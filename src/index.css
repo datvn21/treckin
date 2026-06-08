@@ -1,0 +1,209 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Smart Check-in System · University Edition
+   Base Stylesheet — Tailwind CSS + Design System Foundations
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Google Fonts ─── */
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+
+/* ─── Tailwind Directives ─── */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════════════
+   BASE LAYER — Resets & Global Defaults
+   ═══════════════════════════════════════════════════════════════════ */
+@layer base {
+  /* Root-level design tokens as CSS custom properties */
+  :root {
+    --color-base:        #f7f5f2;
+    --color-surface:     #ffffff;
+    --color-primary:     #0061fe;
+    --color-primary-hov: #0044af;
+    --color-focus:       #428bff;
+    --color-text-dark:   #1e1919;
+    --color-text-muted:  #524a3e;
+
+    --font-heading: "Plus Jakarta Sans", system-ui, sans-serif;
+    --font-ui:      "Inter", system-ui, sans-serif;
+
+    --radius-btn:    12px;
+    --radius-card:   16px;
+    --radius-avatar: 16px;
+
+    --shadow-ticket:    0px 16px 32px 0px rgba(0, 0, 0, 0.10);
+    --shadow-ticket-sm: 0px 8px 16px 0px rgba(0, 0, 0, 0.08);
+    --shadow-elevated:  0px 4px 12px 0px rgba(0, 0, 0, 0.06);
+
+    --min-touch: 44px;
+  }
+
+  /* Antialiased rendering for crisp UI text */
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-family: var(--font-ui);
+    background-color: var(--color-base);
+    color: var(--color-text-dark);
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  /* Typography defaults */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--color-text-dark);
+  }
+
+  /* Accessible focus ring for keyboard navigation */
+  *:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Smooth scrolling */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  /* Respect user motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   COMPONENT LAYER — Reusable Design-System Primitives
+   ═══════════════════════════════════════════════════════════════════ */
+@layer components {
+  /* ─── Ticket Card ─── */
+  .ticket-card {
+    @apply bg-surface rounded-card p-5;
+    box-shadow: var(--shadow-ticket);
+    transition: box-shadow 200ms ease, transform 200ms ease;
+  }
+  .ticket-card:hover {
+    box-shadow: var(--shadow-ticket-sm);
+    transform: translateY(-1px);
+  }
+
+  /* ─── Primary Button ─── */
+  .btn-primary {
+    @apply inline-flex items-center justify-center
+           font-ui font-semibold text-white
+           rounded-btn min-h-touch px-6
+           transition-colors duration-normal;
+    background-color: var(--color-primary);
+  }
+  .btn-primary:hover {
+    background-color: var(--color-primary-hov);
+  }
+  .btn-primary:active {
+    transform: scale(0.98);
+  }
+
+  /* ─── Secondary / Ghost Button ─── */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center
+           font-ui font-semibold
+           rounded-btn min-h-touch px-6
+           border-2 border-neutral-300
+           text-text-dark bg-transparent
+           transition-colors duration-normal;
+  }
+  .btn-secondary:hover {
+    @apply bg-neutral-100 border-neutral-400;
+  }
+
+  /* ─── Student Avatar Frame ─── */
+  .avatar-frame {
+    @apply rounded-avatar overflow-hidden bg-neutral-200;
+    box-shadow: var(--shadow-elevated);
+    aspect-ratio: 1;
+  }
+  .avatar-frame img {
+    @apply w-full h-full object-cover;
+  }
+
+  /* ─── Data Label (Student ID, timestamps) ─── */
+  .data-label {
+    @apply font-ui text-data-md text-text-muted tracking-wide;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ─── QR Container ─── */
+  .qr-container {
+    @apply bg-white rounded-card p-4 flex items-center justify-center;
+    box-shadow: var(--shadow-ticket);
+  }
+
+  /* ─── Status Badges ─── */
+  .badge-success {
+    @apply inline-flex items-center gap-1.5 px-3 py-1
+           rounded-full text-body-sm font-semibold
+           bg-success-bg text-success;
+  }
+  .badge-warning {
+    @apply inline-flex items-center gap-1.5 px-3 py-1
+           rounded-full text-body-sm font-semibold
+           bg-warning-bg text-warning;
+  }
+  .badge-danger {
+    @apply inline-flex items-center gap-1.5 px-3 py-1
+           rounded-full text-body-sm font-semibold
+           bg-danger-bg text-danger;
+  }
+
+  /* ─── Scanner Viewport Overlay ─── */
+  .scanner-viewport {
+    @apply relative overflow-hidden rounded-card;
+    aspect-ratio: 1;
+    background: #000;
+  }
+  .scanner-viewport::after {
+    content: "";
+    @apply absolute inset-0 border-4 border-primary rounded-card
+           pointer-events-none animate-scan-pulse;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   UTILITY LAYER — One-off helpers
+   ═══════════════════════════════════════════════════════════════════ */
+@layer utilities {
+  /* Tabular nums for data-heavy UI (counters, IDs, timers) */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Safe-area padding for PWA (notched devices) */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Hide scrollbar but keep scrollable */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
