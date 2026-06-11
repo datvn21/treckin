@@ -11,13 +11,21 @@ import {
   EVENT_ASSIGNMENT_ROLE,
   EVENT_STATUS,
   EVENT_QR_BEHAVIOR,
+  Prisma,
   WORKSPACE_MEMBER_ROLE,
 } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { WorkspacesService } from '../workspaces/workspaces.service';
 import { CreateEventDto } from './dto/create-event.dto';
-import { AssignEventMemberDto, JoinEventDto, UpdateEventDto } from './dto/event-access.dto';
+import {
+  AssignEventMemberDto,
+  CreateEventSessionDto,
+  JoinEventDto,
+  UpdateEventDto,
+  UpdateEventSessionDto,
+  UpdateEventSettingsDto,
+} from './dto/event-access.dto';
 import { assertEmailEligible, sanitizeDomainList, sanitizeEmailList } from './event-eligibility';
 
 @Injectable()
@@ -227,6 +235,179 @@ export class EventsService {
     return this.withResolvedStatus(updatedEvent);
   }
 
+  async getSettings(eventId: string, userId: string) {
+    const event = await this.requireEventAccess(eventId, userId);
+    return this.prisma.eventSettings.upsert({
+      where: { eventId },
+      update: {},
+      create: {
+        eventId,
+        attendancePolicy: event.attendancePolicy,
+        requiredBoardCount: event.requiredBoardCount,
+      },
+    });
+  }
+
+  async updateSettings(eventId: string, dto: UpdateEventSettingsDto, userId: string) {
+    const event = await this.requireEventManagerOrOwner(eventId, userId);
+    const boardCount = await this.prisma.board.count({ where: { eventId } });
+    this.validateAttendanceConfig(
+      dto.attendancePolicy ?? event.attendancePolicy,
+      dto.requiredBoardCount ?? event.requiredBoardCount,
+      boardCount,
+    );
+
+    const settings = await this.prisma.eventSettings.upsert({
+      where: { eventId },
+      update: {
+        attendancePolicy: dto.attendancePolicy,
+        requiredBoardCount:
+          dto.attendancePolicy === ATTENDANCE_POLICY.BOARD_REQUIREMENTS
+            ? dto.requiredBoardCount
+            : dto.attendancePolicy
+              ? null
+              : dto.requiredBoardCount,
+        checkinModes: dto.checkinModes ? this.resolveCheckinModes(dto.checkinModes) : undefined,
+        eventQrBehavior: dto.eventQrBehavior,
+        qrTtlSeconds: dto.qrTtlSeconds,
+        credentialGraceSeconds: dto.credentialGraceSeconds,
+        offlineSyncEnabled: dto.offlineSyncEnabled,
+        geofenceEnabled: dto.geofenceEnabled,
+        geofenceRadiusMeters: dto.geofenceRadiusMeters,
+        manualCheckinEnabled: dto.manualCheckinEnabled,
+        manualCorrectionEnabled: dto.manualCorrectionEnabled,
+        requireCorrectionReason: dto.requireCorrectionReason,
+        certificateEnabled: dto.certificateEnabled,
+        attendanceProofEnabled: dto.attendanceProofEnabled,
+      },
+      create: {
+        eventId,
+        attendancePolicy: dto.attendancePolicy ?? event.attendancePolicy,
+        requiredBoardCount:
+          (dto.attendancePolicy ?? event.attendancePolicy) === ATTENDANCE_POLICY.BOARD_REQUIREMENTS
+            ? (dto.requiredBoardCount ?? event.requiredBoardCount)
+            : null,
+        checkinModes: dto.checkinModes ? this.resolveCheckinModes(dto.checkinModes) : event.checkinModes,
+        eventQrBehavior: dto.eventQrBehavior ?? event.eventQrBehavior,
+        qrTtlSeconds: dto.qrTtlSeconds,
+        credentialGraceSeconds: dto.credentialGraceSeconds ?? event.credentialGraceSeconds,
+        offlineSyncEnabled: dto.offlineSyncEnabled,
+        geofenceEnabled: dto.geofenceEnabled,
+        geofenceRadiusMeters: dto.geofenceRadiusMeters ?? event.geofenceRadius,
+        manualCheckinEnabled: dto.manualCheckinEnabled,
+        manualCorrectionEnabled: dto.manualCorrectionEnabled,
+        requireCorrectionReason: dto.requireCorrectionReason,
+        certificateEnabled: dto.certificateEnabled,
+        attendanceProofEnabled: dto.attendanceProofEnabled,
+      },
+    });
+
+    await this.prisma.event.update({
+      where: { id: eventId },
+      data: {
+        attendancePolicy: settings.attendancePolicy,
+        requiredBoardCount: settings.requiredBoardCount,
+        checkinModes: settings.checkinModes,
+        eventQrBehavior: settings.eventQrBehavior,
+        credentialGraceSeconds: settings.credentialGraceSeconds,
+        geofenceRadius: settings.geofenceRadiusMeters,
+      },
+    });
+
+    await this.writeAudit(event.workspaceId, userId, 'event.settings.updated', 'EventSettings', settings.id, {
+      after: settings,
+      metadata: { eventId },
+    });
+    return settings;
+  }
+
+  async listSessions(eventId: string, userId: string) {
+    await this.requireEventAccess(eventId, userId);
+    return this.prisma.eventSession.findMany({
+      where: { eventId },
+      orderBy: { startsAt: 'asc' },
+      include: {
+        boards: true,
+        _count: { select: { checkins: true } },
+      },
+    });
+  }
+
+  async createSession(eventId: string, dto: CreateEventSessionDto, userId: string) {
+    const event = await this.requireEventManagerOrOwner(eventId, userId);
+    const startsAt = new Date(dto.startsAt);
+    const endsAt = new Date(dto.endsAt);
+    this.validateSessionWindow(startsAt, endsAt, dto.checkinOpensAt, dto.checkinClosesAt);
+
+    const session = await this.prisma.eventSession.create({
+      data: {
+        eventId,
+        title: dto.title.trim(),
+        description: dto.description?.trim() || undefined,
+        startsAt,
+        endsAt,
+        locationName: dto.locationName?.trim() || undefined,
+        capacity: dto.capacity,
+        status: dto.status,
+        checkinOpensAt: dto.checkinOpensAt ? new Date(dto.checkinOpensAt) : undefined,
+        checkinClosesAt: dto.checkinClosesAt ? new Date(dto.checkinClosesAt) : undefined,
+      },
+      include: {
+        boards: true,
+        _count: { select: { checkins: true } },
+      },
+    });
+
+    await this.writeAudit(event.workspaceId, userId, 'event.session.created', 'EventSession', session.id, {
+      after: session,
+      metadata: { eventId },
+    });
+    return session;
+  }
+
+  async updateSession(
+    eventId: string,
+    sessionId: string,
+    dto: UpdateEventSessionDto,
+    userId: string,
+  ) {
+    const event = await this.requireEventManagerOrOwner(eventId, userId);
+    const existing = await this.prisma.eventSession.findFirst({
+      where: { id: sessionId, eventId },
+    });
+    if (!existing) throw new NotFoundException('Event session not found');
+
+    const startsAt = dto.startsAt ? new Date(dto.startsAt) : existing.startsAt;
+    const endsAt = dto.endsAt ? new Date(dto.endsAt) : existing.endsAt;
+    this.validateSessionWindow(startsAt, endsAt, dto.checkinOpensAt, dto.checkinClosesAt);
+
+    const updated = await this.prisma.eventSession.update({
+      where: { id: sessionId },
+      data: {
+        title: dto.title?.trim(),
+        description: dto.description?.trim(),
+        startsAt: dto.startsAt ? startsAt : undefined,
+        endsAt: dto.endsAt ? endsAt : undefined,
+        locationName: dto.locationName?.trim(),
+        capacity: dto.capacity,
+        status: dto.status,
+        checkinOpensAt: dto.checkinOpensAt ? new Date(dto.checkinOpensAt) : undefined,
+        checkinClosesAt: dto.checkinClosesAt ? new Date(dto.checkinClosesAt) : undefined,
+      },
+      include: {
+        boards: true,
+        _count: { select: { checkins: true } },
+      },
+    });
+
+    await this.writeAudit(event.workspaceId, userId, 'event.session.updated', 'EventSession', updated.id, {
+      before: existing,
+      after: updated,
+      metadata: { eventId },
+    });
+    return updated;
+  }
+
   async findEventBoards(eventId: string, userId: string) {
     await this.requireEventAccess(eventId, userId);
     const event = await this.prisma.event.findUnique({
@@ -388,7 +569,16 @@ export class EventsService {
   private async requireEventAccess(eventId: string, userId: string) {
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
-      select: { id: true, workspaceId: true, attendancePolicy: true, requiredBoardCount: true },
+      select: {
+        id: true,
+        workspaceId: true,
+        attendancePolicy: true,
+        requiredBoardCount: true,
+        checkinModes: true,
+        eventQrBehavior: true,
+        credentialGraceSeconds: true,
+        geofenceRadius: true,
+      },
     });
     if (!event) throw new NotFoundException('Event not found');
 
@@ -413,7 +603,16 @@ export class EventsService {
   private async requireEventManagerOrOwner(eventId: string, userId: string) {
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
-      select: { id: true, workspaceId: true, attendancePolicy: true, requiredBoardCount: true },
+      select: {
+        id: true,
+        workspaceId: true,
+        attendancePolicy: true,
+        requiredBoardCount: true,
+        checkinModes: true,
+        eventQrBehavior: true,
+        credentialGraceSeconds: true,
+        geofenceRadius: true,
+      },
     });
     if (!event) throw new NotFoundException('Event not found');
     if (await this.isWorkspaceAdmin(event.workspaceId, userId)) return event;
@@ -550,6 +749,22 @@ export class EventsService {
     }
   }
 
+  private validateSessionWindow(
+    startsAt: Date,
+    endsAt: Date,
+    checkinOpensAt?: string,
+    checkinClosesAt?: string,
+  ) {
+    if (startsAt >= endsAt) {
+      throw new BadRequestException('Session start time must be before end time');
+    }
+    const opensAt = checkinOpensAt ? new Date(checkinOpensAt) : undefined;
+    const closesAt = checkinClosesAt ? new Date(checkinClosesAt) : undefined;
+    if (opensAt && closesAt && opensAt >= closesAt) {
+      throw new BadRequestException('Check-in open time must be before close time');
+    }
+  }
+
   private resolveCheckinModes(modes: CHECKIN_MODE[] | undefined) {
     const resolved = modes?.length
       ? [...new Set(modes)]
@@ -589,5 +804,36 @@ export class EventsService {
       event,
       message ?? 'Your account is not eligible for this event',
     );
+  }
+
+  private async writeAudit(
+    workspaceId: string,
+    actorUserId: string,
+    action: string,
+    entityType: string,
+    entityId: string,
+    payload: {
+      before?: unknown;
+      after?: unknown;
+      metadata?: unknown;
+    },
+  ) {
+    await this.prisma.auditLog.create({
+      data: {
+        workspaceId,
+        actorUserId,
+        action,
+        entityType,
+        entityId,
+        before: this.toJsonValue(payload.before),
+        after: this.toJsonValue(payload.after),
+        metadata: this.toJsonValue(payload.metadata),
+      },
+    });
+  }
+
+  private toJsonValue(value: unknown): Prisma.InputJsonValue | undefined {
+    if (value === undefined) return undefined;
+    return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
   }
 }
