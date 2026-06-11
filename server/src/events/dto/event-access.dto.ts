@@ -5,6 +5,7 @@ import {
   EVENT_ASSIGNMENT_ROLE,
   EVENT_QR_BEHAVIOR,
   EVENT_STATUS,
+  FIELD_TYPE,
   SESSION_STATUS,
 } from '@prisma/client';
 import {
@@ -14,6 +15,7 @@ import {
   IsEnum,
   IsInt,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   IsUUID,
@@ -282,4 +284,119 @@ export class UpdateEventSessionDto {
   @IsDateString()
   @IsOptional()
   checkinClosesAt?: string;
+}
+
+export class CreateAttendeeFieldDto {
+  @ApiProperty({ example: 'department' })
+  @IsString()
+  key!: string;
+
+  @ApiProperty({ example: 'Department' })
+  @IsString()
+  label!: string;
+
+  @ApiProperty({ enum: FIELD_TYPE })
+  @IsEnum(FIELD_TYPE)
+  type!: FIELD_TYPE;
+
+  @ApiPropertyOptional({ default: false })
+  @IsBoolean()
+  @IsOptional()
+  required?: boolean;
+
+  @ApiPropertyOptional({ example: { choices: ['Engineering', 'Marketing'] } })
+  @IsObject()
+  @IsOptional()
+  options?: Record<string, unknown>;
+
+  @ApiPropertyOptional({ example: { minLength: 2, maxLength: 120 } })
+  @IsObject()
+  @IsOptional()
+  validation?: Record<string, unknown>;
+
+  @ApiPropertyOptional({ example: 0 })
+  @IsInt()
+  @IsOptional()
+  @Min(0)
+  position?: number;
+}
+
+export class UpdateAttendeeFieldDto {
+  @ApiPropertyOptional({ example: 'Department' })
+  @IsString()
+  @IsOptional()
+  label?: string;
+
+  @ApiPropertyOptional({ enum: FIELD_TYPE })
+  @IsEnum(FIELD_TYPE)
+  @IsOptional()
+  type?: FIELD_TYPE;
+
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
+  required?: boolean;
+
+  @ApiPropertyOptional()
+  @IsObject()
+  @IsOptional()
+  options?: Record<string, unknown>;
+
+  @ApiPropertyOptional()
+  @IsObject()
+  @IsOptional()
+  validation?: Record<string, unknown>;
+
+  @ApiPropertyOptional()
+  @IsInt()
+  @IsOptional()
+  @Min(0)
+  position?: number;
+
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
+  isArchived?: boolean;
+}
+
+export class CreateConsentPolicyDto {
+  @ApiProperty({ example: 'Attendance data consent' })
+  @IsString()
+  title!: string;
+
+  @ApiProperty({ example: 'I agree that my attendance data can be processed for this event.' })
+  @IsString()
+  body!: string;
+
+  @ApiPropertyOptional({ default: true })
+  @IsBoolean()
+  @IsOptional()
+  required?: boolean;
+
+  @ApiPropertyOptional({ default: true })
+  @IsBoolean()
+  @IsOptional()
+  active?: boolean;
+}
+
+export class UpdateConsentPolicyDto {
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  title?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  body?: string;
+
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
+  required?: boolean;
+
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
+  active?: boolean;
 }

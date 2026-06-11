@@ -16,8 +16,12 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
 import {
   AssignEventMemberDto,
+  CreateAttendeeFieldDto,
+  CreateConsentPolicyDto,
   CreateEventSessionDto,
   JoinEventDto,
+  UpdateAttendeeFieldDto,
+  UpdateConsentPolicyDto,
   UpdateEventDto,
   UpdateEventSessionDto,
   UpdateEventSettingsDto,
@@ -152,6 +156,72 @@ export class EventsController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.eventsService.updateSession(id, sessionId, dto, user.sub);
+  }
+
+  @Get(':id/attendee-fields')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List event attendee field definitions' })
+  listAttendeeFields(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: JwtPayload) {
+    return this.eventsService.listAttendeeFields(id, user.sub);
+  }
+
+  @Post(':id/attendee-fields')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create an event attendee field definition' })
+  createAttendeeField(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreateAttendeeFieldDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.eventsService.createAttendeeField(id, dto, user.sub);
+  }
+
+  @Patch(':id/attendee-fields/:fieldId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update or archive an event attendee field definition' })
+  updateAttendeeField(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('fieldId', ParseUUIDPipe) fieldId: string,
+    @Body() dto: UpdateAttendeeFieldDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.eventsService.updateAttendeeField(id, fieldId, dto, user.sub);
+  }
+
+  @Get(':id/consent-policies')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List event consent policies' })
+  listConsentPolicies(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: JwtPayload) {
+    return this.eventsService.listConsentPolicies(id, user.sub);
+  }
+
+  @Post(':id/consent-policies')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create an event consent policy' })
+  createConsentPolicy(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreateConsentPolicyDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.eventsService.createConsentPolicy(id, dto, user.sub);
+  }
+
+  @Patch(':id/consent-policies/:policyId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update an event consent policy' })
+  updateConsentPolicy(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('policyId', ParseUUIDPipe) policyId: string,
+    @Body() dto: UpdateConsentPolicyDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.eventsService.updateConsentPolicy(id, policyId, dto, user.sub);
   }
 
   @Post(':id/assignments')

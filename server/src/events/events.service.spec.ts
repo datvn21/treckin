@@ -35,6 +35,18 @@ describe('EventsService', () => {
       auditLog: {
         create: jest.fn(),
       },
+      attendeeFieldDefinition: {
+        create: jest.fn(),
+        findFirst: jest.fn(),
+        findMany: jest.fn(),
+        update: jest.fn(),
+      },
+      consentPolicy: {
+        create: jest.fn(),
+        findFirst: jest.fn(),
+        findMany: jest.fn(),
+        update: jest.fn(),
+      },
       ...prismaOverrides,
     };
     const workspacesService: any = {
@@ -149,5 +161,86 @@ describe('EventsService', () => {
         'admin-1',
       ),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('normalizes attendee field keys and audits creation', async () => {
+    const { service, prisma } = createService();
+    prisma.event.findUnique.mockResolvedValue(event);
+    prisma.workspaceMember.findUnique.mockResolvedValue({
+      role: WORKSPACE_MEMBER_ROLE.ADMIN,
+    });
+    prisma.attendeeFieldDefinition.create.mockResolvedValue({
+      id: 'field-1',
+      key: 'team_name',
+      label: 'Team Name',
+      eventId: 'event-1',
+      workspaceId: 'workspace-1',
+    });
+    prisma.auditLog.create.mockResolvedValue({});
+
+    const result = await service.createAttendeeField(
+      'event-1',
+      {
+        key: 'Team Name!',
+        label: 'Team Name',
+        type: 'TEXT' as any,
+        required: true,
+      },
+      'admin-1',
+    );
+
+    expect(result.key).toBe('team_name');
+    expect(prisma.attendeeFieldDefinition.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        key: 'team_name',
+        eventId: 'event-1',
+        workspaceId: 'workspace-1',
+        required: true,
+      }),
+    });
+    expect(prisma.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: 'event.attendee_field.created',
+        entityId: 'field-1',
+      }),
+    });
+  });
+
+  it('increments consent policy version when title or body changes', async () => {
+    const { service, prisma } = createService();
+    prisma.event.findUnique.mockResolvedValue(event);
+    prisma.workspaceMember.findUnique.mockResolvedValue({
+      role: WORKSPACE_MEMBER_ROLE.ADMIN,
+    });
+    prisma.consentPolicy.findFirst.mockResolvedValue({
+      id: 'policy-1',
+      workspaceId: 'workspace-1',
+      eventId: 'event-1',
+      title: 'Old title',
+      body: 'Old body',
+      version: 1,
+    });
+    prisma.consentPolicy.update.mockResolvedValue({
+      id: 'policy-1',
+      title: 'New title',
+      body: 'Old body',
+      version: 2,
+    });
+    prisma.auditLog.create.mockResolvedValue({});
+
+    await service.updateConsentPolicy(
+      'event-1',
+      'policy-1',
+      { title: 'New title' },
+      'admin-1',
+    );
+
+    expect(prisma.consentPolicy.update).toHaveBeenCalledWith({
+      where: { id: 'policy-1' },
+      data: expect.objectContaining({
+        title: 'New title',
+        version: { increment: 1 },
+      }),
+    });
   });
 });

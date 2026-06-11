@@ -20,8 +20,12 @@ import { WorkspacesService } from '../workspaces/workspaces.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import {
   AssignEventMemberDto,
+  CreateAttendeeFieldDto,
+  CreateConsentPolicyDto,
   CreateEventSessionDto,
   JoinEventDto,
+  UpdateAttendeeFieldDto,
+  UpdateConsentPolicyDto,
   UpdateEventDto,
   UpdateEventSessionDto,
   UpdateEventSettingsDto,
@@ -408,6 +412,143 @@ export class EventsService {
     return updated;
   }
 
+  async listAttendeeFields(eventId: string, userId: string) {
+    const event = await this.requireEventAccess(eventId, userId);
+    return this.prisma.attendeeFieldDefinition.findMany({
+      where: {
+        workspaceId: event.workspaceId,
+        OR: [{ eventId }, { eventId: null }],
+      },
+      orderBy: [{ eventId: 'desc' }, { position: 'asc' }, { createdAt: 'asc' }],
+    });
+  }
+
+  async createAttendeeField(eventId: string, dto: CreateAttendeeFieldDto, userId: string) {
+    const event = await this.requireEventManagerOrOwner(eventId, userId);
+    const key = this.normalizeFieldKey(dto.key);
+
+    const field = await this.prisma.attendeeFieldDefinition.create({
+      data: {
+        workspaceId: event.workspaceId,
+        eventId,
+        key,
+        label: dto.label.trim(),
+        type: dto.type,
+        required: dto.required ?? false,
+        options: this.toJsonValue(dto.options),
+        validation: this.toJsonValue(dto.validation),
+        position: dto.position ?? 0,
+      },
+    });
+
+    await this.writeAudit(event.workspaceId, userId, 'event.attendee_field.created', 'AttendeeFieldDefinition', field.id, {
+      after: field,
+      metadata: { eventId },
+    });
+    return field;
+  }
+
+  async updateAttendeeField(
+    eventId: string,
+    fieldId: string,
+    dto: UpdateAttendeeFieldDto,
+    userId: string,
+  ) {
+    const event = await this.requireEventManagerOrOwner(eventId, userId);
+    const existing = await this.prisma.attendeeFieldDefinition.findFirst({
+      where: { id: fieldId, eventId, workspaceId: event.workspaceId },
+    });
+    if (!existing) throw new NotFoundException('Attendee field not found');
+
+    const updated = await this.prisma.attendeeFieldDefinition.update({
+      where: { id: fieldId },
+      data: {
+        label: dto.label?.trim(),
+        type: dto.type,
+        required: dto.required,
+        options: dto.options === undefined ? undefined : this.toJsonValue(dto.options),
+        validation: dto.validation === undefined ? undefined : this.toJsonValue(dto.validation),
+        position: dto.position,
+        isArchived: dto.isArchived,
+      },
+    });
+
+    await this.writeAudit(event.workspaceId, userId, 'event.attendee_field.updated', 'AttendeeFieldDefinition', updated.id, {
+      before: existing,
+      after: updated,
+      metadata: { eventId },
+    });
+    return updated;
+  }
+
+  async listConsentPolicies(eventId: string, userId: string) {
+    const event = await this.requireEventAccess(eventId, userId);
+    return this.prisma.consentPolicy.findMany({
+      where: {
+        workspaceId: event.workspaceId,
+        OR: [{ eventId }, { eventId: null }],
+      },
+      orderBy: [{ eventId: 'desc' }, { createdAt: 'asc' }],
+    });
+  }
+
+  async createConsentPolicy(eventId: string, dto: CreateConsentPolicyDto, userId: string) {
+    const event = await this.requireEventManagerOrOwner(eventId, userId);
+    const policy = await this.prisma.consentPolicy.create({
+      data: {
+        workspaceId: event.workspaceId,
+        eventId,
+        title: dto.title.trim(),
+        body: dto.body.trim(),
+        required: dto.required ?? true,
+        active: dto.active ?? true,
+      },
+    });
+
+    await this.writeAudit(event.workspaceId, userId, 'event.consent_policy.created', 'ConsentPolicy', policy.id, {
+      after: policy,
+      metadata: { eventId },
+    });
+    return policy;
+  }
+
+  async updateConsentPolicy(
+    eventId: string,
+    policyId: string,
+    dto: UpdateConsentPolicyDto,
+    userId: string,
+  ) {
+    const event = await this.requireEventManagerOrOwner(eventId, userId);
+    const existing = await this.prisma.consentPolicy.findFirst({
+      where: { id: policyId, eventId, workspaceId: event.workspaceId },
+    });
+    if (!existing) throw new NotFoundException('Consent policy not found');
+
+    const title = dto.title?.trim();
+    const body = dto.body?.trim();
+    const contentChanged =
+      (title !== undefined && title !== existing.title) ||
+      (body !== undefined && body !== existing.body);
+
+    const updated = await this.prisma.consentPolicy.update({
+      where: { id: policyId },
+      data: {
+        title,
+        body,
+        required: dto.required,
+        active: dto.active,
+        version: contentChanged ? { increment: 1 } : undefined,
+      },
+    });
+
+    await this.writeAudit(event.workspaceId, userId, 'event.consent_policy.updated', 'ConsentPolicy', updated.id, {
+      before: existing,
+      after: updated,
+      metadata: { eventId, contentChanged },
+    });
+    return updated;
+  }
+
   async findEventBoards(eventId: string, userId: string) {
     await this.requireEventAccess(eventId, userId);
     const event = await this.prisma.event.findUnique({
@@ -773,6 +914,21 @@ export class EventsService {
       throw new BadRequestException('At least one check-in mode is required');
     }
     return resolved;
+  }
+
+  private normalizeFieldKey(input: string) {
+    const key = input
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+    if (!key) {
+      throw new BadRequestException('Field key is required');
+    }
+    if (key.length > 64) {
+      throw new BadRequestException('Field key must be 64 characters or fewer');
+    }
+    return key;
   }
 
   async assertUserEligibleForEvent(eventId: string, userId: string, message?: string) {
