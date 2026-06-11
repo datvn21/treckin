@@ -336,7 +336,7 @@ export class WorkspacesService {
     action: string,
     entityType: string,
     entityId: string,
-    payload: { before?: Prisma.InputJsonValue; after?: Prisma.InputJsonValue; metadata?: Prisma.InputJsonValue },
+    payload: { before?: unknown; after?: unknown; metadata?: unknown },
   ) {
     await this.prisma.auditLog.create({
       data: {
@@ -345,11 +345,16 @@ export class WorkspacesService {
         action,
         entityType,
         entityId,
-        before: payload.before,
-        after: payload.after,
-        metadata: payload.metadata,
+        before: this.toJsonValue(payload.before),
+        after: this.toJsonValue(payload.after),
+        metadata: this.toJsonValue(payload.metadata),
       },
     });
+  }
+
+  private toJsonValue(value: unknown): Prisma.InputJsonValue | undefined {
+    if (value === undefined) return undefined;
+    return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
   }
 
   private workspaceInclude(userId: string) {
