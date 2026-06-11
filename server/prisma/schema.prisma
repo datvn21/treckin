@@ -377,6 +377,7 @@ model WorkspaceInvitation {
   email        String
   token        String            @unique
   status       INVITATION_STATUS @default(PENDING)
+  metadata     Json?
   invitedById  String            @db.Uuid
   invitedBy    User              @relation("InvitationSender", fields: [invitedById], references: [id])
   acceptedById String?           @db.Uuid
