@@ -11,28 +11,11 @@ export function cn(...inputs: ClassValue[]): string {
 }
 
 /**
- * Get the university avatar URL from MSSV (zero-storage pattern).
- * The university hosts official photos at a static URL.
+ * Generate a generic avatar URL from a user's display name.
+ * Falls back to ui-avatars.com which works for any user, any email domain.
  */
-export function getAvatarUrl(mssv: string): string {
-  return `https://elit.tdtu.edu.vn/static/img/svimgs/thumbnail/${mssv}.jpg`;
-}
-
-/**
- * Extract MSSV (Student ID) from university email.
- * e.g., "52100123@student.tdtu.edu.vn" → "52100123"
- */
-export function extractMssv(email: string): string {
-  return email.split("@")[0] ?? "";
-}
-
-/**
- * Format MSSV for display with spacing.
- * e.g., "52100123" → "521 001 23"
- */
-export function formatStudentId(mssv: string): string {
-  if (mssv.length <= 3) return mssv;
-  return mssv.replace(/(\d{3})(?=\d)/g, "$1 ");
+export function getAvatarUrl(name: string): string {
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0061fe&color=fff&size=160`;
 }
 
 /**

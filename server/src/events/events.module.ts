@@ -1,7 +1,9 @@
-import { Module } from '@nestjs/common';
-import { WorkspacesModule } from '../workspaces/workspaces.module';
-import { EventsController, MeController, WorkspaceEventsController } from './events.controller';
-import { EventsService } from './events.service';
+import { Module } from "@nestjs/common";
+import { WorkspacesModule } from "../workspaces/workspaces.module";
+import { EventsController } from "./controllers/events.controller";
+import { WorkspaceEventsController } from "./controllers/workspace-events.controller";
+import { MeController } from "./controllers/me.controller";
+import { EventsService } from "./events.service";
 
 @Module({
   imports: [WorkspacesModule],

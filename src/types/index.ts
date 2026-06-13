@@ -1,14 +1,13 @@
 /* ═══════════════════════════════════════════════════════════════════
-   Core TypeScript Interfaces — Smart Check-in System
+   Core TypeScript Interfaces — Treckin
    ═══════════════════════════════════════════════════════════════════ */
 
 // ─── User & Auth ───
-export type UserRole = "student" | "staff" | "admin";
+export type UserRole = "user" | "admin";
 
 export interface User {
   id: string;
   email: string;
-  mssv: string;
   name: string;
   role: UserRole;
   avatarUrl: string;
@@ -23,6 +22,9 @@ export interface AuthResponse {
 
 // ─── Events ───
 export type EventStatus = "upcoming" | "active" | "completed" | "cancelled";
+export type AttendancePolicy = "SINGLE_IN" | "IN_OUT" | "BOARD_REQUIREMENTS";
+export type CheckinMode = "ATTENDEE_CREDENTIAL" | "BOARD_QR";
+export type EventQrBehavior = "JOIN_ONLY" | "JOIN_AND_CHECKIN";
 
 export interface Event {
   id: string;
@@ -36,6 +38,11 @@ export interface Event {
   longitude?: number;
   geofenceRadius?: number;
   status: EventStatus;
+  attendancePolicy?: AttendancePolicy;
+  requiredBoardCount?: number | null;
+  checkinModes?: CheckinMode[];
+  eventQrBehavior?: EventQrBehavior;
+  customSessionsEnabled?: boolean;
   boards: Board[];
   totalCheckins: number;
   totalRegistered: number;
@@ -68,6 +75,8 @@ export interface Board {
 
 // ─── Check-in Records ───
 export type CheckinMethod = "qr" | "manual" | "offline-sync";
+export type CheckinDirection = "IN" | "OUT";
+export type CheckinSource = "PERSONAL_QR" | "BOARD_QR" | "MANUAL" | "OFFLINE_SYNC";
 
 export type ScanStatus =
   | "success"
@@ -81,10 +90,13 @@ export interface CheckinRecord {
   id: string;
   userId: string;
   userName: string;
-  userMssv: string;
   eventId: string;
   boardId: string;
   boardName: string;
+  sessionId?: string | null;
+  sessionName?: string | null;
+  outsideSession?: boolean;
+  direction?: CheckinDirection;
   timestamp: string;
   method: CheckinMethod;
 }
@@ -94,10 +106,16 @@ export interface ScanResult {
   student?: {
     id: string;
     name: string;
-    mssv: string;
+    email: string;
     avatarUrl: string;
   };
   checkinRecord?: CheckinRecord;
+  attendance?: {
+    policy: AttendancePolicy;
+    completed: boolean;
+    completedBoardCount?: number;
+    requiredBoardCount?: number;
+  };
   message: string;
   originalCheckin?: {
     boardName: string;
@@ -117,6 +135,8 @@ export interface QRGenerateResponse {
   hash: string;
   expiresAt: number;
   ttl: number;
+  /** 6-character alphanumeric short code displayed below the QR for fallback entry */
+  shortCode: string;
 }
 
 // ─── Offline Sync ───
@@ -124,12 +144,19 @@ export interface OfflineCheckin {
   hash: string;
   scannedAt: string;
   boardId: string;
+  direction?: CheckinDirection;
 }
 
 export interface BulkSyncResult {
   synced: number;
   skipped: number;
-  errors: Array<{ hash: string; reason: string }>;
+  errors: number;
+  details: Array<{
+    userId: string;
+    eventId: string;
+    status: "synced" | "skipped" | "error";
+    reason?: string;
+  }>;
 }
 
 // ─── Socket.io Events ───

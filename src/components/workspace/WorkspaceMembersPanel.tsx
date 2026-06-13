@@ -1,5 +1,6 @@
 import { useMemo, useState, type FormEvent } from "react";
-import { Copy, Mail, Shield, UserPlus } from "lucide-react";
+import { Copy, Mail, UserPlus, ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { api } from "@/lib/api";
 import { Button } from "@/atoms/Button";
@@ -8,6 +9,8 @@ import { Select } from "@/atoms/Select";
 import { Modal } from "@/molecules/Modal";
 import { FormField } from "@/molecules/FormField";
 import { useToast } from "@/molecules/Toast";
+import { parseApiError } from "@/lib/parseApiError";
+import { Avatar } from "@/atoms/Avatar";
 
 type WorkspaceRole = "OWNER" | "ADMIN" | "MEMBER" | "VIEWER";
 
@@ -39,14 +42,6 @@ interface WorkspaceMembersPanelProps {
 
 const roleOptions: WorkspaceRole[] = ["OWNER", "ADMIN", "MEMBER", "VIEWER"];
 
-function parseApiError(err: unknown, fallback: string): string {
-  if (typeof err === "object" && err !== null && "response" in err) {
-    const e = err as { response?: { data?: { message?: string | string[] } } };
-    const msg = e.response?.data?.message;
-    return Array.isArray(msg) ? msg.join(" ") : msg ?? fallback;
-  }
-  return fallback;
-}
 
 function roleBadge(role: WorkspaceRole) {
   if (role === "OWNER") return "yellow";
@@ -69,11 +64,15 @@ export function WorkspaceMembersPanel({
   const [inviteRole, setInviteRole] = useState<WorkspaceRole>("MEMBER");
   const [inviting, setInviting] = useState(false);
   const [savingRoleId, setSavingRoleId] = useState<string | null>(null);
+  const [showRoles, setShowRoles] = useState(false);
 
   const canManageMembers = currentUserRole === "OWNER" || currentUserRole === "ADMIN";
   const canAssignElevatedRoles = currentUserRole === "OWNER";
   const selectableInviteRoles = useMemo(
-    () => (canAssignElevatedRoles ? roleOptions : roleOptions.filter((role) => role !== "OWNER" && role !== "ADMIN")),
+    () =>
+      canAssignElevatedRoles
+        ? roleOptions
+        : roleOptions.filter((role) => role !== "OWNER" && role !== "ADMIN"),
     [canAssignElevatedRoles],
   );
 
@@ -89,10 +88,12 @@ export function WorkspaceMembersPanel({
       defaultValue: "Full control over workspace policy, settings, members, roles, and events.",
     }),
     ADMIN: t("workspace.roleDescriptions.admin", {
-      defaultValue: "Manages workspace settings, policies, events, and can invite standard members.",
+      defaultValue:
+        "Manages workspace settings, policies, events, and can invite standard members.",
     }),
     MEMBER: t("workspace.roleDescriptions.member", {
-      defaultValue: "Can view assigned workspace events. Cannot create events unless policy allows it.",
+      defaultValue:
+        "Can view assigned workspace events. Cannot create events unless policy allows it.",
     }),
     VIEWER: t("workspace.roleDescriptions.viewer", {
       defaultValue: "Read-only access for overview and reporting where workspace policy permits.",
@@ -126,7 +127,12 @@ export function WorkspaceMembersPanel({
       toast.success(t("workspace.roleUpdated", { defaultValue: "Role updated" }));
       onReload();
     } catch (err) {
-      toast.error(parseApiError(err, t("workspace.roleUpdateFailed", { defaultValue: "Could not update role" })));
+      toast.error(
+        parseApiError(
+          err,
+          t("workspace.roleUpdateFailed", { defaultValue: "Could not update role" }),
+        ),
+      );
     } finally {
       setSavingRoleId(null);
     }
@@ -151,16 +157,39 @@ export function WorkspaceMembersPanel({
         )}
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
-        {roleOptions.map((role) => (
-          <div key={role} className="card p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Shield size={15} className="text-primary" />
-              <p className="text-sm font-semibold text-ink-1">{roleLabels[role]}</p>
+      <div className="card !bg-transparent overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setShowRoles((prev) => !prev)}
+          className="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold text-ink-2 hover:text-ink-1 transition-all duration-100 text-left outline-none"
+          aria-expanded={showRoles}
+        >
+          <span className="flex items-center gap-2">
+            <span>{t("workspace.roleInformation")}</span>
+          </span>
+          <ChevronDown
+            size={15}
+            className={cn(
+              "text-ink-4 transition-transform duration-150",
+              showRoles && "rotate-180",
+            )}
+          />
+        </button>
+
+        {showRoles && (
+          <div className="p-4 border-t border-border-1 bg-surface-raised/30 animate-fade-in space-y-3">
+            <div className="grid gap-3 md:grid-cols-2">
+              {roleOptions.map((role) => (
+                <div key={role} className="card bg-surface p-4 border border-border-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <p className="text-sm font-semibold text-ink-1">{roleLabels[role]}</p>
+                  </div>
+                  <p className="text-xs leading-5 text-ink-3">{roleDescriptions[role]}</p>
+                </div>
+              ))}
             </div>
-            <p className="text-xs leading-5 text-ink-3">{roleDescriptions[role]}</p>
           </div>
-        ))}
+        )}
       </div>
 
       {pendingInvitations.length > 0 && (
@@ -203,31 +232,29 @@ export function WorkspaceMembersPanel({
             key={member.id}
             className="flex items-center gap-3 px-4 py-3 border-b border-border-1 last:border-b-0"
           >
-            <div
-              className="w-8 h-8 rounded-full bg-surface-raised flex items-center justify-center text-sm font-semibold text-ink-2 shrink-0"
-              aria-hidden
-            >
-              {member.name.charAt(0).toUpperCase()}
-            </div>
+            <Avatar src={member.avatarUrl} name={member.name} size="sm" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-ink-1 truncate">{member.name}</p>
+              <p className="text-sm font-medium text-ink-1 truncate">
+                {member.name || t("common.noName", { defaultValue: "Chưa đặt tên" })}
+              </p>
               <p className="text-xs text-ink-4 truncate">{member.email}</p>
             </div>
             {canManageMembers ? (
-              <Select
-                className="w-32"
-                value={member.role}
-                onChange={(e) => updateRole(member.id, e.target.value as WorkspaceRole)}
-                disabled={savingRoleId === member.id}
-              >
-                {roleOptions.map((role) => (
-                  <option key={role} value={role}>
-                    {roleLabels[role]}
-                  </option>
-                ))}
-              </Select>
+              <div className="w-32 ml-auto shrink-0">
+                <Select
+                  value={member.role}
+                  onChange={(e) => updateRole(member.id, e.target.value as WorkspaceRole)}
+                  disabled={savingRoleId === member.id}
+                >
+                  {roleOptions.map((role) => (
+                    <option key={role} value={role}>
+                      {roleLabels[role]}
+                    </option>
+                  ))}
+                </Select>
+              </div>
             ) : (
-              <Badge variant={roleBadge(member.role)} className="shrink-0">
+              <Badge variant={roleBadge(member.role)} className="shrink-0 ml-auto">
                 {roleLabels[member.role]}
               </Badge>
             )}
@@ -276,7 +303,10 @@ export function WorkspaceMembersPanel({
               autoFocus
             />
           </FormField>
-          <FormField label={t("workspace.inviteRole", { defaultValue: "Role" })} htmlFor="invite-role">
+          <FormField
+            label={t("workspace.inviteRole", { defaultValue: "Role" })}
+            htmlFor="invite-role"
+          >
             <Select
               id="invite-role"
               value={inviteRole}

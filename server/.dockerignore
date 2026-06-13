@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build output  
+dist/
+
+# Version control
+.git/
+.gitignore
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Test artifacts
+test-results/
+coverage/
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+npm-debug.log*
+*.log
+
+# Docker files
+Dockerfile
+
+# Misc
+README.md
+*.md

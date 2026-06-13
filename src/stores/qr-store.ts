@@ -49,10 +49,21 @@ export const useQRStore = create<QRState>()((set, get) => ({
       });
       // Restart countdown after refresh
       get().startCountdown();
-    } catch {
+    } catch (err: unknown) {
+      let errorMsg = "Không thể tạo mã QR. Vui lòng thử lại.";
+      if (
+        typeof err === "object" &&
+        err !== null &&
+        "response" in err
+      ) {
+        const axiosErr = err as { response?: { data?: { message?: string | string[] } } };
+        const msg = axiosErr.response?.data?.message;
+        if (typeof msg === "string") errorMsg = msg;
+        else if (Array.isArray(msg)) errorMsg = msg.join(", ");
+      }
       set({
         isRefreshing: false,
-        error: "Không thể tạo mã QR. Vui lòng thử lại.",
+        error: errorMsg,
       });
     }
   },

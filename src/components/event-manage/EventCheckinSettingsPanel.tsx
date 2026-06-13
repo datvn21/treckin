@@ -3,11 +3,13 @@ import { SlidersHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { api } from "@/lib/api";
 import { Button } from "@/atoms/Button";
+import { CheckboxCard } from "@/atoms/CheckboxCard";
 import { Input } from "@/atoms/Input";
 import { Select } from "@/atoms/Select";
 import { SkeletonList } from "@/atoms/Skeleton";
 import { FormField } from "@/molecules/FormField";
 import { useToast } from "@/molecules/Toast";
+import { parseApiError } from "@/lib/parseApiError";
 
 type AttendancePolicy = "SINGLE_IN" | "IN_OUT" | "BOARD_REQUIREMENTS";
 type CheckinMode = "ATTENDEE_CREDENTIAL" | "BOARD_QR";
@@ -51,14 +53,6 @@ interface EventCheckinSettingsPanelProps {
   eventId: string;
 }
 
-function parseApiError(err: unknown, fallback: string): string {
-  if (typeof err === "object" && err !== null && "response" in err) {
-    const e = err as { response?: { data?: { message?: string | string[] } } };
-    const msg = e.response?.data?.message;
-    return Array.isArray(msg) ? msg.join(" ") : msg ?? fallback;
-  }
-  return fallback;
-}
 
 function formFromSettings(settings: EventSettings): SettingsFormState {
   return {
@@ -95,18 +89,7 @@ function ToggleRow({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex items-start gap-3 rounded-lg border border-border-1 bg-surface px-3 py-3">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="mt-1 h-4 w-4 accent-primary"
-      />
-      <span className="min-w-0">
-        <span className="block text-sm font-medium text-ink-1">{label}</span>
-        {description && <span className="block text-xs text-ink-3 mt-0.5">{description}</span>}
-      </span>
-    </label>
+    <CheckboxCard label={label} description={description} checked={checked} onChange={onChange} />
   );
 }
 

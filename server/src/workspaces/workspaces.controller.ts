@@ -15,6 +15,7 @@ import {
   AcceptInvitationDto,
   CreateWorkspaceDto,
   InviteWorkspaceMemberDto,
+  UpdateWorkspaceDto,
   UpdateWorkspaceMemberRoleDto,
   UpdateWorkspacePolicyDto,
   UpdateWorkspaceSettingsDto,
@@ -44,6 +45,16 @@ export class WorkspacesController {
   @ApiOperation({ summary: 'Get a workspace' })
   findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: JwtPayload) {
     return this.workspacesService.findOne(id, user.sub);
+  }
+
+  @Patch('workspaces/:id')
+  @ApiOperation({ summary: 'Update workspace basic details' })
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateWorkspaceDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.workspacesService.update(id, dto, user.sub);
   }
 
   @Get('workspaces/:id/members')

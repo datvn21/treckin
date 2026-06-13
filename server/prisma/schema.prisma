@@ -426,6 +426,7 @@ model Event {
   checkinModes           CHECKIN_MODE[]    @default([ATTENDEE_CREDENTIAL, BOARD_QR])
   eventQrBehavior        EVENT_QR_BEHAVIOR @default(JOIN_ONLY)
   credentialGraceSeconds Int               @default(120) // 0-300 seconds grace after credential expiry
+  customSessionsEnabled  Boolean           @default(false)
   workspaceId            String            @db.Uuid
   workspace              Workspace         @relation(fields: [workspaceId], references: [id])
 
@@ -490,6 +491,7 @@ model EventSession {
   locationName    String?
   capacity        Int?
   status          SESSION_STATUS @default(SCHEDULED)
+  isDefault       Boolean        @default(false)
   checkinOpensAt  DateTime?
   checkinClosesAt DateTime?
   createdAt       DateTime       @default(now())
@@ -499,6 +501,7 @@ model EventSession {
   checkins CheckinRecord[]
 
   @@index([eventId, startsAt])
+  @@index([eventId, isDefault])
   @@map("event_sessions")
 }
 

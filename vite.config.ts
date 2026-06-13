@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "robots.txt"],
       manifest: {
-        name: "Smart Check-in · University Edition",
-        short_name: "Check-in",
+        name: "Treckin · University Edition",
+        short_name: "Treckin",
         description:
           "High-concurrency, real-time, multi-board event check-in platform for universities.",
         theme_color: "#0061fe",
@@ -60,14 +60,11 @@ export default defineConfig({
             },
           },
           {
+            // Real-time API calls must NEVER be served from cache.
+            // Check-in data is time-critical; stale cached responses could
+            // cause duplicate check-in screens or incorrect event states.
             urlPattern: /\/api\/.*/i,
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "api-cache",
-              networkTimeoutSeconds: 5,
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 5 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
+            handler: "NetworkOnly",
           },
         ],
       },

@@ -178,3 +178,32 @@ export class UpdateWorkspaceMemberRoleDto {
   @IsEnum(WORKSPACE_MEMBER_ROLE)
   role!: WORKSPACE_MEMBER_ROLE;
 }
+
+export class UpdateWorkspaceDto {
+  @ApiProperty({ example: 'Acme Events Team', required: false })
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  name?: string;
+
+  @ApiProperty({ example: 'acme-events', required: false })
+  @IsString()
+  @IsOptional()
+  slug?: string;
+
+  @ApiProperty({ example: 'Operations workspace for Acme events', required: false })
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @ApiProperty({ example: 'Asia/Bangkok', required: false })
+  @IsString()
+  @IsOptional()
+  timezone?: string;
+
+  @ApiProperty({ example: 'vi', required: false })
+  @IsString()
+  @IsOptional()
+  locale?: string;
+}
+

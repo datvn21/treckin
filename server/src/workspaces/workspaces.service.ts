@@ -11,6 +11,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateWorkspaceDto,
   InviteWorkspaceMemberDto,
+  UpdateWorkspaceDto,
   UpdateWorkspaceMemberRoleDto,
   UpdateWorkspacePolicyDto,
   UpdateWorkspaceSettingsDto,
@@ -62,6 +63,39 @@ export class WorkspacesService {
     });
     if (!workspace) throw new NotFoundException('Workspace not found');
     return workspace;
+  }
+
+  async update(workspaceId: string, dto: UpdateWorkspaceDto, userId: string) {
+    await this.requireAdmin(workspaceId, userId);
+
+    const data: Prisma.WorkspaceUpdateInput = {};
+    if (dto.name !== undefined) {
+      data.name = dto.name.trim();
+    }
+    if (dto.description !== undefined) {
+      data.description = dto.description?.trim() || null;
+    }
+    if (dto.timezone !== undefined) {
+      data.timezone = dto.timezone.trim();
+    }
+    if (dto.locale !== undefined) {
+      data.locale = dto.locale.trim();
+    }
+    if (dto.slug !== undefined) {
+      data.slug = await this.resolveWorkspaceSlug(dto.slug);
+    }
+
+    const updated = await this.prisma.workspace.update({
+      where: { id: workspaceId },
+      data,
+      include: this.workspaceInclude(userId),
+    });
+
+    await this.writeAudit(workspaceId, userId, 'workspace.updated', 'Workspace', updated.id, {
+      after: updated,
+    });
+
+    return updated;
   }
 
   async getSettings(workspaceId: string, userId: string) {

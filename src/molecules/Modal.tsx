@@ -40,8 +40,9 @@ const Modal: React.FC<ModalProps> = ({
         {/* Backdrop */}
         <Dialog.Overlay
           className={cn(
-            'fixed inset-0 z-50 bg-black/50 backdrop-blur-sm',
-            'data-[state=open]:animate-fade-in-up'
+            'fixed inset-0 z-50 bg-black/25 backdrop-blur-sm',
+            'data-[state=open]:animate-fade-in',
+            'data-[state=closed]:animate-fade-out'
           )}
         />
 
@@ -52,7 +53,8 @@ const Modal: React.FC<ModalProps> = ({
             'w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] card-elevated flex flex-col',
             'max-h-[calc(100dvh-1rem)] sm:max-h-[90dvh] overflow-hidden',
             'rounded-lg outline-none',
-            'data-[state=open]:animate-scale-in',
+            'data-[state=open]:animate-modal-scale-in',
+            'data-[state=closed]:animate-modal-scale-out',
             sizeMap[size],
             className
           )}

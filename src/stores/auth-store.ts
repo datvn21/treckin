@@ -29,7 +29,7 @@ export const useAuthStore = create<AuthState>()(
         set({ user }),
     }),
     {
-      name: "checkin-auth",
+      name: "treckin-auth",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { CalendarClock, Pencil, Plus } from "lucide-react";
+import { CalendarClock, Check, Pencil, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { api } from "@/lib/api";
 import { Button } from "@/atoms/Button";
@@ -12,6 +12,7 @@ import { SkeletonList } from "@/atoms/Skeleton";
 import { Modal } from "@/molecules/Modal";
 import { FormField } from "@/molecules/FormField";
 import { useToast } from "@/molecules/Toast";
+import { parseApiError } from "@/lib/parseApiError";
 
 type SessionStatus = "DRAFT" | "SCHEDULED" | "OPEN" | "CLOSED" | "CANCELLED";
 
@@ -24,6 +25,7 @@ interface EventSession {
   locationName?: string | null;
   capacity?: number | null;
   status: SessionStatus;
+  isDefault?: boolean;
   checkinOpensAt?: string | null;
   checkinClosesAt?: string | null;
   boards?: Array<{ id: string; name: string }>;
@@ -46,22 +48,16 @@ interface EventSessionsPanelProps {
   eventId: string;
 }
 
-function parseApiError(err: unknown, fallback: string): string {
-  if (typeof err === "object" && err !== null && "response" in err) {
-    const e = err as { response?: { data?: { message?: string | string[] } } };
-    const msg = e.response?.data?.message;
-    return Array.isArray(msg) ? msg.join(" ") : msg ?? fallback;
-  }
-  return fallback;
+interface EventSessionMeta {
+  customSessionsEnabled?: boolean;
 }
+
 
 function toDateTimeLocal(value?: string | null) {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
-    .toISOString()
-    .slice(0, 16);
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
 }
 
 function toIso(value: string) {
@@ -115,7 +111,9 @@ export function EventSessionsPanel({ eventId }: EventSessionsPanelProps) {
   const { t } = useTranslation();
   const toast = useToast();
   const [sessions, setSessions] = useState<EventSession[]>([]);
+  const [eventMeta, setEventMeta] = useState<EventSessionMeta | null>(null);
   const [loading, setLoading] = useState(true);
+  const [togglingCustom, setTogglingCustom] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<EventSession | null>(null);
@@ -135,12 +133,33 @@ export function EventSessionsPanel({ eventId }: EventSessionsPanelProps) {
   const load = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get<EventSession[]>(`/events/${eventId}/sessions`);
-      setSessions(data);
+      const [sessionsRes, eventRes] = await Promise.all([
+        api.get<EventSession[]>(`/events/${eventId}/sessions`),
+        api.get<EventSessionMeta>(`/events/${eventId}`),
+      ]);
+      setSessions(sessionsRes.data);
+      setEventMeta(eventRes.data);
     } catch (err) {
       toast.error(parseApiError(err, t("common.loadFailed")));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleCustomSessions = async (customSessionsEnabled: boolean) => {
+    setTogglingCustom(true);
+    try {
+      await api.patch(`/events/${eventId}`, { customSessionsEnabled });
+      setEventMeta((prev) => ({ ...prev, customSessionsEnabled }));
+      toast.success(
+        customSessionsEnabled
+          ? t("eventManage.sessions.customEnabled", { defaultValue: "Custom sessions enabled." })
+          : t("eventManage.sessions.customDisabled", { defaultValue: "Custom sessions disabled." }),
+      );
+    } catch (err) {
+      toast.error(parseApiError(err, t("common.error")));
+    } finally {
+      setTogglingCustom(false);
     }
   };
 
@@ -178,10 +197,14 @@ export function EventSessionsPanel({ eventId }: EventSessionsPanelProps) {
 
       if (editing) {
         await api.patch(`/events/${eventId}/sessions/${editing.id}`, payload);
-        toast.success(t("eventManage.sessions.updateSuccess", { defaultValue: "Session updated." }));
+        toast.success(
+          t("eventManage.sessions.updateSuccess", { defaultValue: "Session updated." }),
+        );
       } else {
         await api.post(`/events/${eventId}/sessions`, payload);
-        toast.success(t("eventManage.sessions.createSuccess", { defaultValue: "Session created." }));
+        toast.success(
+          t("eventManage.sessions.createSuccess", { defaultValue: "Session created." }),
+        );
       }
       setModalOpen(false);
       await load();
@@ -196,58 +219,148 @@ export function EventSessionsPanel({ eventId }: EventSessionsPanelProps) {
     return <SkeletonList count={3} />;
   }
 
+  const defaultSession = sessions.find((session) => session.isDefault);
+  const customSessions = sessions.filter((session) => !session.isDefault);
+  const customSessionsEnabled = Boolean(eventMeta?.customSessionsEnabled);
+
   return (
     <div className="space-y-4 animate-fade-in-up">
-      <div className="flex justify-end">
-        <Button variant="primary" size="sm" onClick={openCreate}>
-          <Plus size={15} />
-          {t("eventManage.sessions.add", { defaultValue: "Add session" })}
-        </Button>
+      <div
+        className={[
+          "card px-4 py-3 transition-[background-color,border-color,opacity]",
+          customSessionsEnabled ? "bg-surface-raised opacity-70" : "",
+        ].join(" ")}
+      >
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <p
+                className={[
+                  "text-sm font-semibold",
+                  customSessionsEnabled ? "text-ink-3" : "text-ink-1",
+                ].join(" ")}
+              >
+                {t("eventManage.sessions.defaultTitle", { defaultValue: "Full event session" })}
+              </p>
+              <Badge variant={customSessionsEnabled ? "gray" : "blue"}>
+                {customSessionsEnabled
+                  ? t("eventManage.sessions.defaultDisabled", { defaultValue: "Disabled" })
+                  : t("eventManage.sessions.defaultBadge", { defaultValue: "Default" })}
+              </Badge>
+            </div>
+            <p className="text-xs text-ink-3 mt-1">
+              {defaultSession
+                ? `${new Date(defaultSession.startsAt).toLocaleString()} - ${new Date(defaultSession.endsAt).toLocaleString()}`
+                : t("eventManage.sessions.defaultPending", {
+                    defaultValue: "The full-event session is managed by the event schedule.",
+                  })}
+            </p>
+          </div>
+        </div>
       </div>
 
-      {sessions.length === 0 ? (
-        <EmptyState
-          title={t("eventManage.sessions.emptyTitle", { defaultValue: "No sessions yet" })}
-          description={t("eventManage.sessions.emptyDesc", {
-            defaultValue: "Create sessions when this event has multiple time blocks or check-in windows.",
-          })}
-          icon={<CalendarClock size={24} />}
-          action={
-            <Button variant="primary" size="sm" onClick={openCreate}>
-              <Plus size={15} />
-              {t("eventManage.sessions.add", { defaultValue: "Add session" })}
-            </Button>
-          }
-        />
-      ) : (
-        <div className="card overflow-hidden">
-          {sessions.map((session) => (
-            <div
-              key={session.id}
-              className="flex flex-col gap-3 px-4 py-3 border-b border-border-1 last:border-b-0 sm:flex-row sm:items-center"
+      <div className="card overflow-hidden">
+        <div className="flex flex-col gap-3 px-4 py-3 border-b border-border-1 sm:flex-row sm:items-center sm:justify-between">
+          <button
+            type="button"
+            disabled={togglingCustom}
+            onClick={() => void toggleCustomSessions(!customSessionsEnabled)}
+            className="flex min-w-0 items-center gap-3 text-left disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <span
+              className={[
+                "flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-[background-color,border-color,color]",
+                customSessionsEnabled
+                  ? "border-primary bg-primary text-white"
+                  : "border-border-2 bg-surface text-transparent",
+              ].join(" ")}
+              aria-hidden="true"
             >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-ink-1 truncate">{session.title}</p>
-                  <Badge variant={statusVariant(session.status)}>{statusLabels[session.status]}</Badge>
-                </div>
-                <p className="text-xs text-ink-3 mt-1">
-                  {new Date(session.startsAt).toLocaleString()} - {new Date(session.endsAt).toLocaleString()}
-                </p>
-                <p className="text-xs text-ink-3 mt-0.5">
-                  {session.locationName || t("eventManage.sessions.noLocation", { defaultValue: "No location" })}
-                  {session.capacity ? ` · ${session.capacity}` : ""}
-                  {` · ${session._count?.checkins ?? 0} ${t("eventManage.sessions.checkins", { defaultValue: "check-ins" })}`}
-                </p>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => openEdit(session)}>
-                <Pencil size={14} />
-                {t("common.edit")}
+              <Check size={13} strokeWidth={3.25} />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-ink-1">
+                {t("eventManage.sessions.customToggle", { defaultValue: "Use custom sessions" })}
+              </span>
+              <span className="mt-0.5 block text-xs leading-5 text-ink-3">
+                {t("eventManage.sessions.customToggleDesc", {
+                  defaultValue: "Split this event into shifts or time blocks.",
+                })}
+              </span>
+            </span>
+          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            {customSessionsEnabled && (
+              <Button variant="primary" size="sm" onClick={openCreate}>
+                <Plus size={15} />
+                {t("eventManage.sessions.add", { defaultValue: "Add session" })}
               </Button>
-            </div>
-          ))}
+            )}
+          </div>
         </div>
-      )}
+
+        {!customSessionsEnabled ? (
+          <EmptyState
+            title={t("eventManage.sessions.simpleTitle", {
+              defaultValue: "Using the full event schedule",
+            })}
+            description={t("eventManage.sessions.simpleDesc", {
+              defaultValue:
+                "Turn on custom sessions only when this event needs separate shifts or time blocks.",
+            })}
+            icon={<CalendarClock size={24} />}
+            className="py-8"
+          />
+        ) : customSessions.length === 0 ? (
+          <EmptyState
+            title={t("eventManage.sessions.emptyTitle", { defaultValue: "No sessions yet" })}
+            description={t("eventManage.sessions.emptyDesc", {
+              defaultValue:
+                "Create sessions when this event has multiple time blocks or check-in windows.",
+            })}
+            icon={<CalendarClock size={24} />}
+            className="py-8"
+            action={
+              <Button variant="primary" size="sm" onClick={openCreate}>
+                <Plus size={15} />
+                {t("eventManage.sessions.add", { defaultValue: "Add session" })}
+              </Button>
+            }
+          />
+        ) : (
+          <>
+            {customSessions.map((session) => (
+              <div
+                key={session.id}
+                className="flex flex-col gap-3 px-4 py-3 border-b border-border-1 last:border-b-0 sm:flex-row sm:items-center"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-ink-1 truncate">{session.title}</p>
+                    <Badge variant={statusVariant(session.status)}>
+                      {statusLabels[session.status]}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-ink-3 mt-1">
+                    {new Date(session.startsAt).toLocaleString()} -{" "}
+                    {new Date(session.endsAt).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-ink-3 mt-0.5">
+                    {session.locationName ||
+                      t("eventManage.sessions.noLocation", { defaultValue: "No location" })}
+                    {session.capacity ? ` - ${session.capacity}` : ""}
+                    {` - ${session._count?.checkins ?? 0} ${t("eventManage.sessions.checkins", { defaultValue: "check-ins" })}`}
+                  </p>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => openEdit(session)}>
+                  <Pencil size={14} />
+                  {t("common.edit")}
+                </Button>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
 
       <Modal
         open={modalOpen}
@@ -277,8 +390,14 @@ export function EventSessionsPanel({ eventId }: EventSessionsPanelProps) {
         }
       >
         <form id="event-session-form" className="space-y-3" onSubmit={submit}>
-          <FormField label={t("eventManage.sessions.title", { defaultValue: "Session title" })} required>
-            <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          <FormField
+            label={t("eventManage.sessions.title", { defaultValue: "Session title" })}
+            required
+          >
+            <Input
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+            />
           </FormField>
           <FormField label={t("eventManage.sessions.description", { defaultValue: "Description" })}>
             <Textarea
@@ -287,14 +406,20 @@ export function EventSessionsPanel({ eventId }: EventSessionsPanelProps) {
             />
           </FormField>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <FormField label={t("eventManage.sessions.startsAt", { defaultValue: "Starts at" })} required>
+            <FormField
+              label={t("eventManage.sessions.startsAt", { defaultValue: "Starts at" })}
+              required
+            >
               <Input
                 type="datetime-local"
                 value={form.startsAt}
                 onChange={(e) => setForm({ ...form, startsAt: e.target.value })}
               />
             </FormField>
-            <FormField label={t("eventManage.sessions.endsAt", { defaultValue: "Ends at" })} required>
+            <FormField
+              label={t("eventManage.sessions.endsAt", { defaultValue: "Ends at" })}
+              required
+            >
               <Input
                 type="datetime-local"
                 value={form.endsAt}
@@ -331,14 +456,18 @@ export function EventSessionsPanel({ eventId }: EventSessionsPanelProps) {
             </FormField>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <FormField label={t("eventManage.sessions.checkinOpensAt", { defaultValue: "Check-in opens" })}>
+            <FormField
+              label={t("eventManage.sessions.checkinOpensAt", { defaultValue: "Check-in opens" })}
+            >
               <Input
                 type="datetime-local"
                 value={form.checkinOpensAt}
                 onChange={(e) => setForm({ ...form, checkinOpensAt: e.target.value })}
               />
             </FormField>
-            <FormField label={t("eventManage.sessions.checkinClosesAt", { defaultValue: "Check-in closes" })}>
+            <FormField
+              label={t("eventManage.sessions.checkinClosesAt", { defaultValue: "Check-in closes" })}
+            >
               <Input
                 type="datetime-local"
                 value={form.checkinClosesAt}

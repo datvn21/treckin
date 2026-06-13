@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.vite/
+
+# Version control
+.git/
+.gitignore
+
+# Environment files (secrets should be passed via Docker env, not baked in)
+.env
+.env.local
+.env.*.local
+
+# Test artifacts
+test-results/
+coverage/
+
+# Dev tools
+.husky/
+.prettier*
+.eslint*
+commitlint.config.js
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Logs
+npm-debug.log*
+*.log
+
+# Docker files (not needed in container)
+docker-compose*.yml
+Dockerfile
+
+# Misc
+README.md
+*.md

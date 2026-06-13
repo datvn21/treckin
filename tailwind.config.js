@@ -1,144 +1,243 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: ["class"],
+  darkMode: "class",        // toggle via <html class="dark">
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
-      /* ─── Color Palette (Dropbox-inspired, warm neutral) ─── */
+      /* ─── Colors ─── */
       colors: {
-        /* Base surfaces */
-        base:       "#f7f5f2",
-        surface:    "#ffffff",
+        /* App shell — CSS var driven for dark mode */
+        canvas:          "var(--color-canvas)",
+        surface:         "var(--color-surface)",
+        "surface-raised":"var(--color-surface-raised)",
 
-        /* Primary action */
+        /* Primary — Dropbox Blue */
         primary: {
-          DEFAULT:  "#0061fe",
-          hover:    "#0044af",
-          focus:    "#428bff",
+          DEFAULT: "var(--color-primary)",
+          hover:   "var(--color-primary-hover)",
+          muted:   "var(--color-primary-muted)",
+          border:  "var(--color-primary-border)",
+          text:    "var(--color-primary-text)",
         },
 
-        /* Text hierarchy */
-        "text-dark":  "#1e1919",
-        "text-muted": "#524a3e",
+        /* Text scale */
+        "ink-1": "var(--color-ink-1)",
+        "ink-2": "var(--color-ink-2)",
+        "ink-3": "var(--color-ink-3)",
+        "ink-4": "var(--color-ink-4)",
 
-        /* Semantic states */
+        /* Border scale */
+        "border-1": "var(--color-border-1)",
+        "border-2": "var(--color-border-2)",
+        "border-3": "var(--color-border-3)",
+
+        /* Semantic */
         success: {
-          DEFAULT:    "#00a870",
-          foreground: "#ffffff",
-          bg:         "#e6f7f1",
+          DEFAULT: "var(--color-success)",
+          bg:      "var(--color-success-bg)",
+          border:  "var(--color-success-border)",
         },
         warning: {
-          DEFAULT:    "#f5a623",
-          foreground: "#1e1919",
-          bg:         "#fff8eb",
+          DEFAULT: "var(--color-warning)",
+          bg:      "var(--color-warning-bg)",
+          border:  "var(--color-warning-border)",
         },
         danger: {
-          DEFAULT:    "#e5484d",
-          foreground: "#ffffff",
-          bg:         "#ffeef0",
+          DEFAULT: "var(--color-danger)",
+          bg:      "var(--color-danger-bg)",
+          border:  "var(--color-danger-border)",
         },
 
-        /* Neutral scale (for borders, disabled states, dividers) */
+        /* Static neutrals */
         neutral: {
-          100: "#f7f5f2",
-          200: "#ede9e3",
-          300: "#d6d0c8",
-          400: "#b8b0a4",
-          500: "#8c8377",
-          600: "#6b6359",
-          700: "#524a3e",
-          800: "#3b342a",
-          900: "#1e1919",
+          50:  "#f9fafb",
+          100: "#f3f4f6",
+          200: "#e5e7eb",
+          300: "#d1d5db",
+          400: "#9ca3af",
+          500: "#6b7280",
+          600: "#4b5563",
+          700: "#374151",
+          800: "#1f2937",
+          900: "#111827",
+          950: "#0d1117",
         },
       },
 
       /* ─── Typography ─── */
       fontFamily: {
-        heading: ['"Plus Jakarta Sans"', "system-ui", "sans-serif"],
-        ui:      ["Inter", "system-ui", "sans-serif"],
+        sans: ["Geist", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+        mono: ['"JetBrains Mono"', '"Fira Code"', "Consolas", "monospace"],
       },
       fontSize: {
-        /* Display / hero */
-        "display-lg": ["2.25rem", { lineHeight: "2.75rem", fontWeight: "800" }],
-        "display-sm": ["1.875rem", { lineHeight: "2.375rem", fontWeight: "700" }],
-        /* Headings */
-        "heading-1":  ["1.5rem",   { lineHeight: "2rem",    fontWeight: "700" }],
-        "heading-2":  ["1.25rem",  { lineHeight: "1.75rem", fontWeight: "600" }],
-        "heading-3":  ["1.125rem", { lineHeight: "1.5rem",  fontWeight: "600" }],
-        /* Body */
-        "body-lg":    ["1rem",     { lineHeight: "1.5rem",  fontWeight: "400" }],
-        "body-md":    ["0.875rem", { lineHeight: "1.25rem", fontWeight: "400" }],
-        "body-sm":    ["0.75rem",  { lineHeight: "1rem",    fontWeight: "400" }],
-        /* Mono data (Student IDs, timers) */
-        "data-lg":    ["1.125rem", { lineHeight: "1.5rem",  fontWeight: "600" }],
-        "data-md":    ["0.875rem", { lineHeight: "1.25rem", fontWeight: "500" }],
+        "xs":        ["0.75rem",   { lineHeight: "1rem" }],
+        "sm":        ["0.8125rem", { lineHeight: "1.25rem" }],
+        "base":      ["0.875rem",  { lineHeight: "1.375rem" }],
+        "md":        ["0.9375rem", { lineHeight: "1.5rem" }],
+        "lg":        ["1rem",      { lineHeight: "1.5rem" }],
+        "xl":        ["1.125rem",  { lineHeight: "1.625rem" }],
+        "2xl":       ["1.25rem",   { lineHeight: "1.75rem" }],
+        "3xl":       ["1.5rem",    { lineHeight: "2rem" }],
+        /* Design system scale */
+        "page-title":    ["1.375rem", { lineHeight: "1.875rem", fontWeight: "600" }],
+        "section-title": ["1.0625rem", { lineHeight: "1.625rem", fontWeight: "600" }],
+        "card-title":    ["0.9375rem", { lineHeight: "1.5rem",   fontWeight: "600" }],
+        "body":          ["0.875rem", { lineHeight: "1.5rem",    fontWeight: "400" }],
+        "body-sm":       ["0.8125rem",{ lineHeight: "1.375rem",  fontWeight: "400" }],
+        "caption":       ["0.75rem",  { lineHeight: "1.1rem",    fontWeight: "500" }],
+        "overline":      ["0.6875rem",{ lineHeight: "1rem",      fontWeight: "600" }],
+        "form-label":    ["0.8125rem",{ lineHeight: "1.375rem",  fontWeight: "600" }],
+      },
+      fontWeight: {
+        normal:   "400",
+        medium:   "500",
+        semibold: "600",
+        bold:     "700",
       },
 
-      /* ─── Border Radii ─── */
+      /* ─── Border radii — Dropbox product shapes ─── */
       borderRadius: {
-        btn:    "12px",
-        card:   "16px",
-        avatar: "16px",
-        full:   "9999px",
+        none:    "0",
+        sm:      "6px",
+        DEFAULT: "8px",   /* inputs */
+        md:      "12px",  /* buttons */
+        lg:      "16px",  /* cards */
+        xl:      "20px",  /* large panels / modals */
+        "2xl":   "24px",
+        full:    "9999px",
       },
 
-      /* ─── Shadows (Soft, physical-depth tickets) ─── */
+      /* ─── Shadows — minimal, border-first ─── */
       boxShadow: {
-        "ticket":    "0px 16px 32px 0px rgba(0, 0, 0, 0.10)",
-        "ticket-sm": "0px 8px 16px 0px rgba(0, 0, 0, 0.08)",
-        "elevated":  "0px 4px 12px 0px rgba(0, 0, 0, 0.06)",
-        "focus":     "0 0 0 3px #428bff",
+        none:    "none",
+        xs:      "0 1px 2px rgba(0,0,0,0.05)",
+        sm:      "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
+        md:      "0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04)",
+        lg:      "0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04)",
+        modal:   "0 20px 60px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.08)",
+        focus:   "0 0 0 3px rgba(0,97,254,0.25)",
       },
 
-      /* ─── Touch Targets ─── */
-      minHeight: {
-        touch: "44px",
-      },
-      minWidth: {
-        touch: "44px",
-      },
-
-      /* ─── Spacing Tokens ─── */
+      /* ─── Spacing — functional ─── */
       spacing: {
-        "4.5": "1.125rem",
-        "18":  "4.5rem",
+        px:        "1px",
+        0:         "0",
+        1:         "0.25rem",
+        1.5:       "0.375rem",
+        2:         "0.5rem",
+        2.5:       "0.625rem",
+        3:         "0.75rem",
+        3.5:       "0.875rem",
+        4:         "1rem",
+        5:         "1.25rem",
+        6:         "1.5rem",
+        7:         "1.75rem",
+        8:         "2rem",
+        9:         "2.25rem",
+        10:        "2.5rem",
+        12:        "3rem",
+        14:        "3.5rem",
+        16:        "4rem",
+        20:        "5rem",
+        24:        "6rem",
+        sidebar:   "220px",
+        "bottom-nav": "64px",   /* mobile bottom nav height */
+        "safe-b":  "env(safe-area-inset-bottom, 0px)",
       },
+
+      /* ─── Layout ─── */
+      width:     { sidebar: "220px" },
+      height:    { "bottom-nav": "64px", header: "52px" },
+      minHeight: { touch: "44px" },    /* WCAG 2.5.5 min touch target */
+      minWidth:  { touch: "44px" },
 
       /* ─── Transitions ─── */
       transitionDuration: {
-        fast:   "120ms",
-        normal: "200ms",
-        slow:   "350ms",
+        75:  "75ms",
+        100: "100ms",
+        150: "150ms",
+        200: "200ms",
+        fast: "160ms",
+        normal: "260ms",
+        300: "300ms",
+        slow: "420ms",
+      },
+      transitionTimingFunction: {
+        "ease-spring": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "ease-out":    "cubic-bezier(0.2, 0.8, 0.2, 1)",
+        "ease-in-out": "cubic-bezier(0.4, 0, 0.2, 1)",
       },
 
-      /* ─── Keyframe Animations ─── */
+      /* ─── Keyframes ─── */
       keyframes: {
-        "scan-pulse": {
-          "0%, 100%": { opacity: "1" },
-          "50%":      { opacity: "0.4" },
-        },
-        "slide-up": {
-          "0%":   { transform: "translateY(12px)", opacity: "0" },
-          "100%": { transform: "translateY(0)",    opacity: "1" },
-        },
         "fade-in": {
           "0%":   { opacity: "0" },
           "100%": { opacity: "1" },
         },
-        "qr-refresh": {
-          "0%":   { transform: "scale(1)" },
-          "50%":  { transform: "scale(0.96)", opacity: "0.7" },
-          "100%": { transform: "scale(1)" },
+        "fade-out": {
+          "0%":   { opacity: "1" },
+          "100%": { opacity: "0" },
+        },
+        "fade-in-up": {
+          "0%":   { opacity: "0", transform: "translateY(10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "fade-in-down": {
+          "0%":   { opacity: "0", transform: "translateY(-10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "scale-in": {
+          "0%":   { opacity: "0", transform: "scale(0.95)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        "modal-scale-in": {
+          "0%":   { opacity: "0", transform: "translate(-50%, -50%) scale(0.95)" },
+          "100%": { opacity: "1", transform: "translate(-50%, -50%) scale(1)" },
+        },
+        "modal-scale-out": {
+          "0%":   { opacity: "1", transform: "translate(-50%, -50%) scale(1)" },
+          "100%": { opacity: "0", transform: "translate(-50%, -50%) scale(0.95)" },
+        },
+        "slide-up": {
+          "0%":   { opacity: "0", transform: "translateY(100%)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "slide-in-right": {
+          "0%":   { opacity: "0", transform: "translateX(16px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        "shimmer": {
+          "0%":   { backgroundPosition: "-400px 0" },
+          "100%": { backgroundPosition: "400px 0" },
+        },
+        "spin": {
+          "to": { transform: "rotate(360deg)" },
+        },
+        "bounce-dot": {
+          "0%, 80%, 100%": { transform: "scale(0)" },
+          "40%":           { transform: "scale(1)" },
+        },
+        "tab-indicator": {
+          "0%":   { transform: "scaleX(0)" },
+          "100%": { transform: "scaleX(1)" },
         },
       },
       animation: {
-        "scan-pulse": "scan-pulse 2s ease-in-out infinite",
-        "slide-up":   "slide-up 0.35s ease-out",
-        "fade-in":    "fade-in 0.2s ease-out",
-        "qr-refresh": "qr-refresh 0.4s ease-in-out",
+        "fade-in":       "fade-in 260ms cubic-bezier(0.2,0.8,0.2,1) both",
+        "fade-out":      "fade-out 150ms cubic-bezier(0.4,0,1,1) both",
+        "fade-in-up":    "fade-in-up 420ms cubic-bezier(0.2,0.8,0.2,1) both",
+        "fade-in-down":  "fade-in-down 320ms cubic-bezier(0.2,0.8,0.2,1) both",
+        "scale-in":      "scale-in 320ms cubic-bezier(0.16,1,0.3,1) both",
+        "modal-scale-in":"modal-scale-in 320ms cubic-bezier(0.16,1,0.3,1) both",
+        "modal-scale-out":"modal-scale-out 150ms cubic-bezier(0.4,0,1,1) both",
+        "slide-up":      "slide-up 420ms cubic-bezier(0.2,0.8,0.2,1) both",
+        "slide-in-right":"slide-in-right 320ms cubic-bezier(0.2,0.8,0.2,1) both",
+        "shimmer":       "shimmer 1.6s linear infinite",
+        "spin":          "spin 1.1s linear infinite",
+        "spin-slow":     "spin 1.8s linear infinite",
       },
     },
   },

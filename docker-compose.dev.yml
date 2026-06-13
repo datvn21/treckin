@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # -------------------------------------------------------------
+  # Local Dev PostgreSQL Database
+  # -------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: treckin-postgres-dev
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password # Matches default DATABASE_URL in server/.env.example
+      POSTGRES_DB: treckin_db
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # -------------------------------------------------------------
+  # Local Dev Redis
+  # -------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: treckin-redis-dev
+    restart: always
+    ports:
+      - "6379:6379"
+    deploy:
+      resources:
+        limits:
+          memory: 150M
+
+volumes:
+  pgdata_dev:

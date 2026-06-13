@@ -4,20 +4,22 @@ import {
   Logger,
   ForbiddenException,
   BadRequestException,
-} from '@nestjs/common';
+} from "@nestjs/common";
 import {
   ATTENDANCE_POLICY,
+  BOARD_STATUS,
   CHECKIN_MODE,
   EVENT_ASSIGNMENT_ROLE,
   EVENT_STATUS,
   EVENT_QR_BEHAVIOR,
   Prisma,
+  SESSION_STATUS,
   WORKSPACE_MEMBER_ROLE,
-} from '@prisma/client';
-import { randomBytes } from 'crypto';
-import { PrismaService } from '../prisma/prisma.service';
-import { WorkspacesService } from '../workspaces/workspaces.service';
-import { CreateEventDto } from './dto/create-event.dto';
+} from "@prisma/client";
+import { randomBytes } from "crypto";
+import { PrismaService } from "../prisma/prisma.service";
+import { WorkspacesService } from "../workspaces/workspaces.service";
+import { CreateEventDto } from "./dto/create-event.dto";
 import {
   AssignEventMemberDto,
   CreateAttendeeFieldDto,
@@ -29,8 +31,8 @@ import {
   UpdateEventDto,
   UpdateEventSessionDto,
   UpdateEventSettingsDto,
-} from './dto/event-access.dto';
-import { assertEmailEligible, sanitizeDomainList, sanitizeEmailList } from './event-eligibility';
+} from "./dto/event-access.dto";
+import { assertEmailEligible, sanitizeDomainList, sanitizeEmailList } from "./event-eligibility";
 
 @Injectable()
 export class EventsService {
@@ -82,6 +84,7 @@ export class EventsService {
         checkinModes: this.resolveCheckinModes(dto.checkinModes),
         eventQrBehavior: dto.eventQrBehavior ?? EVENT_QR_BEHAVIOR.JOIN_ONLY,
         credentialGraceSeconds: dto.credentialGraceSeconds ?? 120,
+        customSessionsEnabled: dto.customSessionsEnabled ?? false,
         createdById,
         workspaceId,
         joinCode: await this.generateJoinCode(),
@@ -94,7 +97,8 @@ export class EventsService {
                 : null,
             checkinModes: this.resolveCheckinModes(dto.checkinModes),
             eventQrBehavior: dto.eventQrBehavior ?? EVENT_QR_BEHAVIOR.JOIN_ONLY,
-            credentialGraceSeconds: dto.credentialGraceSeconds ?? settings.defaultOfflineGraceSeconds,
+            credentialGraceSeconds:
+              dto.credentialGraceSeconds ?? settings.defaultOfflineGraceSeconds,
             qrTtlSeconds: settings.defaultQrTtlSeconds,
             offlineSyncEnabled: true,
             geofenceEnabled: dto.latitude != null && dto.longitude != null,
@@ -106,9 +110,21 @@ export class EventsService {
             name: board.name,
           })),
         },
+        sessions: {
+          create: {
+            title: "Full event",
+            startsAt: startTime,
+            endsAt: endTime,
+            locationName: dto.location.trim(),
+            capacity: undefined,
+            status: SESSION_STATUS.SCHEDULED,
+            isDefault: true,
+          },
+        },
       },
       include: {
         boards: true,
+        sessions: true,
         createdBy: {
           select: { id: true, name: true, email: true },
         },
@@ -131,7 +147,7 @@ export class EventsService {
         where: this.visibleEventWhere(userId),
         skip,
         take: limit,
-        orderBy: { date: 'desc' },
+        orderBy: { date: "desc" },
         include: {
           boards: {
             select: { id: true, name: true, status: true, checkinCount: true },
@@ -163,7 +179,12 @@ export class EventsService {
     };
   }
 
-  async findWorkspaceEvents(workspaceId: string, userId: string, pageParam?: any, limitParam?: any) {
+  async findWorkspaceEvents(
+    workspaceId: string,
+    userId: string,
+    pageParam?: any,
+    limitParam?: any,
+  ) {
     await this.requireWorkspaceMember(workspaceId, userId);
     let page = Number(pageParam);
     let limit = Number(limitParam);
@@ -176,7 +197,7 @@ export class EventsService {
         where: { workspaceId },
         skip,
         take: limit,
-        orderBy: { date: 'desc' },
+        orderBy: { date: "desc" },
         include: this.eventInclude(userId),
       }),
       this.prisma.event.count({ where: { workspaceId } }),
@@ -204,6 +225,12 @@ export class EventsService {
 
   async update(eventId: string, dto: UpdateEventDto, userId: string) {
     const event = await this.requireEventManagerOrOwner(eventId, userId);
+    const eventDate = dto.date ? new Date(dto.date) : event.date;
+    const startTime = this.resolveEventDateTime(dto.startTime, event.startTime, eventDate);
+    const endTime = this.resolveEventDateTime(dto.endTime, event.endTime, eventDate);
+    if (startTime >= endTime) {
+      throw new BadRequestException("Event start time must be before end time");
+    }
     if (dto.attendancePolicy || dto.requiredBoardCount !== undefined) {
       const boardCount = await this.prisma.board.count({ where: { eventId } });
       this.validateAttendanceConfig(
@@ -217,6 +244,13 @@ export class EventsService {
       data: {
         title: dto.title?.trim(),
         description: dto.description?.trim(),
+        date: dto.date ? eventDate : undefined,
+        startTime: dto.startTime || dto.date ? startTime : undefined,
+        endTime: dto.endTime || dto.date ? endTime : undefined,
+        startsAt: dto.startTime || dto.date ? startTime : undefined,
+        endsAt: dto.endTime || dto.date ? endTime : undefined,
+        location: dto.location?.trim(),
+        locationName: dto.location?.trim(),
         registrationEnabled: dto.registrationEnabled,
         status: dto.status,
         attendancePolicy: dto.attendancePolicy,
@@ -232,9 +266,18 @@ export class EventsService {
         checkinModes: dto.checkinModes ? this.resolveCheckinModes(dto.checkinModes) : undefined,
         eventQrBehavior: dto.eventQrBehavior,
         credentialGraceSeconds: dto.credentialGraceSeconds,
+        customSessionsEnabled: dto.customSessionsEnabled,
       },
       include: this.eventInclude(userId),
     });
+
+    if (dto.date || dto.startTime || dto.endTime || dto.location) {
+      await this.syncDefaultSession(updatedEvent.id, {
+        startsAt: updatedEvent.startTime,
+        endsAt: updatedEvent.endTime,
+        locationName: updatedEvent.locationName ?? updatedEvent.location,
+      });
+    }
 
     return this.withResolvedStatus(updatedEvent);
   }
@@ -291,7 +334,9 @@ export class EventsService {
           (dto.attendancePolicy ?? event.attendancePolicy) === ATTENDANCE_POLICY.BOARD_REQUIREMENTS
             ? (dto.requiredBoardCount ?? event.requiredBoardCount)
             : null,
-        checkinModes: dto.checkinModes ? this.resolveCheckinModes(dto.checkinModes) : event.checkinModes,
+        checkinModes: dto.checkinModes
+          ? this.resolveCheckinModes(dto.checkinModes)
+          : event.checkinModes,
         eventQrBehavior: dto.eventQrBehavior ?? event.eventQrBehavior,
         qrTtlSeconds: dto.qrTtlSeconds,
         credentialGraceSeconds: dto.credentialGraceSeconds ?? event.credentialGraceSeconds,
@@ -318,10 +363,17 @@ export class EventsService {
       },
     });
 
-    await this.writeAudit(event.workspaceId, userId, 'event.settings.updated', 'EventSettings', settings.id, {
-      after: settings,
-      metadata: { eventId },
-    });
+    await this.writeAudit(
+      event.workspaceId,
+      userId,
+      "event.settings.updated",
+      "EventSettings",
+      settings.id,
+      {
+        after: settings,
+        metadata: { eventId },
+      },
+    );
     return settings;
   }
 
@@ -329,7 +381,7 @@ export class EventsService {
     await this.requireEventAccess(eventId, userId);
     return this.prisma.eventSession.findMany({
       where: { eventId },
-      orderBy: { startsAt: 'asc' },
+      orderBy: [{ isDefault: "desc" }, { startsAt: "asc" }],
       include: {
         boards: true,
         _count: { select: { checkins: true } },
@@ -342,6 +394,8 @@ export class EventsService {
     const startsAt = new Date(dto.startsAt);
     const endsAt = new Date(dto.endsAt);
     this.validateSessionWindow(startsAt, endsAt, dto.checkinOpensAt, dto.checkinClosesAt);
+    this.validateSessionWithinEvent(startsAt, endsAt, event.startTime, event.endTime);
+    await this.ensureNoOverlappingSession(eventId, startsAt, endsAt);
 
     const session = await this.prisma.eventSession.create({
       data: {
@@ -353,6 +407,7 @@ export class EventsService {
         locationName: dto.locationName?.trim() || undefined,
         capacity: dto.capacity,
         status: dto.status,
+        isDefault: false,
         checkinOpensAt: dto.checkinOpensAt ? new Date(dto.checkinOpensAt) : undefined,
         checkinClosesAt: dto.checkinClosesAt ? new Date(dto.checkinClosesAt) : undefined,
       },
@@ -362,9 +417,20 @@ export class EventsService {
       },
     });
 
-    await this.writeAudit(event.workspaceId, userId, 'event.session.created', 'EventSession', session.id, {
-      after: session,
-      metadata: { eventId },
+    await this.writeAudit(
+      event.workspaceId,
+      userId,
+      "event.session.created",
+      "EventSession",
+      session.id,
+      {
+        after: session,
+        metadata: { eventId },
+      },
+    );
+    await this.prisma.event.update({
+      where: { id: eventId },
+      data: { customSessionsEnabled: true },
     });
     return session;
   }
@@ -379,11 +445,16 @@ export class EventsService {
     const existing = await this.prisma.eventSession.findFirst({
       where: { id: sessionId, eventId },
     });
-    if (!existing) throw new NotFoundException('Event session not found');
+    if (!existing) throw new NotFoundException("Event session not found");
+    if (existing.isDefault) {
+      throw new BadRequestException("Default event session is managed by the event schedule");
+    }
 
     const startsAt = dto.startsAt ? new Date(dto.startsAt) : existing.startsAt;
     const endsAt = dto.endsAt ? new Date(dto.endsAt) : existing.endsAt;
     this.validateSessionWindow(startsAt, endsAt, dto.checkinOpensAt, dto.checkinClosesAt);
+    this.validateSessionWithinEvent(startsAt, endsAt, event.startTime, event.endTime);
+    await this.ensureNoOverlappingSession(eventId, startsAt, endsAt, sessionId);
 
     const updated = await this.prisma.eventSession.update({
       where: { id: sessionId },
@@ -404,11 +475,18 @@ export class EventsService {
       },
     });
 
-    await this.writeAudit(event.workspaceId, userId, 'event.session.updated', 'EventSession', updated.id, {
-      before: existing,
-      after: updated,
-      metadata: { eventId },
-    });
+    await this.writeAudit(
+      event.workspaceId,
+      userId,
+      "event.session.updated",
+      "EventSession",
+      updated.id,
+      {
+        before: existing,
+        after: updated,
+        metadata: { eventId },
+      },
+    );
     return updated;
   }
 
@@ -419,7 +497,7 @@ export class EventsService {
         workspaceId: event.workspaceId,
         OR: [{ eventId }, { eventId: null }],
       },
-      orderBy: [{ eventId: 'desc' }, { position: 'asc' }, { createdAt: 'asc' }],
+      orderBy: [{ eventId: "desc" }, { position: "asc" }, { createdAt: "asc" }],
     });
   }
 
@@ -441,10 +519,17 @@ export class EventsService {
       },
     });
 
-    await this.writeAudit(event.workspaceId, userId, 'event.attendee_field.created', 'AttendeeFieldDefinition', field.id, {
-      after: field,
-      metadata: { eventId },
-    });
+    await this.writeAudit(
+      event.workspaceId,
+      userId,
+      "event.attendee_field.created",
+      "AttendeeFieldDefinition",
+      field.id,
+      {
+        after: field,
+        metadata: { eventId },
+      },
+    );
     return field;
   }
 
@@ -458,7 +543,7 @@ export class EventsService {
     const existing = await this.prisma.attendeeFieldDefinition.findFirst({
       where: { id: fieldId, eventId, workspaceId: event.workspaceId },
     });
-    if (!existing) throw new NotFoundException('Attendee field not found');
+    if (!existing) throw new NotFoundException("Attendee field not found");
 
     const updated = await this.prisma.attendeeFieldDefinition.update({
       where: { id: fieldId },
@@ -473,11 +558,18 @@ export class EventsService {
       },
     });
 
-    await this.writeAudit(event.workspaceId, userId, 'event.attendee_field.updated', 'AttendeeFieldDefinition', updated.id, {
-      before: existing,
-      after: updated,
-      metadata: { eventId },
-    });
+    await this.writeAudit(
+      event.workspaceId,
+      userId,
+      "event.attendee_field.updated",
+      "AttendeeFieldDefinition",
+      updated.id,
+      {
+        before: existing,
+        after: updated,
+        metadata: { eventId },
+      },
+    );
     return updated;
   }
 
@@ -488,7 +580,7 @@ export class EventsService {
         workspaceId: event.workspaceId,
         OR: [{ eventId }, { eventId: null }],
       },
-      orderBy: [{ eventId: 'desc' }, { createdAt: 'asc' }],
+      orderBy: [{ eventId: "desc" }, { createdAt: "asc" }],
     });
   }
 
@@ -505,10 +597,17 @@ export class EventsService {
       },
     });
 
-    await this.writeAudit(event.workspaceId, userId, 'event.consent_policy.created', 'ConsentPolicy', policy.id, {
-      after: policy,
-      metadata: { eventId },
-    });
+    await this.writeAudit(
+      event.workspaceId,
+      userId,
+      "event.consent_policy.created",
+      "ConsentPolicy",
+      policy.id,
+      {
+        after: policy,
+        metadata: { eventId },
+      },
+    );
     return policy;
   }
 
@@ -522,7 +621,7 @@ export class EventsService {
     const existing = await this.prisma.consentPolicy.findFirst({
       where: { id: policyId, eventId, workspaceId: event.workspaceId },
     });
-    if (!existing) throw new NotFoundException('Consent policy not found');
+    if (!existing) throw new NotFoundException("Consent policy not found");
 
     const title = dto.title?.trim();
     const body = dto.body?.trim();
@@ -541,11 +640,18 @@ export class EventsService {
       },
     });
 
-    await this.writeAudit(event.workspaceId, userId, 'event.consent_policy.updated', 'ConsentPolicy', updated.id, {
-      before: existing,
-      after: updated,
-      metadata: { eventId, contentChanged },
-    });
+    await this.writeAudit(
+      event.workspaceId,
+      userId,
+      "event.consent_policy.updated",
+      "ConsentPolicy",
+      updated.id,
+      {
+        before: existing,
+        after: updated,
+        metadata: { eventId, contentChanged },
+      },
+    );
     return updated;
   }
 
@@ -560,26 +666,219 @@ export class EventsService {
       throw new NotFoundException(`Event with ID "${eventId}" not found`);
     }
 
-    return this.prisma.board.findMany({
+    const boards = await this.prisma.board.findMany({
       where: { eventId },
       include: {
         _count: { select: { checkins: true } },
       },
+      orderBy: { name: "asc" },
     });
+
+    return boards.map((b) => ({
+      id: b.id,
+      name: b.name,
+      status: this.mapDbStatusToApi(b.status),
+      checkinCount: b._count.checkins,
+    }));
+  }
+
+  async findRegistrations(eventId: string, userId: string) {
+    await this.requireEventAccess(eventId, userId);
+    const registrations = await this.prisma.eventRegistration.findMany({
+      where: { eventId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true,
+            checkins: {
+              where: { eventId },
+              orderBy: { timestamp: "desc" },
+              include: {
+                board: { select: { name: true } },
+                session: { select: { title: true } },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { registeredAt: "desc" },
+    });
+
+    return registrations.map((reg) => ({
+      id: reg.id,
+      userId: reg.userId,
+      user: {
+        id: reg.user.id,
+        name: reg.user.name,
+        email: reg.user.email,
+        avatarUrl: reg.user.avatarUrl,
+      },
+      checkins: reg.user.checkins.map((c) => ({
+        timestamp: c.timestamp,
+        direction: c.direction,
+        board: c.board,
+        session: c.session,
+      })),
+      registeredAt: reg.registeredAt,
+    }));
+  }
+
+  async exportCsv(eventId: string, scope: "all" | "checked-in", userId: string): Promise<string> {
+    await this.requireEventAccess(eventId, userId);
+    const registrations = await this.prisma.eventRegistration.findMany({
+      where: { eventId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            checkins: {
+              where: { eventId },
+              orderBy: { timestamp: "desc" },
+              include: {
+                board: { select: { name: true } },
+                session: { select: { title: true } },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { registeredAt: "desc" },
+    });
+
+    let list = registrations;
+    if (scope === "checked-in") {
+      list = list.filter((reg) => reg.user.checkins.length > 0);
+    }
+
+    const BOM = "\uFEFF";
+    const headers = ["#", "Họ tên", "Email", "Trạng thái", "Board", "Phiên", "Thời gian check-in"];
+    const rows = [headers.join(",")];
+
+    list.forEach((reg, index) => {
+      const user = reg.user;
+      const latestCheckin = user.checkins[0] ?? null;
+      const status = latestCheckin ? "Đã check-in" : "Chưa check-in";
+      const board = latestCheckin?.board?.name ?? "";
+      const session = latestCheckin?.session?.title ?? "";
+      const time = latestCheckin ? new Date(latestCheckin.timestamp).toLocaleString() : "";
+
+      const clean = (val: string) => {
+        const escaped = val.replace(/"/g, '""');
+        return `"${escaped}"`;
+      };
+
+      const row = [
+        index + 1,
+        clean(user.name),
+        clean(user.email),
+        clean(status),
+        clean(board),
+        clean(session),
+        clean(time),
+      ];
+      rows.push(row.join(","));
+    });
+
+    return BOM + rows.join("\n");
+  }
+
+  async createBoard(eventId: string, name: string, userId: string) {
+    await this.requireEventManagerOrOwner(eventId, userId);
+    const newBoard = await this.prisma.board.create({
+      data: {
+        eventId,
+        name: name.trim(),
+        status: BOARD_STATUS.ACTIVE,
+      },
+    });
+    return {
+      id: newBoard.id,
+      name: newBoard.name,
+      status: this.mapDbStatusToApi(newBoard.status),
+      checkinCount: 0,
+    };
+  }
+
+  async updateBoard(
+    eventId: string,
+    boardId: string,
+    dto: { name?: string; status?: "ACTIVE" | "PAUSED" | "CLOSED" },
+    userId: string,
+  ) {
+    await this.requireEventManagerOrOwner(eventId, userId);
+    const board = await this.prisma.board.findUnique({
+      where: { id: boardId },
+      include: {
+        _count: { select: { checkins: true } },
+      },
+    });
+    if (!board || board.eventId !== eventId) {
+      throw new NotFoundException("Board not found");
+    }
+
+    const updated = await this.prisma.board.update({
+      where: { id: boardId },
+      data: {
+        name: dto.name?.trim(),
+        status: dto.status ? this.mapApiStatusToDb(dto.status) : undefined,
+      },
+    });
+
+    return {
+      id: updated.id,
+      name: updated.name,
+      status: this.mapDbStatusToApi(updated.status),
+      checkinCount: board._count.checkins,
+    };
+  }
+
+  async deleteBoard(eventId: string, boardId: string, userId: string) {
+    await this.requireEventManagerOrOwner(eventId, userId);
+    const board = await this.prisma.board.findUnique({
+      where: { id: boardId },
+      include: {
+        _count: { select: { checkins: true } },
+      },
+    });
+    if (!board || board.eventId !== eventId) {
+      throw new NotFoundException("Board not found");
+    }
+    if (board._count.checkins > 0) {
+      throw new BadRequestException("Cannot delete board with check-in records");
+    }
+    await this.prisma.board.delete({
+      where: { id: boardId },
+    });
+    return { success: true };
+  }
+
+  private mapDbStatusToApi(status: BOARD_STATUS): "ACTIVE" | "PAUSED" | "CLOSED" {
+    if (status === BOARD_STATUS.INACTIVE) return "PAUSED";
+    return status as "ACTIVE" | "CLOSED";
+  }
+
+  private mapApiStatusToDb(status: "ACTIVE" | "PAUSED" | "CLOSED"): BOARD_STATUS {
+    if (status === "PAUSED") return BOARD_STATUS.INACTIVE;
+    return status as BOARD_STATUS;
   }
 
   async assign(eventId: string, dto: AssignEventMemberDto, assignedById: string) {
     const event = await this.requireEventManagerOrOwner(eventId, assignedById);
     const assignerIsAdmin = await this.isWorkspaceAdmin(event.workspaceId, assignedById);
     if (dto.role === EVENT_ASSIGNMENT_ROLE.MANAGER && !assignerIsAdmin) {
-      throw new ForbiddenException('Only workspace admins can assign event managers');
+      throw new ForbiddenException("Only workspace admins can assign event managers");
     }
 
     const targetMember = await this.prisma.workspaceMember.findUnique({
       where: { workspaceId_userId: { workspaceId: event.workspaceId, userId: dto.userId } },
     });
     if (!targetMember) {
-      throw new BadRequestException('Assigned user must be a workspace member');
+      throw new BadRequestException("Assigned user must be a workspace member");
     }
 
     return this.prisma.eventAssignment.upsert({
@@ -615,14 +914,10 @@ export class EventsService {
         select: { email: true },
       }),
     ]);
-    if (!event) throw new NotFoundException('Event not found');
-    if (!user) throw new NotFoundException('User not found');
-    if (!event.registrationEnabled) throw new ForbiddenException('Event registration is closed');
-    assertEmailEligible(
-      user.email,
-      event,
-      'Your account is not eligible to join this event',
-    );
+    if (!event) throw new NotFoundException("Event not found");
+    if (!user) throw new NotFoundException("User not found");
+    if (!event.registrationEnabled) throw new ForbiddenException("Event registration is closed");
+    assertEmailEligible(user.email, event, "Your account is not eligible to join this event");
 
     await this.prisma.eventRegistration.upsert({
       where: { one_registration_per_event: { eventId: event.id, userId } },
@@ -633,10 +928,10 @@ export class EventsService {
     return this.findOne(event.id, userId);
   }
 
-  async getMeEvents(userId: string, view?: 'attending' | 'managing') {
+  async getMeEvents(userId: string, view?: "attending" | "managing") {
     const events = await this.prisma.event.findMany({
       where: this.meEventWhere(userId, view),
-      orderBy: { date: 'desc' },
+      orderBy: { date: "desc" },
       include: this.eventInclude(userId),
     });
     return { data: events.map((event) => this.withResolvedStatus(event)) };
@@ -647,12 +942,12 @@ export class EventsService {
       where: { id: eventId },
       select: { workspaceId: true },
     });
-    if (!event) throw new NotFoundException('Event not found');
+    if (!event) throw new NotFoundException("Event not found");
     if (await this.isWorkspaceAdmin(event.workspaceId, userId)) return true;
     const assignment = await this.prisma.eventAssignment.findUnique({
       where: { eventId_userId: { eventId, userId } },
     });
-    if (!assignment) throw new ForbiddenException('Scanner permission required');
+    if (!assignment) throw new ForbiddenException("Scanner permission required");
     return true;
   }
 
@@ -661,7 +956,7 @@ export class EventsService {
       where: { id: boardId },
       select: { eventId: true },
     });
-    if (!board) throw new NotFoundException('Board not found');
+    if (!board) throw new NotFoundException("Board not found");
     await this.canScanEvent(board.eventId, userId);
     return board.eventId;
   }
@@ -675,7 +970,7 @@ export class EventsService {
       await this.assertUserEligibleForEvent(
         eventId,
         userId,
-        'Your account is not eligible for this event',
+        "Your account is not eligible for this event",
       );
       return true;
     }
@@ -689,7 +984,7 @@ export class EventsService {
       select: { checkinModes: true },
     });
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException("Event not found");
     }
     if (!event.checkinModes.includes(mode)) {
       throw new ForbiddenException(`This event does not allow ${mode} check-in`);
@@ -702,7 +997,7 @@ export class EventsService {
       select: { eventQrBehavior: true },
     });
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException("Event not found");
     }
     return event.eventQrBehavior;
   }
@@ -719,9 +1014,10 @@ export class EventsService {
         eventQrBehavior: true,
         credentialGraceSeconds: true,
         geofenceRadius: true,
+        customSessionsEnabled: true,
       },
     });
-    if (!event) throw new NotFoundException('Event not found');
+    if (!event) throw new NotFoundException("Event not found");
 
     const [member, assignment, registration] = await Promise.all([
       this.prisma.workspaceMember.findUnique({
@@ -736,7 +1032,7 @@ export class EventsService {
     ]);
 
     if (!member && !assignment && !registration) {
-      throw new ForbiddenException('Event access denied');
+      throw new ForbiddenException("Event access denied");
     }
     return event;
   }
@@ -753,16 +1049,22 @@ export class EventsService {
         eventQrBehavior: true,
         credentialGraceSeconds: true,
         geofenceRadius: true,
+        date: true,
+        startTime: true,
+        endTime: true,
+        location: true,
+        locationName: true,
+        customSessionsEnabled: true,
       },
     });
-    if (!event) throw new NotFoundException('Event not found');
+    if (!event) throw new NotFoundException("Event not found");
     if (await this.isWorkspaceAdmin(event.workspaceId, userId)) return event;
 
     const assignment = await this.prisma.eventAssignment.findUnique({
       where: { eventId_userId: { eventId, userId } },
     });
     if (assignment?.role !== EVENT_ASSIGNMENT_ROLE.MANAGER) {
-      throw new ForbiddenException('Event manager permission required');
+      throw new ForbiddenException("Event manager permission required");
     }
     return event;
   }
@@ -771,14 +1073,14 @@ export class EventsService {
     const member = await this.prisma.workspaceMember.findUnique({
       where: { workspaceId_userId: { workspaceId, userId } },
     });
-    if (!member) throw new ForbiddenException('Workspace access denied');
+    if (!member) throw new ForbiddenException("Workspace access denied");
     return member;
   }
 
   private async requireWorkspaceOwner(workspaceId: string, userId: string) {
     const member = await this.requireWorkspaceMember(workspaceId, userId);
     if (member.role !== WORKSPACE_MEMBER_ROLE.OWNER) {
-      throw new ForbiddenException('Workspace owner permission required');
+      throw new ForbiddenException("Workspace owner permission required");
     }
     return member;
   }
@@ -796,7 +1098,9 @@ export class EventsService {
       where: { workspaceId_userId: { workspaceId, userId } },
       select: { role: true },
     });
-    return member?.role === WORKSPACE_MEMBER_ROLE.OWNER || member?.role === WORKSPACE_MEMBER_ROLE.ADMIN;
+    return (
+      member?.role === WORKSPACE_MEMBER_ROLE.OWNER || member?.role === WORKSPACE_MEMBER_ROLE.ADMIN
+    );
   }
 
   private visibleEventWhere(userId: string) {
@@ -809,8 +1113,8 @@ export class EventsService {
     };
   }
 
-  private meEventWhere(userId: string, view?: 'attending' | 'managing') {
-    if (view === 'attending') {
+  private meEventWhere(userId: string, view?: "attending" | "managing") {
+    if (view === "attending") {
       return {
         registrations: { some: { userId } },
         assignments: { none: { userId } },
@@ -818,7 +1122,7 @@ export class EventsService {
       };
     }
 
-    if (view === 'managing') {
+    if (view === "managing") {
       return {
         OR: [
           { workspace: { members: { some: { userId } } } },
@@ -865,13 +1169,47 @@ export class EventsService {
     };
   }
 
+  private async syncDefaultSession(
+    eventId: string,
+    data: { startsAt: Date; endsAt: Date; locationName?: string | null },
+  ) {
+    await this.prisma.eventSession.updateMany({
+      where: { eventId, isDefault: true },
+      data,
+    });
+  }
+
+  private resolveEventDateTime(value: string | undefined, fallback: Date, eventDate: Date) {
+    if (!value) {
+      return this.copyTimeToDate(fallback, eventDate);
+    }
+    if (/^\d{2}:\d{2}$/.test(value)) {
+      const [hours, minutes] = value.split(":").map(Number);
+      const next = new Date(eventDate);
+      next.setHours(hours, minutes, 0, 0);
+      return next;
+    }
+    return new Date(value);
+  }
+
+  private copyTimeToDate(source: Date, targetDate: Date) {
+    const next = new Date(targetDate);
+    next.setHours(
+      source.getHours(),
+      source.getMinutes(),
+      source.getSeconds(),
+      source.getMilliseconds(),
+    );
+    return next;
+  }
+
   private async generateJoinCode() {
     for (let i = 0; i < 5; i++) {
-      const joinCode = randomBytes(4).toString('hex').toUpperCase();
+      const joinCode = randomBytes(4).toString("hex").toUpperCase();
       const exists = await this.prisma.event.findUnique({ where: { joinCode } });
       if (!exists) return joinCode;
     }
-    throw new BadRequestException('Could not generate event join code');
+    throw new BadRequestException("Could not generate event join code");
   }
 
   private validateAttendanceConfig(
@@ -882,10 +1220,12 @@ export class EventsService {
     const resolvedPolicy = policy ?? ATTENDANCE_POLICY.SINGLE_IN;
     if (resolvedPolicy === ATTENDANCE_POLICY.BOARD_REQUIREMENTS) {
       if (!requiredBoardCount || requiredBoardCount < 1) {
-        throw new BadRequestException('requiredBoardCount is required for board requirement events');
+        throw new BadRequestException(
+          "requiredBoardCount is required for board requirement events",
+        );
       }
       if (requiredBoardCount > boardCount) {
-        throw new BadRequestException('requiredBoardCount cannot exceed the number of boards');
+        throw new BadRequestException("requiredBoardCount cannot exceed the number of boards");
       }
     }
   }
@@ -897,12 +1237,45 @@ export class EventsService {
     checkinClosesAt?: string,
   ) {
     if (startsAt >= endsAt) {
-      throw new BadRequestException('Session start time must be before end time');
+      throw new BadRequestException("Session start time must be before end time");
     }
     const opensAt = checkinOpensAt ? new Date(checkinOpensAt) : undefined;
     const closesAt = checkinClosesAt ? new Date(checkinClosesAt) : undefined;
     if (opensAt && closesAt && opensAt >= closesAt) {
-      throw new BadRequestException('Check-in open time must be before close time');
+      throw new BadRequestException("Check-in open time must be before close time");
+    }
+  }
+
+  private validateSessionWithinEvent(
+    startsAt: Date,
+    endsAt: Date,
+    eventStart: Date,
+    eventEnd: Date,
+  ) {
+    if (startsAt < eventStart || endsAt > eventEnd) {
+      throw new BadRequestException("Session must be within the event schedule");
+    }
+  }
+
+  private async ensureNoOverlappingSession(
+    eventId: string,
+    startsAt: Date,
+    endsAt: Date,
+    excludeSessionId?: string,
+  ) {
+    const overlapping = await this.prisma.eventSession.findFirst({
+      where: {
+        eventId,
+        isDefault: false,
+        id: excludeSessionId ? { not: excludeSessionId } : undefined,
+        status: { not: SESSION_STATUS.CANCELLED },
+        startsAt: { lt: endsAt },
+        endsAt: { gt: startsAt },
+      },
+      select: { id: true },
+    });
+    if (overlapping) {
+      throw new BadRequestException("Session overlaps another custom session");
     }
   }
 
@@ -911,7 +1284,7 @@ export class EventsService {
       ? [...new Set(modes)]
       : [CHECKIN_MODE.ATTENDEE_CREDENTIAL, CHECKIN_MODE.BOARD_QR];
     if (resolved.length < 1) {
-      throw new BadRequestException('At least one check-in mode is required');
+      throw new BadRequestException("At least one check-in mode is required");
     }
     return resolved;
   }
@@ -920,13 +1293,13 @@ export class EventsService {
     const key = input
       .trim()
       .toLowerCase()
-      .replace(/[^a-z0-9_]+/g, '_')
-      .replace(/^_+|_+$/g, '');
+      .replace(/[^a-z0-9_]+/g, "_")
+      .replace(/^_+|_+$/g, "");
     if (!key) {
-      throw new BadRequestException('Field key is required');
+      throw new BadRequestException("Field key is required");
     }
     if (key.length > 64) {
-      throw new BadRequestException('Field key must be 64 characters or fewer');
+      throw new BadRequestException("Field key must be 64 characters or fewer");
     }
     return key;
   }
@@ -949,16 +1322,16 @@ export class EventsService {
     ]);
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException("Event not found");
     }
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
 
     assertEmailEligible(
       user.email,
       event,
-      message ?? 'Your account is not eligible for this event',
+      message ?? "Your account is not eligible for this event",
     );
   }
 
