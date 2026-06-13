@@ -1,0 +1,52 @@
+# ── Dependencies ──
+node_modules/
+server/node_modules/
+
+# ── Build output ──
+dist/
+server/dist/
+dev-dist/
+
+# ── Test & coverage ──
+coverage/
+test-results/
+
+# ── Environment (local only) ──
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ── Logs ──
+*.log
+npm-debug.log*
+
+# ── OS files ──
+.DS_Store
+Thumbs.db
+
+# ── IDE ──
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+
+# ── Cursor ──
+.cursor/
+
+# ── Cache ──
+.npm-cache/
+*.tsbuildinfo
+.cache/
+.vite/
+.eslintcache
+
+# ── CodeGraph ──
+.codegraph/
+
+# ── Misc temp files ──
+*.swp
+*.swo
+*~
