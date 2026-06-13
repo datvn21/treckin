@@ -1,11 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-} from '@aws-sdk/client-s3';
-import type { StorageProvider, UploadOptions, UploadResult } from '../storage.interface';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import type { StorageProvider, UploadOptions, UploadResult } from "../storage.interface";
 
 @Injectable()
 export class R2StorageProvider implements StorageProvider {
@@ -15,22 +11,20 @@ export class R2StorageProvider implements StorageProvider {
   private readonly publicUrl: string;
 
   constructor(private readonly config: ConfigService) {
-    const accountId = this.config.getOrThrow<string>('R2_ACCOUNT_ID');
-    this.bucket = this.config.getOrThrow<string>('R2_BUCKET_NAME');
-    this.publicUrl = this.config
-      .getOrThrow<string>('R2_PUBLIC_URL')
-      .replace(/\/+$/, '');
+    const accountId = this.config.getOrThrow<string>("R2_ACCOUNT_ID");
+    this.bucket = this.config.getOrThrow<string>("R2_BUCKET_NAME");
+    this.publicUrl = this.config.getOrThrow<string>("R2_PUBLIC_URL").replace(/\/+$/, "");
 
     this.s3 = new S3Client({
-      region: 'auto',
+      region: "auto",
       endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
       credentials: {
-        accessKeyId: this.config.getOrThrow<string>('R2_ACCESS_KEY_ID'),
-        secretAccessKey: this.config.getOrThrow<string>('R2_SECRET_ACCESS_KEY'),
+        accessKeyId: this.config.getOrThrow<string>("R2_ACCESS_KEY_ID"),
+        secretAccessKey: this.config.getOrThrow<string>("R2_SECRET_ACCESS_KEY"),
       },
     });
 
-    this.logger.log('R2 storage provider initialized');
+    this.logger.log("R2 storage provider initialized");
   }
 
   async upload(buffer: Buffer, opts: UploadOptions): Promise<UploadResult> {
@@ -42,14 +36,14 @@ export class R2StorageProvider implements StorageProvider {
         Key: key,
         Body: buffer,
         ContentType: opts.mimeType,
-        CacheControl: 'public, max-age=31536000, immutable',
+        CacheControl: "public, max-age=31536000, immutable",
       }),
     );
 
     const publicUrl = `${this.publicUrl}/${key}`;
     this.logger.log(`Uploaded to R2: ${key}`);
 
-    return { publicUrl, key, provider: 'r2' };
+    return { publicUrl, key, provider: "r2" };
   }
 
   async delete(key: string): Promise<void> {

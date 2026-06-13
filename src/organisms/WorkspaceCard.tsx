@@ -67,7 +67,7 @@ export function WorkspaceCard({
         "card p-5 flex flex-col gap-4 animate-fade-in-up transition-[background-color,border-color]",
         onClick && "cursor-pointer hover:border-border-2",
         isSelected && "border-primary bg-primary-muted",
-        className
+        className,
       )}
       aria-current={isSelected ? "true" : undefined}
     >
@@ -99,7 +99,10 @@ export function WorkspaceCard({
         {onSettings && (
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); onSettings(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSettings();
+            }}
             aria-label={t("workspace.settings")}
             className="btn-icon shrink-0 -mr-1.5 -mt-1"
           >

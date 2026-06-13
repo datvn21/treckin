@@ -66,10 +66,7 @@ export function NavDropdown({
         {label}
         <ChevronDown
           size={13}
-          className={cn(
-            "text-ink-4 transition-[transform] duration-150",
-            open && "rotate-180",
-          )}
+          className={cn("text-ink-4 transition-[transform] duration-150", open && "rotate-180")}
         />
       </button>
 
@@ -97,9 +94,7 @@ export function NavDropdown({
           {items.length > 0 && <div className="border-b border-border-1" />}
 
           {items.length === 0 && emptyLabel && (
-            <p className="px-4 py-3 text-xs text-ink-4 bg-surface">
-              {emptyLabel}
-            </p>
+            <p className="px-4 py-3 text-xs text-ink-4 bg-surface">{emptyLabel}</p>
           )}
 
           {items.length > 0 && (
@@ -124,9 +119,7 @@ export function NavDropdown({
                     )}
                   >
                     {item.icon && (
-                      <span className="shrink-0 flex items-center justify-center">
-                        {item.icon}
-                      </span>
+                      <span className="shrink-0 flex items-center justify-center">{item.icon}</span>
                     )}
                     <span className="flex-1 truncate">{item.label}</span>
                     {item.meta && (

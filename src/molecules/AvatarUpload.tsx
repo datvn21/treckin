@@ -126,10 +126,7 @@ export function AvatarUpload({
         {/* Uploading spinner overlay */}
         {uploading && (
           <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
-            <Loader2
-              size={size === "xl" ? 22 : 16}
-              className="animate-spin text-white"
-            />
+            <Loader2 size={size === "xl" ? 22 : 16} className="animate-spin text-white" />
           </span>
         )}
       </button>

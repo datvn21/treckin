@@ -13,10 +13,7 @@ interface RecentCheckinsTickerProps {
 export function RecentCheckinsTicker({ checkins }: RecentCheckinsTickerProps) {
   const { t } = useTranslation();
 
-  const recent = useMemo(
-    () => checkins.slice(0, 5),
-    [checkins]
-  );
+  const recent = useMemo(() => checkins.slice(0, 5), [checkins]);
 
   if (recent.length === 0) return null;
 
@@ -27,15 +24,14 @@ export function RecentCheckinsTicker({ checkins }: RecentCheckinsTickerProps) {
         {recent.map((checkin) => {
           const isIn = checkin.direction === "IN";
           return (
-            <div
-              key={checkin.id}
-              className="flex items-center gap-2.5 flex-shrink-0"
-            >
+            <div key={checkin.id} className="flex items-center gap-2.5 flex-shrink-0">
               {/* Direction icon */}
-              <div className={cn(
-                "flex items-center justify-center w-6 h-6 rounded-full",
-                isIn ? "bg-[#4ade80]/10 text-[#4ade80]" : "bg-[#f87171]/10 text-[#f87171]"
-              )}>
+              <div
+                className={cn(
+                  "flex items-center justify-center w-6 h-6 rounded-full",
+                  isIn ? "bg-[#4ade80]/10 text-[#4ade80]" : "bg-[#f87171]/10 text-[#f87171]",
+                )}
+              >
                 {isIn ? (
                   <ArrowDownLeft className="w-3 h-3" strokeWidth={2} />
                 ) : (
@@ -44,11 +40,7 @@ export function RecentCheckinsTicker({ checkins }: RecentCheckinsTickerProps) {
               </div>
 
               {/* Avatar */}
-              <Avatar
-                name={checkin.userName}
-                avatarUrl={undefined}
-                size="sm"
-              />
+              <Avatar name={checkin.userName} avatarUrl={undefined} size="sm" />
 
               {/* Name + time */}
               <div className="flex flex-col">
@@ -61,7 +53,10 @@ export function RecentCheckinsTicker({ checkins }: RecentCheckinsTickerProps) {
               </div>
 
               {/* Divider */}
-              <ChevronRight className="w-3.5 h-3.5 text-[#3d3530] flex-shrink-0" strokeWidth={1.5} />
+              <ChevronRight
+                className="w-3.5 h-3.5 text-[#3d3530] flex-shrink-0"
+                strokeWidth={1.5}
+              />
             </div>
           );
         })}

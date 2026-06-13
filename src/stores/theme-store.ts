@@ -2,13 +2,13 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 type Theme = "light" | "dark" | "system";
-type Lang  = string;
+type Lang = string;
 
 interface ThemeStore {
   theme: Theme;
-  lang:  Lang;
+  lang: Lang;
   setTheme: (theme: Theme) => void;
-  setLang:  (lang: Lang)   => void;
+  setLang: (lang: Lang) => void;
   resolvedTheme: () => "light" | "dark";
 }
 
@@ -25,7 +25,7 @@ export const useThemeStore = create<ThemeStore>()(
   persist(
     (set, get) => ({
       theme: "system",
-      lang:  "vi",
+      lang: "vi",
 
       setTheme(theme) {
         set({ theme });

@@ -24,8 +24,20 @@ const mockEvent = {
   geofenceRadius: 500,
   status: "active" as const,
   boards: [
-    { id: "board-1", name: "Gate A", eventId: "event-1", status: "active" as const, checkinCount: 42 },
-    { id: "board-2", name: "Gate B", eventId: "event-1", status: "active" as const, checkinCount: 38 },
+    {
+      id: "board-1",
+      name: "Gate A",
+      eventId: "event-1",
+      status: "active" as const,
+      checkinCount: 42,
+    },
+    {
+      id: "board-2",
+      name: "Gate B",
+      eventId: "event-1",
+      status: "active" as const,
+      checkinCount: 38,
+    },
   ],
   totalCheckins: 80,
   totalRegistered: 200,

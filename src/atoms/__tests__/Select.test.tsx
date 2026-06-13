@@ -67,10 +67,7 @@ describe("Select", () => {
 
     it("links error message to select via aria-describedby", () => {
       render(<Select id="status" error="Status is required" />);
-      expect(screen.getByRole("combobox")).toHaveAttribute(
-        "aria-describedby",
-        "status-error",
-      );
+      expect(screen.getByRole("combobox")).toHaveAttribute("aria-describedby", "status-error");
     });
   });
 
@@ -89,7 +86,13 @@ describe("Select", () => {
   describe("Accessibility", () => {
     it("forwards ref to the select element", () => {
       let refValue: HTMLSelectElement | null = null;
-      render(<Select ref={(el) => { refValue = el; }} />);
+      render(
+        <Select
+          ref={(el) => {
+            refValue = el;
+          }}
+        />,
+      );
       expect(refValue).toBeInTheDocument();
     });
 

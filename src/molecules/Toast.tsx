@@ -1,24 +1,24 @@
 /* ══════════════════════════════════════════════════
    Toast — lightweight singleton toast notification system
    ══════════════════════════════════════════════════ */
-import React, { useState, useEffect, useRef } from 'react';
-import { CheckCircle2, XCircle, Info, Loader2, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React, { useState, useEffect, useRef } from "react";
+import { CheckCircle2, XCircle, Info, Loader2, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-type ToastVariant = 'success' | 'error' | 'info' | 'loading';
+type ToastVariant = "success" | "error" | "info" | "loading";
 
 interface ToastItem {
-  id:       string;
-  message:  string;
-  variant:  ToastVariant;
+  id: string;
+  message: string;
+  variant: ToastVariant;
 }
 
 const MAX_TOASTS = 5;
 
 const AUTO_DISMISS: Record<ToastVariant, number | null> = {
   success: 4000,
-  info:    4000,
-  error:   6000,
+  info: 4000,
+  error: 6000,
   loading: null, // never auto-dismiss
 };
 
@@ -54,11 +54,11 @@ function addToast(message: string, variant: ToastVariant) {
 
 // ── Public API ───────────────────────────────────────────────────────────────
 export const toast = {
-  success: (message: string) => addToast(message, 'success'),
-  error:   (message: string) => addToast(message, 'error'),
-  info:    (message: string) => addToast(message, 'info'),
-  loading: (message: string) => addToast(message, 'loading'),
-  dismiss: (id: string)      => removeToast(id),
+  success: (message: string) => addToast(message, "success"),
+  error: (message: string) => addToast(message, "error"),
+  info: (message: string) => addToast(message, "info"),
+  loading: (message: string) => addToast(message, "loading"),
+  dismiss: (id: string) => removeToast(id),
 };
 
 /** Returns the toast object directly for backward compatibility.
@@ -71,46 +71,40 @@ export function useToast() {
 // ── Icon & style maps ────────────────────────────────────────────────────────
 const ICON_MAP: Record<ToastVariant, React.ReactNode> = {
   success: <CheckCircle2 size={16} aria-hidden="true" />,
-  error:   <XCircle      size={16} aria-hidden="true" />,
-  info:    <Info         size={16} aria-hidden="true" />,
-  loading: <Loader2      size={16} className="animate-spin" aria-hidden="true" />,
+  error: <XCircle size={16} aria-hidden="true" />,
+  info: <Info size={16} aria-hidden="true" />,
+  loading: <Loader2 size={16} className="animate-spin" aria-hidden="true" />,
 };
 
 const VARIANT_CLASS: Record<ToastVariant, string> = {
-  success: 'border-success-border bg-success-bg   text-success',
-  error:   'border-danger-border  bg-danger-bg    text-danger',
-  info:    'border-primary-border bg-primary-muted text-primary-text',
-  loading: 'border-border-1       bg-surface       text-ink-2',
+  success: "border-success-border bg-success-bg   text-success",
+  error: "border-danger-border  bg-danger-bg    text-danger",
+  info: "border-primary-border bg-primary-muted text-primary-text",
+  loading: "border-border-1       bg-surface       text-ink-2",
 };
 
 // ── Single toast item ────────────────────────────────────────────────────────
-function ToastItemComponent({
-  item,
-  onClose,
-}: {
-  item:    ToastItem;
-  onClose: () => void;
-}) {
+function ToastItemComponent({ item, onClose }: { item: ToastItem; onClose: () => void }) {
   return (
     <div
       role="alert"
       aria-live="assertive"
       className={cn(
-        'flex items-center gap-2.5 px-3 py-2.5 rounded-lg border',
-        'text-sm font-medium shadow-md animate-slide-in-right',
-        'min-h-[44px]',
-        VARIANT_CLASS[item.variant]
+        "flex items-center gap-2.5 px-3 py-2.5 rounded-lg border",
+        "text-sm font-medium shadow-md animate-slide-in-right",
+        "min-h-[44px]",
+        VARIANT_CLASS[item.variant],
       )}
     >
       <span className="shrink-0">{ICON_MAP[item.variant]}</span>
       <span className="flex-1 leading-snug">{item.message}</span>
-      {item.variant !== 'loading' && (
+      {item.variant !== "loading" && (
         <button
           type="button"
           onClick={onClose}
           className="shrink-0 p-0.5 rounded opacity-60 hover:opacity-100 transition-opacity"
           aria-label="Đóng thông báo"
-          style={{ minHeight: 'auto', minWidth: 'auto' }}
+          style={{ minHeight: "auto", minWidth: "auto" }}
         >
           <X size={14} aria-hidden="true" />
         </button>
@@ -142,10 +136,7 @@ export function Toaster() {
     >
       {items.map((item) => (
         <div key={item.id} className="pointer-events-auto">
-          <ToastItemComponent
-            item={item}
-            onClose={() => removeToast(item.id)}
-          />
+          <ToastItemComponent item={item} onClose={() => removeToast(item.id)} />
         </div>
       ))}
     </div>

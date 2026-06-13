@@ -9,8 +9,12 @@ import type { AuthResponse } from "@/types";
 import { cn } from "@/lib/utils";
 import { AuthLayout } from "@/templates";
 import { useDocumentTitle } from "@/hooks";
-import { getFlowPreference, setFlowPreference, flowPath, type AppFlow } from "@/lib/flow-preference";
-
+import {
+  getFlowPreference,
+  setFlowPreference,
+  flowPath,
+  type AppFlow,
+} from "@/lib/flow-preference";
 
 type AuthMode = "login" | "register";
 
@@ -35,8 +39,8 @@ export function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const redirectTo =
-    (location.state as { from?: { pathname?: string; search?: string } } | null)?.from;
+  const redirectTo = (location.state as { from?: { pathname?: string; search?: string } } | null)
+    ?.from;
 
   const [selectedRole, setSelectedRole] = useState<AppFlow>(() => {
     return getFlowPreference() ?? "attendee";
@@ -71,31 +75,34 @@ export function LoginPage() {
     step === "role-select"
       ? t("gateway.title", { defaultValue: "Chọn vai trò" })
       : mode === "login"
-      ? t("auth.login")
-      : t("auth.register")
+        ? t("auth.login")
+        : t("auth.register"),
   );
 
   const hasRedirected = useRef(false);
 
-  const getPostAuthPath = useCallback((role: AppFlow) => {
-    if (!redirectTo?.pathname) return flowPath(role);
-    const path = redirectTo.pathname;
-    // If it's a generic dashboard landing page, force flowPath(role)
-    const genericLandingPages = [
-      "/app",
-      "/app/",
-      "/app/workspaces",
-      "/app/workspaces/",
-      "/app/join",
-      "/app/join/",
-      "/app/events",
-      "/app/events/",
-    ];
-    if (genericLandingPages.includes(path)) {
-      return flowPath(role);
-    }
-    return `${path}${redirectTo.search ?? ""}`;
-  }, [redirectTo]);
+  const getPostAuthPath = useCallback(
+    (role: AppFlow) => {
+      if (!redirectTo?.pathname) return flowPath(role);
+      const path = redirectTo.pathname;
+      // If it's a generic dashboard landing page, force flowPath(role)
+      const genericLandingPages = [
+        "/app",
+        "/app/",
+        "/app/workspaces",
+        "/app/workspaces/",
+        "/app/join",
+        "/app/join/",
+        "/app/events",
+        "/app/events/",
+      ];
+      if (genericLandingPages.includes(path)) {
+        return flowPath(role);
+      }
+      return `${path}${redirectTo.search ?? ""}`;
+    },
+    [redirectTo],
+  );
 
   const postAuthPath = getPostAuthPath(selectedRole);
 
@@ -111,58 +118,72 @@ export function LoginPage() {
     setError(null);
   }, []);
 
-  const finishAuth = useCallback((data: AuthResponse) => {
-    login(data.user, data.accessToken);
-    setFlowPreference(selectedRole);
-    navigate(getPostAuthPath(selectedRole), { replace: true });
-  }, [login, navigate, selectedRole, getPostAuthPath]);
+  const finishAuth = useCallback(
+    (data: AuthResponse) => {
+      login(data.user, data.accessToken);
+      setFlowPreference(selectedRole);
+      navigate(getPostAuthPath(selectedRole), { replace: true });
+    },
+    [login, navigate, selectedRole, getPostAuthPath],
+  );
 
   const parseApiError = (err: unknown, fallback: string) => {
     if (typeof err === "object" && err !== null && "response" in err) {
       const errorWithResponse = err as { response?: { data?: { message?: string | string[] } } };
       const message = errorWithResponse.response?.data?.message;
-      return Array.isArray(message) ? message.join(" ") : message ?? fallback;
+      return Array.isArray(message) ? message.join(" ") : (message ?? fallback);
     }
     return fallback;
   };
 
-  const handleEmailSubmit = useCallback(async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
+  const handleEmailSubmit = useCallback(
+    async (e: FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      const endpoint = mode === "login" ? "/auth/login" : "/auth/register";
-      const payload = mode === "login"
-        ? { email: form.email, password: form.password }
-        : { name: form.name, email: form.email, password: form.password };
-      const { data } = await api.post<AuthResponse>(endpoint, payload);
-      finishAuth(data);
-    } catch (err) {
-      setError(parseApiError(err, mode === "login" ? t("auth.loginFailed") : t("auth.registerFailed")));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [finishAuth, form, mode, t]);
+      try {
+        const endpoint = mode === "login" ? "/auth/login" : "/auth/register";
+        const payload =
+          mode === "login"
+            ? { email: form.email, password: form.password }
+            : { name: form.name, email: form.email, password: form.password };
+        const { data } = await api.post<AuthResponse>(endpoint, payload);
+        finishAuth(data);
+      } catch (err) {
+        setError(
+          parseApiError(err, mode === "login" ? t("auth.loginFailed") : t("auth.registerFailed")),
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [finishAuth, form, mode, t],
+  );
 
-  const handleGoogleSuccess = useCallback(async (res: CredentialResponse) => {
-    if (!res.credential) {
-      setError(t("auth.googleFailed"));
-      return;
-    }
+  const handleGoogleSuccess = useCallback(
+    async (res: CredentialResponse) => {
+      if (!res.credential) {
+        setError(t("auth.googleFailed"));
+        return;
+      }
 
-    setIsLoading(true);
-    setError(null);
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      const { data } = await api.post<AuthResponse>("/auth/google", { credential: res.credential });
-      finishAuth(data);
-    } catch (err) {
-      setError(parseApiError(err, t("auth.googleFailed")));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [finishAuth, t]);
+      try {
+        const { data } = await api.post<AuthResponse>("/auth/google", {
+          credential: res.credential,
+        });
+        finishAuth(data);
+      } catch (err) {
+        setError(parseApiError(err, t("auth.googleFailed")));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [finishAuth, t],
+  );
 
   return (
     <AuthLayout onBack={step === "auth-form" ? () => setStep("role-select") : undefined}>
@@ -195,7 +216,9 @@ export function LoginPage() {
                   {t("gateway.attendeeTitle", { defaultValue: "Tham gia sự kiện" })}
                 </span>
                 <span className="block text-xs text-ink-3 leading-relaxed">
-                  {t("gateway.attendeeDescription", { defaultValue: "Quét QR, nhập mã hoặc xem sự kiện của bạn." })}
+                  {t("gateway.attendeeDescription", {
+                    defaultValue: "Quét QR, nhập mã hoặc xem sự kiện của bạn.",
+                  })}
                 </span>
               </div>
             </button>
@@ -217,7 +240,9 @@ export function LoginPage() {
                   {t("gateway.organizerTitle", { defaultValue: "Quản lý sự kiện" })}
                 </span>
                 <span className="block text-xs text-ink-3 leading-relaxed">
-                  {t("gateway.organizerDescription", { defaultValue: "Tạo workspace, quản lý sự kiện và check-in." })}
+                  {t("gateway.organizerDescription", {
+                    defaultValue: "Tạo workspace, quản lý sự kiện và check-in.",
+                  })}
                 </span>
               </div>
             </button>
@@ -225,7 +250,6 @@ export function LoginPage() {
         </div>
       ) : (
         <div className="card p-6">
-
           <div className="mb-5">
             <h1 className="text-xl font-semibold text-ink-1">
               {mode === "login" ? t("auth.login") : t("auth.register")}
@@ -243,7 +267,7 @@ export function LoginPage() {
                 "font-medium pb-1 border-b-2 transition-colors",
                 mode === "login"
                   ? "border-primary text-primary"
-                  : "border-transparent text-ink-3 hover:text-ink-1"
+                  : "border-transparent text-ink-3 hover:text-ink-1",
               )}
             >
               {t("auth.login")}
@@ -255,16 +279,14 @@ export function LoginPage() {
                 "font-medium pb-1 border-b-2 transition-colors",
                 mode === "register"
                   ? "border-primary text-primary"
-                  : "border-transparent text-ink-3 hover:text-ink-1"
+                  : "border-transparent text-ink-3 hover:text-ink-1",
               )}
             >
               {t("auth.register")}
             </button>
           </div>
 
-          {error && (
-            <div className="notice-danger mb-4 text-sm">{error}</div>
-          )}
+          {error && <div className="notice-danger mb-4 text-sm">{error}</div>}
 
           <form onSubmit={handleEmailSubmit} className="space-y-3">
             {mode === "register" && (
@@ -307,11 +329,7 @@ export function LoginPage() {
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="btn-primary btn-lg w-full mt-1"
-            >
+            <button type="submit" disabled={isLoading} className="btn-primary btn-lg w-full mt-1">
               {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
               {mode === "login" ? t("auth.login") : t("auth.register")}
             </button>

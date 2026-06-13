@@ -13,8 +13,16 @@ export function NotFoundPage() {
           Đường dẫn này không tồn tại hoặc bạn không có quyền truy cập.
         </p>
         <div className="flex items-center justify-center gap-2">
-          <button type="button" className="btn-default" onClick={() => navigate(-1)}>Quay lại</button>
-          <button type="button" className="btn-primary" onClick={() => navigate("/app", { replace: true })}>Trang chủ</button>
+          <button type="button" className="btn-default" onClick={() => navigate(-1)}>
+            Quay lại
+          </button>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => navigate("/app", { replace: true })}
+          >
+            Trang chủ
+          </button>
         </div>
       </div>
     </div>

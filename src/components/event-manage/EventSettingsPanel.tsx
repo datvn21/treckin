@@ -8,8 +8,13 @@
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Info, CalendarClock, SlidersHorizontal, Users,
-  TriangleAlert, Plus, Trash2,
+  Info,
+  CalendarClock,
+  SlidersHorizontal,
+  Users,
+  TriangleAlert,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { parseApiError } from "@/lib/parseApiError";
@@ -108,7 +113,12 @@ export function EventSettingsPanel({
         startTime: editStartTime,
         location: editLocation,
       });
-      onEventInfoSaved({ title: editTitle, date: editDate, startTime: editStartTime, location: editLocation });
+      onEventInfoSaved({
+        title: editTitle,
+        date: editDate,
+        startTime: editStartTime,
+        location: editLocation,
+      });
       toast.success(t("event.updateSuccess"));
     } catch (err) {
       toast.error(parseApiError(err, t("event.updateFailed")));
@@ -165,7 +175,6 @@ export function EventSettingsPanel({
 
   return (
     <div className="space-y-3 animate-fade-in-up">
-
       {/* ── 1. Event Info — always open ──────────────────────────── */}
       <CollapsibleSection
         title={t("manage.settingsTitle")}
@@ -174,18 +183,11 @@ export function EventSettingsPanel({
       >
         <div className="space-y-3">
           <FormField label={t("event.title")} required>
-            <Input
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-            />
+            <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
           </FormField>
           <div className="grid grid-cols-2 gap-3">
             <FormField label={t("event.date")} required>
-              <Input
-                type="date"
-                value={editDate}
-                onChange={(e) => setEditDate(e.target.value)}
-              />
+              <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
             </FormField>
             <FormField label={t("event.startTime")} required>
               <Input
@@ -196,10 +198,7 @@ export function EventSettingsPanel({
             </FormField>
           </div>
           <FormField label={t("event.location")}>
-            <Input
-              value={editLocation}
-              onChange={(e) => setEditLocation(e.target.value)}
-            />
+            <Input value={editLocation} onChange={(e) => setEditLocation(e.target.value)} />
           </FormField>
           <div className="flex justify-end">
             <Button variant="primary" isLoading={isSaving} onClick={saveEventInfo}>
@@ -233,9 +232,7 @@ export function EventSettingsPanel({
         icon={<Users size={15} />}
         defaultOpen={false}
         badge={
-          assignments.length > 0 ? (
-            <Badge variant="blue">{assignments.length}</Badge>
-          ) : undefined
+          assignments.length > 0 ? <Badge variant="blue">{assignments.length}</Badge> : undefined
         }
         headerAction={
           <Button variant="default" size="sm" onClick={() => setAssignOpen(true)}>
@@ -364,11 +361,7 @@ export function EventSettingsPanel({
             <Button variant="default" onClick={() => setCancelOpen(false)}>
               {t("common.cancel")}
             </Button>
-            <Button
-              variant="danger"
-              isLoading={isCancelling}
-              onClick={() => void doCancelEvent()}
-            >
+            <Button variant="danger" isLoading={isCancelling} onClick={() => void doCancelEvent()}>
               {t("manage.cancelEvent")}
             </Button>
           </div>

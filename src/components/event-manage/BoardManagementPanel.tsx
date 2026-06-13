@@ -6,8 +6,16 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Plus, Pencil, Trash2, Check, X, ScanQrCode,
-  LayoutGrid, Play, Pause, Lock,
+  Plus,
+  Pencil,
+  Trash2,
+  Check,
+  X,
+  ScanQrCode,
+  LayoutGrid,
+  Play,
+  Pause,
+  Lock,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { parseApiError } from "@/lib/parseApiError";
@@ -123,14 +131,20 @@ export function BoardManagementPanel({
 
   const commitRename = async (boardId: string) => {
     const name = renameDraft.trim();
-    if (!name) { cancelRename(); return; }
+    if (!name) {
+      cancelRename();
+      return;
+    }
 
     const original = boards.find((b) => b.id === boardId)?.name;
-    if (name === original) { cancelRename(); return; }
+    if (name === original) {
+      cancelRename();
+      return;
+    }
 
     try {
       await api.patch(`/events/${eventId}/boards/${boardId}`, { name });
-      setBoards((prev) => prev.map((b) => b.id === boardId ? { ...b, name } : b));
+      setBoards((prev) => prev.map((b) => (b.id === boardId ? { ...b, name } : b)));
       toast.success(t("manage.boards.renameSuccess"));
     } catch (err) {
       toast.error(parseApiError(err, t("manage.boards.renameFailed")));
@@ -143,7 +157,7 @@ export function BoardManagementPanel({
     const newStatus: BoardStatus = board.status === "ACTIVE" ? "PAUSED" : "ACTIVE";
     try {
       await api.patch(`/events/${eventId}/boards/${board.id}`, { status: newStatus });
-      setBoards((prev) => prev.map((b) => b.id === board.id ? { ...b, status: newStatus } : b));
+      setBoards((prev) => prev.map((b) => (b.id === board.id ? { ...b, status: newStatus } : b)));
     } catch (err) {
       toast.error(parseApiError(err, t("common.error")));
     }
@@ -180,9 +194,12 @@ export function BoardManagementPanel({
   // ── Status helpers ─────────────────────────────────────────────
   const statusBadge = (status: BoardStatus) => {
     switch (status) {
-      case "ACTIVE": return <Badge variant="green">{t("manage.boards.statusActive")}</Badge>;
-      case "PAUSED": return <Badge variant="yellow">{t("manage.boards.statusPaused")}</Badge>;
-      case "CLOSED": return <Badge variant="gray">{t("manage.boards.statusClosed")}</Badge>;
+      case "ACTIVE":
+        return <Badge variant="green">{t("manage.boards.statusActive")}</Badge>;
+      case "PAUSED":
+        return <Badge variant="yellow">{t("manage.boards.statusPaused")}</Badge>;
+      case "CLOSED":
+        return <Badge variant="gray">{t("manage.boards.statusClosed")}</Badge>;
     }
   };
 
@@ -193,17 +210,11 @@ export function BoardManagementPanel({
     <div className="space-y-4">
       {/* Header row */}
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-section-title text-ink-1">
-          {t("manage.boards.title")}
-        </h3>
+        <h3 className="text-section-title text-ink-1">{t("manage.boards.title")}</h3>
         <div className="flex items-center gap-2">
           {/* Global "Open Scanner" button */}
           {eventIsOngoing && boards.length > 0 && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleOpenScannerButton}
-            >
+            <Button variant="primary" size="sm" onClick={handleOpenScannerButton}>
               <ScanQrCode size={14} />
               {t("event.openScanner")}
             </Button>
@@ -295,13 +306,18 @@ export function BoardManagementPanel({
                   {board.status !== "CLOSED" && (
                     <button
                       type="button"
-                      className={cn(
-                        "btn-icon",
-                        board.status === "PAUSED" && "text-warning"
-                      )}
+                      className={cn("btn-icon", board.status === "PAUSED" && "text-warning")}
                       onClick={() => void toggleStatus(board)}
-                      title={board.status === "ACTIVE" ? t("manage.boards.pause") : t("manage.boards.resume")}
-                      aria-label={board.status === "ACTIVE" ? t("manage.boards.pause") : t("manage.boards.resume")}
+                      title={
+                        board.status === "ACTIVE"
+                          ? t("manage.boards.pause")
+                          : t("manage.boards.resume")
+                      }
+                      aria-label={
+                        board.status === "ACTIVE"
+                          ? t("manage.boards.pause")
+                          : t("manage.boards.resume")
+                      }
                     >
                       {board.status === "ACTIVE" ? <Pause size={13} /> : <Play size={13} />}
                     </button>
@@ -327,7 +343,7 @@ export function BoardManagementPanel({
                       "btn-icon",
                       board.checkinCount > 0
                         ? "text-ink-4 cursor-not-allowed opacity-40"
-                        : "text-danger"
+                        : "text-danger",
                     )}
                     onClick={() => board.checkinCount === 0 && setDeleteId(board.id)}
                     disabled={board.checkinCount > 0}

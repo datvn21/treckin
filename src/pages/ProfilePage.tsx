@@ -1,16 +1,7 @@
 import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import {
-  Globe,
-  LogOut,
-  Monitor,
-  Moon,
-  Shield,
-  Sun,
-  UserRound,
-  RefreshCw,
-} from "lucide-react";
+import { Globe, LogOut, Monitor, Moon, Shield, Sun, UserRound, RefreshCw } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
 import { useThemeStore } from "@/stores/theme-store";
 import { PageHeader } from "@/organisms/PageHeader";
@@ -23,7 +14,6 @@ import { Badge } from "@/atoms/Badge";
 import { cn } from "@/lib/utils";
 import { setFlowPreference, getFlowPreference, flowPath } from "@/lib/flow-preference";
 import { useDocumentTitle } from "@/hooks";
-
 
 type Theme = "light" | "dark" | "system";
 
@@ -48,7 +38,7 @@ function ChoiceButton({ active, children, icon, onClick }: ChoiceButtonProps) {
         "active:translate-y-0 active:scale-[0.985]",
         active
           ? "border-primary bg-primary-muted text-primary shadow-[inset_0_0_0_1px_var(--color-primary-border)]"
-          : "border-border-1 bg-surface"
+          : "border-border-1 bg-surface",
       )}
     >
       {icon}
@@ -93,9 +83,7 @@ export function ProfilePage() {
   const currentFlow = getFlowPreference();
   const otherFlow = currentFlow === "attendee" ? "organizer" : "attendee";
   const otherLabel =
-    otherFlow === "attendee"
-      ? t("gateway.attendeeTitle")
-      : t("gateway.organizerTitle");
+    otherFlow === "attendee" ? t("gateway.attendeeTitle") : t("gateway.organizerTitle");
 
   const currentTheme = theme ?? "system";
 
@@ -107,10 +95,7 @@ export function ProfilePage() {
 
   return (
     <>
-      <PageHeader
-        title={t("nav.profile")}
-        subtitle={user?.email}
-      />
+      <PageHeader title={t("nav.profile")} subtitle={user?.email} />
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
         {user && (
@@ -149,9 +134,7 @@ export function ProfilePage() {
                 <RefreshCw size={18} />
               </span>
               <div className="min-w-0">
-                <h3 className="text-section-title text-ink-1">
-                  {t("profile.switchRole")}
-                </h3>
+                <h3 className="text-section-title text-ink-1">{t("profile.switchRole")}</h3>
                 <p className="mt-1 text-sm text-ink-3">
                   {t("profile.currentRole")}:{" "}
                   {currentFlow === "attendee"
@@ -180,20 +163,12 @@ export function ProfilePage() {
               <UserRound size={18} />
             </span>
             <div className="min-w-0">
-              <h3 className="text-section-title text-ink-1">
-                {t("common.settings")}
-              </h3>
-              <p className="mt-1 text-sm text-ink-3">
-                {t("common.profile")}
-              </p>
+              <h3 className="text-section-title text-ink-1">{t("common.settings")}</h3>
+              <p className="mt-1 text-sm text-ink-3">{t("common.profile")}</p>
             </div>
           </div>
 
-          <Button
-            variant="danger"
-            className="w-full justify-center gap-2"
-            onClick={handleLogout}
-          >
+          <Button variant="danger" className="w-full justify-center gap-2" onClick={handleLogout}>
             <LogOut size={16} />
             {t("auth.logout")}
           </Button>
@@ -206,12 +181,8 @@ export function ProfilePage() {
                 <Globe size={18} />
               </span>
               <div>
-                <h3 className="text-section-title text-ink-1">
-                  {t("common.language")}
-                </h3>
-                <p className="mt-1 text-sm text-ink-3">
-                  {lang.toUpperCase()}
-                </p>
+                <h3 className="text-section-title text-ink-1">{t("common.language")}</h3>
+                <p className="mt-1 text-sm text-ink-3">{lang.toUpperCase()}</p>
               </div>
             </div>
 
@@ -226,9 +197,7 @@ export function ProfilePage() {
                 <Monitor size={18} />
               </span>
               <div>
-                <h3 className="text-section-title text-ink-1">
-                  {t("common.darkMode")}
-                </h3>
+                <h3 className="text-section-title text-ink-1">{t("common.darkMode")}</h3>
                 <p className="mt-1 text-sm text-ink-3">
                   {themeOptions.find((opt) => opt.value === currentTheme)?.label}
                 </p>

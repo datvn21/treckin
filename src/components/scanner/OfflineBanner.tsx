@@ -14,24 +14,18 @@ export function OfflineBanner({ queueCount, isSyncing }: OfflineBannerProps) {
     <div
       className={cn(
         "flex items-center gap-2 px-4 py-2 text-sm",
-        isSyncing
-          ? "bg-[#f59e0b]/10 text-[#f59e0b]"
-          : "bg-[#ef4444]/10 text-[#ef4444]"
+        isSyncing ? "bg-[#f59e0b]/10 text-[#f59e0b]" : "bg-[#ef4444]/10 text-[#ef4444]",
       )}
     >
       {isSyncing ? (
         <>
           <RefreshCw className="w-4 h-4 flex-shrink-0 animate-spin" strokeWidth={1.5} />
-          <span className="text-xs font-medium">
-            {t("scanner.syncing", { count: queueCount })}
-          </span>
+          <span className="text-xs font-medium">{t("scanner.syncing", { count: queueCount })}</span>
         </>
       ) : (
         <>
           <WifiOff className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
-          <span className="text-xs font-medium">
-            {t("scanner.offline", { count: queueCount })}
-          </span>
+          <span className="text-xs font-medium">{t("scanner.offline", { count: queueCount })}</span>
         </>
       )}
     </div>

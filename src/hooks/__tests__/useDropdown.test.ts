@@ -26,7 +26,7 @@ describe("useDropdown", () => {
   describe("setOpen function", () => {
     it("can set open to true", () => {
       const { result } = renderHook(() => useDropdown());
-      
+
       act(() => {
         result.current.setOpen(true);
       });
@@ -36,7 +36,7 @@ describe("useDropdown", () => {
 
     it("can set open to false", () => {
       const { result } = renderHook(() => useDropdown());
-      
+
       act(() => {
         result.current.setOpen(true);
       });
@@ -61,10 +61,12 @@ describe("useDropdown", () => {
 
       // Simulate click outside
       act(() => {
-        document.dispatchEvent(new MouseEvent("mousedown", {
-          bubbles: true,
-          target: document.body,
-        }));
+        document.dispatchEvent(
+          new MouseEvent("mousedown", {
+            bubbles: true,
+            target: document.body,
+          }),
+        );
       });
 
       expect(result.current.open).toBe(false);
@@ -83,10 +85,12 @@ describe("useDropdown", () => {
       act(() => {
         const refElement = result.current.ref.current;
         if (refElement) {
-          refElement.dispatchEvent(new MouseEvent("mousedown", {
-            bubbles: true,
-            target: refElement,
-          }));
+          refElement.dispatchEvent(
+            new MouseEvent("mousedown", {
+              bubbles: true,
+              target: refElement,
+            }),
+          );
         }
       });
 
@@ -106,7 +110,7 @@ describe("useDropdown", () => {
 
       // Should not add mousedown listener when closed
       const mousedownListeners = addEventListenerSpy.mock.calls.filter(
-        ([event]) => event === "mousedown"
+        ([event]) => event === "mousedown",
       );
       expect(mousedownListeners.length).toBe(0);
 

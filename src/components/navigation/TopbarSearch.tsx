@@ -32,10 +32,7 @@ export function TopbarSearch({ workspaces, events }: TopbarSearchProps) {
   /* Close on outside click */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setFocused(false);
         setQuery("");
       }
@@ -61,9 +58,7 @@ export function TopbarSearch({ workspaces, events }: TopbarSearchProps) {
       ? []
       : [
           ...workspaces
-            .filter((ws) =>
-              ws.name.toLowerCase().includes(query.toLowerCase()),
-            )
+            .filter((ws) => ws.name.toLowerCase().includes(query.toLowerCase()))
             .slice(0, 4)
             .map((ws) => ({
               id: ws.id,
@@ -72,9 +67,7 @@ export function TopbarSearch({ workspaces, events }: TopbarSearchProps) {
               to: `/app/workspaces/${ws.id}`,
             })),
           ...events
-            .filter((e) =>
-              e.title.toLowerCase().includes(query.toLowerCase()),
-            )
+            .filter((e) => e.title.toLowerCase().includes(query.toLowerCase()))
             .slice(0, 4)
             .map((e) => ({
               id: e.id,
@@ -142,9 +135,7 @@ export function TopbarSearch({ workspaces, events }: TopbarSearchProps) {
       {showDropdown && (
         <div className="absolute top-[calc(100%+6px)] left-0 w-72 card-elevated py-1 animate-scale-in origin-top-left z-50">
           {results.length === 0 ? (
-            <p className="px-3 py-3 text-sm text-ink-4 text-center">
-              Không có kết quả
-            </p>
+            <p className="px-3 py-3 text-sm text-ink-4 text-center">Không có kết quả</p>
           ) : (
             <>
               {results.some((r) => r.type === "workspace") && (

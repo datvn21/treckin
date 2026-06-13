@@ -1,6 +1,6 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import * as sharp from 'sharp';
-import { STORAGE_PROVIDER, type StorageProvider, type UploadResult } from './storage.interface';
+import { Inject, Injectable, Logger } from "@nestjs/common";
+import * as sharp from "sharp";
+import { STORAGE_PROVIDER, type StorageProvider, type UploadResult } from "./storage.interface";
 
 /** Avatar output config */
 const AVATAR_SIZE = 256;
@@ -22,7 +22,7 @@ export class StorageService {
    */
   async uploadAvatar(
     buffer: Buffer,
-    entityType: 'user' | 'workspace',
+    entityType: "user" | "workspace",
     entityId: string,
   ): Promise<UploadResult> {
     const optimized = await this.optimizeAvatar(buffer);
@@ -32,7 +32,7 @@ export class StorageService {
     return this.provider.upload(optimized, {
       folder: `avatars/${entityType}`,
       filename,
-      mimeType: 'image/webp',
+      mimeType: "image/webp",
     });
   }
 
@@ -49,8 +49,8 @@ export class StorageService {
   private async optimizeAvatar(buffer: Buffer): Promise<Buffer> {
     const optimized = await sharp(buffer)
       .resize(AVATAR_SIZE, AVATAR_SIZE, {
-        fit: 'cover',
-        position: 'centre',
+        fit: "cover",
+        position: "centre",
       })
       .webp({ quality: AVATAR_QUALITY })
       .toBuffer();

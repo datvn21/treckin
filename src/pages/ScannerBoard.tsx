@@ -74,85 +74,86 @@ export function ScannerBoard() {
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useDocumentTitle(
-    event && board
-      ? `${t("scanner.title")} · ${event.title} (${board.name})`
-      : t("scanner.title")
+    event && board ? `${t("scanner.title")} · ${event.title} (${board.name})` : t("scanner.title"),
   );
 
   // ── Data loading ────────────────────────────────────────────────
-  const loadData = useCallback(async (targetBoardId: string) => {
-    if (!eventId || !targetBoardId) return;
+  const loadData = useCallback(
+    async (targetBoardId: string) => {
+      if (!eventId || !targetBoardId) return;
 
-    try {
-      const { data } = await api.get<{
-        id: string;
-        title: string;
-        description?: string;
-        date: string;
-        startTime?: string;
-        endTime?: string;
-        location?: string;
-        latitude?: number;
-        longitude?: number;
-        geofenceRadius?: number;
-        status: string;
-        attendancePolicy: string;
-        requiredBoardCount?: number;
-        boards?: Array<{
+      try {
+        const { data } = await api.get<{
           id: string;
-          name: string;
-          eventId: string;
+          title: string;
+          description?: string;
+          date: string;
+          startTime?: string;
+          endTime?: string;
+          location?: string;
+          latitude?: number;
+          longitude?: number;
+          geofenceRadius?: number;
           status: string;
-          checkinCount?: number;
-        }>;
-        _count?: { checkins: number; registrations: number };
-        createdBy?: { name: string };
-        createdAt?: string;
-      }>(`/events/${eventId}`);
+          attendancePolicy: string;
+          requiredBoardCount?: number;
+          boards?: Array<{
+            id: string;
+            name: string;
+            eventId: string;
+            status: string;
+            checkinCount?: number;
+          }>;
+          _count?: { checkins: number; registrations: number };
+          createdBy?: { name: string };
+          createdAt?: string;
+        }>(`/events/${eventId}`);
 
-      const mappedEvent: Event = {
-        id: data.id,
-        title: data.title,
-        description: data.description ?? "",
-        date: data.date,
-        startTime: data.startTime ?? "",
-        endTime: data.endTime ?? "",
-        location: data.location ?? "",
-        latitude: data.latitude,
-        longitude: data.longitude,
-        geofenceRadius: data.geofenceRadius,
-        status: mapApiEventStatus(data.status),
-        attendancePolicy: data.attendancePolicy as Event["attendancePolicy"],
-        requiredBoardCount: data.requiredBoardCount,
-        boards: (data.boards ?? []).map((b) => ({
-          id: b.id,
-          name: b.name,
-          eventId: b.eventId,
-          status: b.status.toLowerCase() as BoardStatus,
-          checkinCount: b.checkinCount ?? 0,
-        })),
-        totalCheckins: data._count?.checkins ?? 0,
-        totalRegistered: data._count?.registrations ?? 0,
-        createdBy: data.createdBy?.name ?? "",
-        createdAt: data.createdAt ?? "",
-      };
+        const mappedEvent: Event = {
+          id: data.id,
+          title: data.title,
+          description: data.description ?? "",
+          date: data.date,
+          startTime: data.startTime ?? "",
+          endTime: data.endTime ?? "",
+          location: data.location ?? "",
+          latitude: data.latitude,
+          longitude: data.longitude,
+          geofenceRadius: data.geofenceRadius,
+          status: mapApiEventStatus(data.status),
+          attendancePolicy: data.attendancePolicy as Event["attendancePolicy"],
+          requiredBoardCount: data.requiredBoardCount,
+          boards: (data.boards ?? []).map((b) => ({
+            id: b.id,
+            name: b.name,
+            eventId: b.eventId,
+            status: b.status.toLowerCase() as BoardStatus,
+            checkinCount: b.checkinCount ?? 0,
+          })),
+          totalCheckins: data._count?.checkins ?? 0,
+          totalRegistered: data._count?.registrations ?? 0,
+          createdBy: data.createdBy?.name ?? "",
+          createdAt: data.createdAt ?? "",
+        };
 
-      const foundBoard = mappedEvent.boards.find((b) => b.id === targetBoardId);
-      if (!foundBoard) {
+        const foundBoard = mappedEvent.boards.find((b) => b.id === targetBoardId);
+        if (!foundBoard) {
+          navigate(`/app/events/${eventId}/manage`, { replace: true });
+          return;
+        }
+
+        setLocalEvent(mappedEvent);
+        setLocalBoard(foundBoard);
+        setEvent(mappedEvent);
+        setBoard(foundBoard);
+        setTotalCheckins(mappedEvent.totalCheckins);
+      } catch (err) {
+        console.error("Failed to load scanner data:", parseApiError(err, "Load error"));
         navigate(`/app/events/${eventId}/manage`, { replace: true });
-        return;
       }
-
-      setLocalEvent(mappedEvent);
-      setLocalBoard(foundBoard);
-      setEvent(mappedEvent);
-      setBoard(foundBoard);
-      setTotalCheckins(mappedEvent.totalCheckins);
-    } catch (err) {
-      console.error("Failed to load scanner data:", parseApiError(err, "Load error"));
-      navigate(`/app/events/${eventId}/manage`, { replace: true });
-    }
-  }, [eventId, navigate, setEvent, setBoard, setTotalCheckins]);
+    },
+    [eventId, navigate, setEvent, setBoard, setTotalCheckins],
+  );
 
   // Initial load
   useEffect(() => {
@@ -161,22 +162,27 @@ export function ScannerBoard() {
       return;
     }
     void loadData(initialBoardId);
-    return () => { reset(); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      reset();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId, initialBoardId]);
 
   // ── Board switching ─────────────────────────────────────────────
-  const handleBoardChange = useCallback((newBoardId: string) => {
-    setActiveBoardId(newBoardId);
-    clearResult();
-    setIsPaused(false);
-    const newBoard = event?.boards.find((b) => b.id === newBoardId);
-    if (newBoard && event) {
-      setLocalBoard(newBoard);
-      setBoard(newBoard);
-      setTotalCheckins(newBoard.checkinCount ?? 0);
-    }
-  }, [event, clearResult, setBoard, setTotalCheckins]);
+  const handleBoardChange = useCallback(
+    (newBoardId: string) => {
+      setActiveBoardId(newBoardId);
+      clearResult();
+      setIsPaused(false);
+      const newBoard = event?.boards.find((b) => b.id === newBoardId);
+      if (newBoard && event) {
+        setLocalBoard(newBoard);
+        setBoard(newBoard);
+        setTotalCheckins(newBoard.checkinCount ?? 0);
+      }
+    },
+    [event, clearResult, setBoard, setTotalCheckins],
+  );
 
   // ── QR scan handler ─────────────────────────────────────────────
   const handleScan = useCallback(
@@ -266,8 +272,7 @@ export function ScannerBoard() {
           addCheckin(result.checkinRecord);
         }
       } catch (err) {
-        const backendMessage =
-          parseApiError(err, t("scanner.invalidQrDesc"));
+        const backendMessage = parseApiError(err, t("scanner.invalidQrDesc"));
 
         let status: ScanStatus = "invalid-qr";
         const messageLower = backendMessage.toLowerCase();
@@ -280,7 +285,19 @@ export function ScannerBoard() {
         setScanResult({ status, message: backendMessage });
       }
     },
-    [isProcessing, activeBoardId, eventId, board, direction, isOnline, setProcessing, queueOffline, setScanResult, addCheckin, t]
+    [
+      isProcessing,
+      activeBoardId,
+      eventId,
+      board,
+      direction,
+      isOnline,
+      setProcessing,
+      queueOffline,
+      setScanResult,
+      addCheckin,
+      t,
+    ],
   );
 
   // ── Short code handler ──────────────────────────────────────────
@@ -353,15 +370,14 @@ export function ScannerBoard() {
           addCheckin(result.checkinRecord);
         }
       } catch (err) {
-        const backendMessage =
-          parseApiError(err, t("scanner.invalidQr"));
+        const backendMessage = parseApiError(err, t("scanner.invalidQr"));
         setScanResult({ status: "invalid-qr", message: backendMessage });
         setShortCode("");
       } finally {
         setIsSubmittingCode(false);
       }
     },
-    [shortCode, activeBoardId, eventId, board, direction, setScanResult, addCheckin, t]
+    [shortCode, activeBoardId, eventId, board, direction, setScanResult, addCheckin, t],
   );
 
   // ── Dismiss scan result ─────────────────────────────────────────
@@ -420,7 +436,7 @@ export function ScannerBoard() {
               "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
               mode === "scan-personal"
                 ? "bg-[#2c2724] text-[#f0ebe6] shadow-sm"
-                : "text-[#8f857f] hover:text-[#c2b9b3]"
+                : "text-[#8f857f] hover:text-[#c2b9b3]",
             )}
           >
             {t("scanner.scanQr")}
@@ -432,7 +448,7 @@ export function ScannerBoard() {
               "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
               mode === "enter-code"
                 ? "bg-[#2c2724] text-[#f0ebe6] shadow-sm"
-                : "text-[#8f857f] hover:text-[#c2b9b3]"
+                : "text-[#8f857f] hover:text-[#c2b9b3]",
             )}
           >
             {t("scanner.enterCode")}
@@ -444,7 +460,7 @@ export function ScannerBoard() {
               "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
               mode === "display-board"
                 ? "bg-[#2c2724] text-[#f0ebe6] shadow-sm"
-                : "text-[#8f857f] hover:text-[#c2b9b3]"
+                : "text-[#8f857f] hover:text-[#c2b9b3]",
             )}
           >
             {t("scanner.displayBoard")}
@@ -461,7 +477,7 @@ export function ScannerBoard() {
                 "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
                 direction === "IN"
                   ? "bg-[#2c2724] text-[#f0ebe6] shadow-sm"
-                  : "text-[#8f857f] hover:text-[#c2b9b3]"
+                  : "text-[#8f857f] hover:text-[#c2b9b3]",
               )}
             >
               {t("scanner.directionIn")}
@@ -473,7 +489,7 @@ export function ScannerBoard() {
                 "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
                 direction === "OUT"
                   ? "bg-[#2c2724] text-[#f0ebe6] shadow-sm"
-                  : "text-[#8f857f] hover:text-[#c2b9b3]"
+                  : "text-[#8f857f] hover:text-[#c2b9b3]",
               )}
             >
               {t("scanner.directionOut")}
@@ -489,10 +505,7 @@ export function ScannerBoard() {
 
       {/* ── Main content ──────────────────────────────────────── */}
       {mode === "scan-personal" ? (
-        <QRScanner
-          onScan={handleScan}
-          isPaused={isPaused || isProcessing}
-        />
+        <QRScanner onScan={handleScan} isPaused={isPaused || isProcessing} />
       ) : mode === "enter-code" ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6">
           <div className="text-center">
@@ -509,9 +522,7 @@ export function ScannerBoard() {
               id="input-short-code"
               type="text"
               value={shortCode}
-              onChange={(e) =>
-                setShortCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))
-              }
+              onChange={(e) => setShortCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
               placeholder={t("scanner.enterCodePlaceholder")}
               className="text-center text-xl font-mono tracking-widest uppercase bg-[#231f1c] border-[#3d3530] text-[#f0ebe6] placeholder:text-[#5e5650]"
               maxLength={6}

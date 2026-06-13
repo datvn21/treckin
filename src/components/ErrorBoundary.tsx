@@ -1,11 +1,22 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
-interface Props { children: ReactNode; fallback?: ReactNode; }
-interface State { hasError: boolean; error: Error | null; }
+interface Props {
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+interface State {
+  hasError: boolean;
+  error: Error | null;
+}
 
 export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) { super(props); this.state = { hasError: false, error: null }; }
-  static getDerivedStateFromError(error: Error): State { return { hasError: true, error }; }
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error("[ErrorBoundary]", error, info.componentStack);
   }
@@ -20,13 +31,17 @@ export class ErrorBoundary extends Component<Props, State> {
             <p className="text-sm text-ink-3 mb-4">Ứng dụng gặp sự cố không mong muốn.</p>
             {this.state.error && (
               <details className="text-left mb-4">
-                <summary className="text-xs font-medium text-ink-3 cursor-pointer mb-2">Chi tiết lỗi</summary>
+                <summary className="text-xs font-medium text-ink-3 cursor-pointer mb-2">
+                  Chi tiết lỗi
+                </summary>
                 <pre className="text-xs font-code text-danger bg-danger-bg border border-danger-border rounded p-3 overflow-auto">
                   {this.state.error.message}
                 </pre>
               </details>
             )}
-            <button type="button" className="btn-primary" onClick={() => window.location.reload()}>Tải lại trang</button>
+            <button type="button" className="btn-primary" onClick={() => window.location.reload()}>
+              Tải lại trang
+            </button>
           </div>
         </div>
       );

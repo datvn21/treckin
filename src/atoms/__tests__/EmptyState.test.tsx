@@ -16,12 +16,7 @@ describe("EmptyState", () => {
     });
 
     it("renders custom icon when provided", () => {
-      render(
-        <EmptyState
-          title="Custom Icon"
-          icon={<span data-testid="custom-icon">🎉</span>}
-        />,
-      );
+      render(<EmptyState title="Custom Icon" icon={<span data-testid="custom-icon">🎉</span>} />);
       expect(screen.getByTestId("custom-icon")).toBeInTheDocument();
     });
   });
@@ -29,14 +24,9 @@ describe("EmptyState", () => {
   describe("Description", () => {
     it("renders description when provided", () => {
       render(
-        <EmptyState
-          title="No Data"
-          description="There is no data to display at the moment."
-        />,
+        <EmptyState title="No Data" description="There is no data to display at the moment." />,
       );
-      expect(
-        screen.getByText("There is no data to display at the moment."),
-      ).toBeInTheDocument();
+      expect(screen.getByText("There is no data to display at the moment.")).toBeInTheDocument();
     });
 
     it("does not render description when not provided", () => {
@@ -48,12 +38,7 @@ describe("EmptyState", () => {
 
   describe("Action", () => {
     it("renders action button when provided", () => {
-      render(
-        <EmptyState
-          title="No Items"
-          action={<button>Add Item</button>}
-        />,
-      );
+      render(<EmptyState title="No Items" action={<button>Add Item</button>} />);
       expect(screen.getByRole("button", { name: "Add Item" })).toBeInTheDocument();
     });
 
@@ -88,12 +73,7 @@ describe("EmptyState", () => {
     });
 
     it("renders description as paragraph", () => {
-      render(
-        <EmptyState
-          title="Title"
-          description="This is a description."
-        />,
-      );
+      render(<EmptyState title="Title" description="This is a description." />);
       const paragraph = document.querySelector("p");
       expect(paragraph).toHaveTextContent("This is a description.");
     });
@@ -109,13 +89,7 @@ describe("EmptyState", () => {
 
   describe("Accessibility", () => {
     it("forwards additional props", () => {
-      render(
-        <EmptyState
-          title="Accessible"
-          id="empty-1"
-          data-testid="empty-state"
-        />,
-      );
+      render(<EmptyState title="Accessible" id="empty-1" data-testid="empty-state" />);
       expect(screen.getByTestId("empty-state")).toBeInTheDocument();
     });
   });

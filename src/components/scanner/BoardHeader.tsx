@@ -44,9 +44,7 @@ export function BoardHeader({
 
       {/* ── Event info ──────────────────────────────────── */}
       <div className="flex-none flex flex-col min-w-0">
-        <p className="text-xs text-[#5e5650] leading-tight truncate max-w-[120px]">
-          {eventName}
-        </p>
+        <p className="text-xs text-[#5e5650] leading-tight truncate max-w-[120px]">{eventName}</p>
         <div className="flex items-center gap-1.5">
           {isOnline ? (
             <Wifi className="w-3.5 h-3.5 text-[#4ade80]" strokeWidth={1.5} />
@@ -74,14 +72,16 @@ export function BoardHeader({
             <span className="text-sm font-semibold text-[#f0ebe6] truncate max-w-[100px]">
               {currentBoard.name}
             </span>
-            <span className={cn(
-              "text-xs",
-              currentBoard.status === "active"
-                ? "text-[#4ade80]"
-                : currentBoard.status === "paused"
-                  ? "text-[#facc15]"
-                  : "text-[#8f857f]"
-            )}>
+            <span
+              className={cn(
+                "text-xs",
+                currentBoard.status === "active"
+                  ? "text-[#4ade80]"
+                  : currentBoard.status === "paused"
+                    ? "text-[#facc15]"
+                    : "text-[#8f857f]",
+              )}
+            >
               {t(`scanner.status.${currentBoard.status}`)}
             </span>
           </div>
@@ -95,10 +95,7 @@ export function BoardHeader({
         {/* Board dropdown */}
         {isDropdownOpen && (
           <>
-            <div
-              className="fixed inset-0 z-40"
-              onClick={() => setIsDropdownOpen(false)}
-            />
+            <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
             <div className="absolute right-0 top-full mt-2 z-50 w-48 rounded-xl bg-[#231f1c] border border-[#3d3530] shadow-xl overflow-hidden">
               {boards.map((board) => (
                 <button
@@ -110,26 +107,30 @@ export function BoardHeader({
                   }}
                   className={cn(
                     "w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[#2c2724] transition-colors",
-                    board.id === currentBoard.id && "bg-[#2c2724]"
+                    board.id === currentBoard.id && "bg-[#2c2724]",
                   )}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className={cn(
-                      "text-sm font-medium truncate",
-                      board.id === currentBoard.id ? "text-[#f0ebe6]" : "text-[#c2b9b3]"
-                    )}>
+                    <p
+                      className={cn(
+                        "text-sm font-medium truncate",
+                        board.id === currentBoard.id ? "text-[#f0ebe6]" : "text-[#c2b9b3]",
+                      )}
+                    >
                       {board.name}
                     </p>
                     <p className="text-xs text-[#5e5650]">
                       {board.checkinCount} {t("scanner.checkins")}
                     </p>
                   </div>
-                  <span className={cn(
-                    "w-2 h-2 rounded-full flex-none",
-                    board.status === "active" && "bg-[#4ade80]",
-                    board.status === "paused" && "bg-[#facc15]",
-                    board.status === "inactive" && "bg-[#5e5650]"
-                  )} />
+                  <span
+                    className={cn(
+                      "w-2 h-2 rounded-full flex-none",
+                      board.status === "active" && "bg-[#4ade80]",
+                      board.status === "paused" && "bg-[#facc15]",
+                      board.status === "inactive" && "bg-[#5e5650]",
+                    )}
+                  />
                 </button>
               ))}
             </div>
@@ -145,7 +146,7 @@ export function BoardHeader({
           "flex items-center justify-center w-9 h-9 rounded-lg border transition-colors",
           isPaused
             ? "bg-[#0061fe] border-transparent text-white hover:bg-[#0052d4]"
-            : "bg-[#231f1c] border-[#3d3530] text-[#8f857f] hover:text-[#f0ebe6] hover:bg-[#2c2724] hover:border-[#4d4540]"
+            : "bg-[#231f1c] border-[#3d3530] text-[#8f857f] hover:text-[#f0ebe6] hover:bg-[#2c2724] hover:border-[#4d4540]",
         )}
         aria-label={isPaused ? t("scanner.resume") : t("scanner.pause")}
         title={isPaused ? t("scanner.resume") : t("scanner.pause")}

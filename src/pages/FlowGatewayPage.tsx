@@ -44,7 +44,7 @@ export function FlowGatewayPage() {
             "lg:col-span-2 card text-left p-7 sm:p-8 min-h-[17rem]",
             "flex flex-col justify-between gap-8",
             "transition-[background-color,border-color] duration-normal ease-out",
-            "border-primary-border hover:bg-primary-muted"
+            "border-primary-border hover:bg-primary-muted",
           )}
         >
           <span
@@ -76,7 +76,7 @@ export function FlowGatewayPage() {
             "lg:col-span-1 card text-left p-7 sm:p-8 min-h-[17rem]",
             "flex flex-col justify-between gap-8",
             "transition-[background-color,border-color] duration-normal ease-out",
-            "border-border-1 hover:bg-surface-raised"
+            "border-border-1 hover:bg-surface-raised",
           )}
         >
           <span

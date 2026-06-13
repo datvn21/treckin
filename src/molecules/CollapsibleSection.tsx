@@ -42,29 +42,25 @@ export function CollapsibleSection({
           "w-full flex items-center gap-2.5 px-4 py-3.5 text-left",
           "hover:bg-surface-raised transition-colors duration-100",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-          isOpen && "border-b border-border-1"
+          isOpen && "border-b border-border-1",
         )}
         aria-expanded={isOpen}
       >
         {/* Icon */}
-        {icon && (
-          <span className="text-ink-3 shrink-0 flex items-center">{icon}</span>
-        )}
+        {icon && <span className="text-ink-3 shrink-0 flex items-center">{icon}</span>}
 
         {/* Title */}
         <span className="flex-1 text-sm font-semibold text-ink-1">{title}</span>
 
         {/* Badge */}
-        {badge && (
-          <span className="shrink-0">{badge}</span>
-        )}
+        {badge && <span className="shrink-0">{badge}</span>}
 
         {/* Chevron */}
         <ChevronDown
           size={16}
           className={cn(
             "text-ink-3 shrink-0 transition-transform duration-200",
-            isOpen && "rotate-180"
+            isOpen && "rotate-180",
           )}
         />
       </button>
@@ -73,7 +69,7 @@ export function CollapsibleSection({
       <div
         className={cn(
           "grid transition-all duration-200 ease-in-out",
-          isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+          isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
         )}
       >
         <div className="overflow-hidden">

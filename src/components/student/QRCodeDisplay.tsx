@@ -24,15 +24,8 @@ const QR_DURATION = 30; // seconds
  * countdown interval. Both are cleaned up on unmount.
  */
 export function QRCodeDisplay({ eventId }: QRCodeDisplayProps) {
-  const {
-    currentHash,
-    timeRemaining,
-    isRefreshing,
-    error,
-    refreshQR,
-    stopCountdown,
-    setEventId,
-  } = useQRStore();
+  const { currentHash, timeRemaining, isRefreshing, error, refreshQR, stopCountdown, setEventId } =
+    useQRStore();
 
   useEffect(() => {
     setEventId(eventId);
@@ -101,17 +94,10 @@ export function QRCodeDisplay({ eventId }: QRCodeDisplayProps) {
       </div>
 
       {/* Countdown Ring */}
-      <CountdownRing
-        duration={QR_DURATION}
-        remaining={timeRemaining}
-        size={64}
-        strokeWidth={3}
-      />
+      <CountdownRing duration={QR_DURATION} remaining={timeRemaining} size={64} strokeWidth={3} />
 
       {/* Hint text */}
-      <p className="text-xs text-ink-3 text-center">
-        Mã QR tự động làm mới
-      </p>
+      <p className="text-xs text-ink-3 text-center">Mã QR tự động làm mới</p>
 
       {/* Inline error (when QR exists but refresh failed) */}
       {error && (

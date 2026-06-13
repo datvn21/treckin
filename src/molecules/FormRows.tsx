@@ -13,13 +13,7 @@ interface CheckRowProps {
   onChange: (v: boolean) => void;
 }
 
-export function CheckRow({
-  id,
-  label,
-  description,
-  checked,
-  onChange,
-}: CheckRowProps) {
+export function CheckRow({ id, label, description, checked, onChange }: CheckRowProps) {
   return (
     <CheckboxCard
       id={id}
@@ -73,9 +67,7 @@ export function RadioRow({
       />
       <div>
         <p className="text-sm font-medium text-ink-1">{label}</p>
-        {description && (
-          <p className="text-xs text-ink-3 mt-0.5">{description}</p>
-        )}
+        {description && <p className="text-xs text-ink-3 mt-0.5">{description}</p>}
       </div>
     </label>
   );

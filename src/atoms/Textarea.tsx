@@ -1,8 +1,7 @@
-import * as React from 'react';
-import { cn } from '@/lib/utils';
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
-export interface TextareaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   error?: string;
 }
 
@@ -13,12 +12,8 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         <textarea
           ref={ref}
           rows={rows}
-          className={cn(
-            'input',
-            error && 'border-danger focus:border-danger',
-            className
-          )}
-          aria-invalid={error ? 'true' : undefined}
+          className={cn("input", error && "border-danger focus:border-danger", className)}
+          aria-invalid={error ? "true" : undefined}
           aria-describedby={error ? `${props.id}-error` : undefined}
           {...props}
         />
@@ -33,9 +28,9 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
-Textarea.displayName = 'Textarea';
+Textarea.displayName = "Textarea";
 
 export { Textarea };

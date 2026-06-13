@@ -3,23 +3,23 @@ import { initReactI18next } from "react-i18next";
 import vi from "./locales/vi.json";
 import en from "./locales/en.json";
 
-i18n
-  .use(initReactI18next)
-  .init({
-    resources: {
-      vi: { translation: vi },
-      en: { translation: en },
-    },
-    lng: localStorage.getItem("treckin-theme")
-      ? (() => {
-          try {
-            const s = JSON.parse(localStorage.getItem("treckin-theme")!);
-            return (s?.state?.lang as string) ?? "vi";
-          } catch { return "vi"; }
-        })()
-      : "vi",
-    fallbackLng: "vi",
-    interpolation: { escapeValue: false },
-  });
+i18n.use(initReactI18next).init({
+  resources: {
+    vi: { translation: vi },
+    en: { translation: en },
+  },
+  lng: localStorage.getItem("treckin-theme")
+    ? (() => {
+        try {
+          const s = JSON.parse(localStorage.getItem("treckin-theme")!);
+          return (s?.state?.lang as string) ?? "vi";
+        } catch {
+          return "vi";
+        }
+      })()
+    : "vi",
+  fallbackLng: "vi",
+  interpolation: { escapeValue: false },
+});
 
 export default i18n;

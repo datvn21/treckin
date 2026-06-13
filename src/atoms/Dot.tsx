@@ -1,8 +1,8 @@
-import * as React from 'react';
-import { cn } from '@/lib/utils';
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
-type DotColor = 'green' | 'yellow' | 'red' | 'gray' | 'blue';
-type DotSize  = 'sm' | 'md';
+type DotColor = "green" | "yellow" | "red" | "gray" | "blue";
+type DotSize = "sm" | "md";
 
 export interface DotProps extends React.HTMLAttributes<HTMLSpanElement> {
   color?: DotColor;
@@ -11,25 +11,25 @@ export interface DotProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 const sizeMap: Record<DotSize, string> = {
-  sm: 'w-1.5 h-1.5',
-  md: 'w-2 h-2',
+  sm: "w-1.5 h-1.5",
+  md: "w-2 h-2",
 };
 
 const Dot: React.FC<DotProps> = ({
   className,
-  color = 'gray',
-  size = 'md',
+  color = "gray",
+  size = "md",
   animated = false,
   ...props
 }) => {
   return (
     <span
       className={cn(
-        'dot',
+        "dot",
         `dot-${color}`,
         sizeMap[size],
-        animated && 'animate-pulse-dot',
-        className
+        animated && "animate-pulse-dot",
+        className,
       )}
       aria-hidden="true"
       {...props}
@@ -37,6 +37,6 @@ const Dot: React.FC<DotProps> = ({
   );
 };
 
-Dot.displayName = 'Dot';
+Dot.displayName = "Dot";
 
 export { Dot };

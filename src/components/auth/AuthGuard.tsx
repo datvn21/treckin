@@ -27,8 +27,7 @@ export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
 
   if (requiredRole) {
     const isAllowed =
-      user?.role === requiredRole ||
-      (requiredRole === "user" && user?.role === "admin");
+      user?.role === requiredRole || (requiredRole === "user" && user?.role === "admin");
 
     if (!isAllowed) {
       return <Navigate to="/" replace />;

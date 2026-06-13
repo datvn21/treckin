@@ -42,7 +42,6 @@ interface WorkspaceMembersPanelProps {
 
 const roleOptions: WorkspaceRole[] = ["OWNER", "ADMIN", "MEMBER", "VIEWER"];
 
-
 function roleBadge(role: WorkspaceRole) {
   if (role === "OWNER") return "yellow";
   if (role === "ADMIN") return "blue";

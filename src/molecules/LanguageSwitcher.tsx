@@ -1,36 +1,41 @@
-import * as React from 'react';
-import { useTranslation } from 'react-i18next';
-import { useThemeStore } from '@/stores/theme-store';
-import { cn } from '@/lib/utils';
-import { ChevronDown, Search, X, Check, Languages } from 'lucide-react';
+import * as React from "react";
+import { useTranslation } from "react-i18next";
+import { useThemeStore } from "@/stores/theme-store";
+import { cn } from "@/lib/utils";
+import { ChevronDown, Search, X, Check, Languages } from "lucide-react";
 
 export interface LanguageSwitcherProps {
   className?: string;
-  compact?:   boolean; // compact = show VI/EN only, false = show full names in pills mode
-  variant?:   'pills' | 'dropdown';
+  compact?: boolean; // compact = show VI/EN only, false = show full names in pills mode
+  variant?: "pills" | "dropdown";
 }
 
 const LANGUAGES = [
-  { value: 'vi', label: 'Vietnamese', nativeName: 'Tiếng Việt', searchKey: 'tieng viet vietnamese vi' },
-  { value: 'en', label: 'English', nativeName: 'English', searchKey: 'english en' },
-  { value: 'ja', label: 'Japanese', nativeName: '日本語', searchKey: 'japanese nihongo ja' },
-  { value: 'ko', label: 'Korean', nativeName: '한국어', searchKey: 'korean ko' },
-  { value: 'zh', label: 'Chinese', nativeName: '中文', searchKey: 'chinese zh' },
-  { value: 'fr', label: 'French', nativeName: 'Français', searchKey: 'french fr' },
-  { value: 'es', label: 'Spanish', nativeName: 'Español', searchKey: 'spanish es' },
-  { value: 'de', label: 'German', nativeName: 'Deutsch', searchKey: 'german de' },
+  {
+    value: "vi",
+    label: "Vietnamese",
+    nativeName: "Tiếng Việt",
+    searchKey: "tieng viet vietnamese vi",
+  },
+  { value: "en", label: "English", nativeName: "English", searchKey: "english en" },
+  { value: "ja", label: "Japanese", nativeName: "日本語", searchKey: "japanese nihongo ja" },
+  { value: "ko", label: "Korean", nativeName: "한국어", searchKey: "korean ko" },
+  { value: "zh", label: "Chinese", nativeName: "中文", searchKey: "chinese zh" },
+  { value: "fr", label: "French", nativeName: "Français", searchKey: "french fr" },
+  { value: "es", label: "Spanish", nativeName: "Español", searchKey: "spanish es" },
+  { value: "de", label: "German", nativeName: "Deutsch", searchKey: "german de" },
 ];
 
 const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
   className,
   compact = true,
-  variant = 'pills',
+  variant = "pills",
 }) => {
   const { lang, setLang } = useThemeStore();
   const { i18n } = useTranslation();
 
   const [isOpen, setIsOpen] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchQuery, setSearchQuery] = React.useState("");
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -40,9 +45,9 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
         setIsOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener("mousedown", handleOutsideClick);
     return () => {
-      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener("mousedown", handleOutsideClick);
     };
   }, [isOpen]);
 
@@ -50,32 +55,33 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
     setLang(next);
     i18n.changeLanguage(next);
     setIsOpen(false);
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
-  const filteredLanguages = LANGUAGES.filter((l) =>
-    l.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    l.nativeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    l.searchKey.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredLanguages = LANGUAGES.filter(
+    (l) =>
+      l.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      l.nativeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      l.searchKey.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const currentLangObj = LANGUAGES.find((l) => l.value === lang) || {
-    value: 'vi',
-    label: 'Vietnamese',
-    nativeName: 'Tiếng Việt',
-    searchKey: 'tieng viet'
+    value: "vi",
+    label: "Vietnamese",
+    nativeName: "Tiếng Việt",
+    searchKey: "tieng viet",
   };
 
-  if (variant === 'dropdown') {
+  if (variant === "dropdown") {
     return (
-      <div ref={containerRef} className={cn('relative w-full', className)}>
+      <div ref={containerRef} className={cn("relative w-full", className)}>
         <button
           type="button"
           onClick={() => setIsOpen((prev) => !prev)}
           className={cn(
-            'flex items-center justify-between w-full rounded-md border border-border-1 bg-surface px-3 py-2 text-sm font-medium text-ink-1 min-h-[44px]',
-            'hover:border-border-2 hover:bg-surface-raised transition-all duration-100 outline-none',
-            isOpen && 'border-primary ring-2 ring-primary/20'
+            "flex items-center justify-between w-full rounded-md border border-border-1 bg-surface px-3 py-2 text-sm font-medium text-ink-1 min-h-[44px]",
+            "hover:border-border-2 hover:bg-surface-raised transition-all duration-100 outline-none",
+            isOpen && "border-primary ring-2 ring-primary/20",
           )}
           aria-expanded={isOpen}
         >
@@ -85,7 +91,7 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
           </span>
           <ChevronDown
             size={14}
-            className={cn('text-ink-4 transition-transform duration-150', isOpen && 'rotate-180')}
+            className={cn("text-ink-4 transition-transform duration-150", isOpen && "rotate-180")}
           />
         </button>
 
@@ -104,7 +110,7 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
               {searchQuery && (
                 <button
                   type="button"
-                  onClick={() => setSearchQuery('')}
+                  onClick={() => setSearchQuery("")}
                   className="absolute right-2.5 p-0.5 text-ink-4 hover:text-ink-2 transition-colors"
                 >
                   <X size={12} />
@@ -124,10 +130,10 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
                       type="button"
                       onClick={() => setLanguage(l.value)}
                       className={cn(
-                        'flex w-full items-center justify-between px-3 py-2 text-sm rounded transition-all duration-100 text-left',
+                        "flex w-full items-center justify-between px-3 py-2 text-sm rounded transition-all duration-100 text-left",
                         isSelected
-                          ? 'text-primary font-semibold bg-primary-muted/20'
-                          : 'text-ink-2 hover:text-ink-1 hover:bg-surface-raised'
+                          ? "text-primary font-semibold bg-primary-muted/20"
+                          : "text-ink-2 hover:text-ink-1 hover:bg-surface-raised",
                       )}
                     >
                       <span className="flex flex-col">
@@ -150,22 +156,18 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
 
   // Pills variant (default)
   const pillsOptions = [
-    { value: 'vi', label: 'Tiếng Việt', short: 'VI' },
-    { value: 'en', label: 'English',    short: 'EN' },
+    { value: "vi", label: "Tiếng Việt", short: "VI" },
+    { value: "en", label: "English", short: "EN" },
   ];
 
   return (
-    <div
-      className={cn('tab-pills', className)}
-      role="group"
-      aria-label="Chọn ngôn ngữ"
-    >
+    <div className={cn("tab-pills", className)} role="group" aria-label="Chọn ngôn ngữ">
       {pillsOptions.map((opt) => (
         <button
           key={opt.value}
           type="button"
           onClick={() => setLanguage(opt.value)}
-          className={cn('tab-pill', lang === opt.value && 'active')}
+          className={cn("tab-pill", lang === opt.value && "active")}
           aria-pressed={lang === opt.value}
           aria-label={opt.label}
         >
@@ -176,6 +178,6 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
   );
 };
 
-LanguageSwitcher.displayName = 'LanguageSwitcher';
+LanguageSwitcher.displayName = "LanguageSwitcher";
 
 export { LanguageSwitcher };

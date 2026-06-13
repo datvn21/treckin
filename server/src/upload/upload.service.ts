@@ -4,17 +4,13 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-} from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { StorageService } from '../storage/storage.service';
-import { WORKSPACE_MEMBER_ROLE } from '@prisma/client';
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { StorageService } from "../storage/storage.service";
+import { WORKSPACE_MEMBER_ROLE } from "@prisma/client";
 
 /** Allowed MIME types for avatar uploads */
-const ALLOWED_MIME_TYPES = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-]);
+const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 /** Max file size in bytes (2 MB) */
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
@@ -44,10 +40,10 @@ export class UploadService {
       where: { id: userId },
       select: { avatarUrl: true },
     });
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException("User not found");
 
     // Upload new avatar
-    const result = await this.storage.uploadAvatar(buffer, 'user', userId);
+    const result = await this.storage.uploadAvatar(buffer, "user", userId);
 
     // Update DB
     await this.prisma.user.update({
@@ -79,12 +75,12 @@ export class UploadService {
     const member = await this.prisma.workspaceMember.findUnique({
       where: { workspaceId_userId: { workspaceId, userId } },
     });
-    if (!member) throw new ForbiddenException('Workspace access denied');
+    if (!member) throw new ForbiddenException("Workspace access denied");
     if (
       member.role !== WORKSPACE_MEMBER_ROLE.OWNER &&
       member.role !== WORKSPACE_MEMBER_ROLE.ADMIN
     ) {
-      throw new ForbiddenException('Workspace admin permission required');
+      throw new ForbiddenException("Workspace admin permission required");
     }
 
     // Fetch current workspace
@@ -92,10 +88,10 @@ export class UploadService {
       where: { id: workspaceId },
       select: { logoUrl: true },
     });
-    if (!workspace) throw new NotFoundException('Workspace not found');
+    if (!workspace) throw new NotFoundException("Workspace not found");
 
     // Upload
-    const result = await this.storage.uploadAvatar(buffer, 'workspace', workspaceId);
+    const result = await this.storage.uploadAvatar(buffer, "workspace", workspaceId);
 
     // Update DB
     await this.prisma.workspace.update({
@@ -115,7 +111,7 @@ export class UploadService {
   private validateFile(mimeType: string, fileSize: number): void {
     if (!ALLOWED_MIME_TYPES.has(mimeType)) {
       throw new BadRequestException(
-        `Invalid file type: ${mimeType}. Allowed: ${[...ALLOWED_MIME_TYPES].join(', ')}`,
+        `Invalid file type: ${mimeType}. Allowed: ${[...ALLOWED_MIME_TYPES].join(", ")}`,
       );
     }
     if (fileSize > MAX_FILE_SIZE) {
@@ -131,10 +127,10 @@ export class UploadService {
    * (contains 'avatars/' path), to avoid deleting external URLs like Google profile pics.
    */
   private cleanupOldAvatar(oldUrl: string | null, newKey: string): void {
-    if (!oldUrl || !oldUrl.includes('avatars/')) return;
+    if (!oldUrl || !oldUrl.includes("avatars/")) return;
 
     // Extract key from URL — find 'avatars/' and take everything after
-    const idx = oldUrl.indexOf('avatars/');
+    const idx = oldUrl.indexOf("avatars/");
     if (idx === -1) return;
     const oldKey = oldUrl.substring(idx);
 

@@ -52,7 +52,6 @@ interface EventSessionMeta {
   customSessionsEnabled?: boolean;
 }
 
-
 function toDateTimeLocal(value?: string | null) {
   if (!value) return "";
   const date = new Date(value);

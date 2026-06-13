@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { createHmac, randomUUID, timingSafeEqual } from 'crypto';
-import { RedisService } from '../redis/redis.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { createHmac, randomUUID, timingSafeEqual } from "crypto";
+import { RedisService } from "../redis/redis.service";
 
 interface QrGenerateResult {
   hash: string;
@@ -13,7 +13,7 @@ interface QrGenerateResult {
 
 export type QrToken =
   | {
-      type: 'PERSONAL';
+      type: "PERSONAL";
       userId: string;
       eventId?: string;
       issuedAt: number;
@@ -21,10 +21,10 @@ export type QrToken =
       jti: string;
     }
   | {
-      type: 'BOARD';
+      type: "BOARD";
       eventId: string;
       boardId: string;
-      direction: 'IN' | 'OUT';
+      direction: "IN" | "OUT";
       issuedAt: number;
       expiresAt: number;
       jti: string;
@@ -32,8 +32,15 @@ export type QrToken =
 
 /** Legacy payload shape kept for backwards-compat during offline sync */
 type LegacyQrToken =
-  | { type: 'PERSONAL'; userId: string; eventId?: string; timestamp: number; jti?: string }
-  | { type: 'BOARD'; eventId: string; boardId: string; direction: 'IN' | 'OUT'; timestamp: number; jti?: string };
+  | { type: "PERSONAL"; userId: string; eventId?: string; timestamp: number; jti?: string }
+  | {
+      type: "BOARD";
+      eventId: string;
+      boardId: string;
+      direction: "IN" | "OUT";
+      timestamp: number;
+      jti?: string;
+    };
 
 @Injectable()
 export class QrService {
@@ -42,26 +49,26 @@ export class QrService {
   private readonly ttlSeconds: number;
 
   /** Short-code Redis key prefix */
-  private readonly SHORT_CODE_PREFIX = 'QR_SC:';
+  private readonly SHORT_CODE_PREFIX = "QR_SC:";
   /** Consumed JTI prefix for single-use enforcement */
-  private readonly JTI_PREFIX = 'QR_JTI:';
+  private readonly JTI_PREFIX = "QR_JTI:";
 
   constructor(
     private readonly redisService: RedisService,
     private readonly configService: ConfigService,
   ) {
-    const hmacSecret = this.configService.get<string>('QR_HMAC_SECRET');
+    const hmacSecret = this.configService.get<string>("QR_HMAC_SECRET");
     if (!hmacSecret) {
-      throw new Error('QR_HMAC_SECRET environment variable is required.');
+      throw new Error("QR_HMAC_SECRET environment variable is required.");
     }
     this.hmacSecret = hmacSecret;
-    this.ttlSeconds = this.configService.get<number>('QR_TTL_SECONDS', 30);
+    this.ttlSeconds = this.configService.get<number>("QR_TTL_SECONDS", 30);
   }
 
   async generatePersonalQr(userId: string, eventId?: string): Promise<QrGenerateResult> {
     const now = Date.now();
     return this.createSignedToken({
-      type: 'PERSONAL',
+      type: "PERSONAL",
       userId,
       eventId,
       issuedAt: now,
@@ -73,11 +80,11 @@ export class QrService {
   async generateBoardQr(
     eventId: string,
     boardId: string,
-    direction: 'IN' | 'OUT' = 'IN',
+    direction: "IN" | "OUT" = "IN",
   ): Promise<QrGenerateResult> {
     const now = Date.now();
     return this.createSignedToken({
-      type: 'BOARD',
+      type: "BOARD",
       eventId,
       boardId,
       direction,
@@ -95,11 +102,9 @@ export class QrService {
   private async createSignedToken(payloadData: QrToken): Promise<QrGenerateResult> {
     const payload = JSON.stringify(payloadData);
 
-    const signature = createHmac('sha256', this.hmacSecret)
-      .update(payload)
-      .digest('hex');
+    const signature = createHmac("sha256", this.hmacSecret).update(payload).digest("hex");
 
-    const token = `${Buffer.from(payload).toString('base64url')}.${signature}`;
+    const token = `${Buffer.from(payload).toString("base64url")}.${signature}`;
 
     const redisKey = `QR:${token}`;
 
@@ -128,9 +133,9 @@ export class QrService {
    * The short code expires alongside the credential + max grace period (300 s).
    */
   private async createShortCode(hash: string, ttlSeconds: number): Promise<string> {
-    const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // unambiguous chars
+    const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // unambiguous chars
     for (let attempt = 0; attempt < 10; attempt++) {
-      let code = '';
+      let code = "";
       for (let i = 0; i < 6; i++) {
         code += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
       }
@@ -143,7 +148,7 @@ export class QrService {
       }
     }
     // Fallback: use first 6 chars of jti from hash (collision extremely unlikely)
-    const fallback = Buffer.from(hash).toString('base64url').substring(0, 6).toUpperCase();
+    const fallback = Buffer.from(hash).toString("base64url").substring(0, 6).toUpperCase();
     const key = `${this.SHORT_CODE_PREFIX}${fallback}`;
     await this.redisService.setex(key, ttlSeconds + 300, hash);
     return fallback;
@@ -182,11 +187,11 @@ export class QrService {
     }
 
     // 2. Offline sync fallback: extract and verify signature + expiresAt from token
-    if (!hash.includes('.')) {
+    if (!hash.includes(".")) {
       return null;
     }
 
-    const dotIndex = hash.lastIndexOf('.');
+    const dotIndex = hash.lastIndexOf(".");
     const payloadB64 = hash.substring(0, dotIndex);
     const signature = hash.substring(dotIndex + 1);
 
@@ -198,9 +203,9 @@ export class QrService {
       // Try base64url first (new format), then base64 (legacy)
       let payload: string;
       try {
-        payload = Buffer.from(payloadB64, 'base64url').toString('utf-8');
+        payload = Buffer.from(payloadB64, "base64url").toString("utf-8");
       } catch {
-        payload = Buffer.from(payloadB64, 'base64').toString('utf-8');
+        payload = Buffer.from(payloadB64, "base64").toString("utf-8");
       }
 
       const parsed = this.normalizePayload(JSON.parse(payload));
@@ -217,12 +222,10 @@ export class QrService {
         return null;
       }
 
-      const expectedSignature = createHmac('sha256', this.hmacSecret)
-        .update(payload)
-        .digest('hex');
+      const expectedSignature = createHmac("sha256", this.hmacSecret).update(payload).digest("hex");
 
-      const sigBuffer = Buffer.from(signature, 'hex');
-      const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+      const sigBuffer = Buffer.from(signature, "hex");
+      const expectedBuffer = Buffer.from(expectedSignature, "hex");
 
       if (sigBuffer.length !== expectedBuffer.length) {
         return null;
@@ -241,7 +244,7 @@ export class QrService {
 
   async validateHash(hash: string): Promise<{ userId: string; eventId?: string } | null> {
     const token = await this.validateToken(hash);
-    if (!token || token.type !== 'PERSONAL') return null;
+    if (!token || token.type !== "PERSONAL") return null;
     return { userId: token.userId, eventId: token.eventId };
   }
 
@@ -251,7 +254,7 @@ export class QrService {
    */
   async markJtiConsumed(jti: string): Promise<void> {
     const key = `${this.JTI_PREFIX}${jti}`;
-    await this.redisService.setex(key, this.ttlSeconds + 300, '1');
+    await this.redisService.setex(key, this.ttlSeconds + 300, "1");
   }
 
   async isJtiConsumed(jti: string): Promise<boolean> {
@@ -273,51 +276,53 @@ export class QrService {
         if (parsed.jti) {
           await this.markJtiConsumed(parsed.jti);
         }
-      } catch { /* ignore parse errors */ }
+      } catch {
+        /* ignore parse errors */
+      }
     }
     await this.redisService.del(redisKey);
   }
 
   private normalizePayload(raw: unknown): QrToken | null {
-    if (!raw || typeof raw !== 'object') return null;
+    if (!raw || typeof raw !== "object") return null;
     const data = raw as Record<string, unknown>;
 
     // Determine timestamps — support both new (issuedAt/expiresAt) and legacy (timestamp) shapes
     let issuedAt: number;
     let expiresAt: number;
 
-    if (typeof data['issuedAt'] === 'number' && typeof data['expiresAt'] === 'number') {
-      issuedAt = data['issuedAt'];
-      expiresAt = data['expiresAt'];
-    } else if (typeof data['timestamp'] === 'number') {
+    if (typeof data["issuedAt"] === "number" && typeof data["expiresAt"] === "number") {
+      issuedAt = data["issuedAt"];
+      expiresAt = data["expiresAt"];
+    } else if (typeof data["timestamp"] === "number") {
       // Legacy shape: timestamp = issuedAt, expiresAt = timestamp + ttl (approximated)
-      issuedAt = data['timestamp'];
+      issuedAt = data["timestamp"];
       expiresAt = issuedAt + this.ttlSeconds * 1000;
     } else {
       return null;
     }
 
-    const jti = typeof data['jti'] === 'string' ? data['jti'] : randomUUID();
+    const jti = typeof data["jti"] === "string" ? data["jti"] : randomUUID();
 
-    if (data['type'] === 'PERSONAL') {
-      if (typeof data['userId'] !== 'string') return null;
+    if (data["type"] === "PERSONAL") {
+      if (typeof data["userId"] !== "string") return null;
       return {
-        type: 'PERSONAL',
-        userId: data['userId'],
-        eventId: typeof data['eventId'] === 'string' ? data['eventId'] : undefined,
+        type: "PERSONAL",
+        userId: data["userId"],
+        eventId: typeof data["eventId"] === "string" ? data["eventId"] : undefined,
         issuedAt,
         expiresAt,
         jti,
       };
     }
 
-    if (data['type'] === 'BOARD') {
-      if (typeof data['eventId'] !== 'string' || typeof data['boardId'] !== 'string') return null;
-      const direction = data['direction'] === 'OUT' ? 'OUT' : 'IN';
+    if (data["type"] === "BOARD") {
+      if (typeof data["eventId"] !== "string" || typeof data["boardId"] !== "string") return null;
+      const direction = data["direction"] === "OUT" ? "OUT" : "IN";
       return {
-        type: 'BOARD',
-        eventId: data['eventId'],
-        boardId: data['boardId'],
+        type: "BOARD",
+        eventId: data["eventId"],
+        boardId: data["boardId"],
         direction,
         issuedAt,
         expiresAt,

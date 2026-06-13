@@ -19,9 +19,5 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderWrapperProps)
     );
   }
 
-  return (
-    <GoogleOAuthProvider clientId={clientId ?? ""}>
-      {children}
-    </GoogleOAuthProvider>
-  );
+  return <GoogleOAuthProvider clientId={clientId ?? ""}>{children}</GoogleOAuthProvider>;
 }

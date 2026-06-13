@@ -46,12 +46,7 @@ export function timeAgo(date: string | Date): string {
  * Haversine distance between two coordinates in meters.
  * Used for geofencing validation.
  */
-export function haversineDistance(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
+export function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371e3; // Earth radius in meters
   const toRad = (deg: number) => (deg * Math.PI) / 180;
 
@@ -73,7 +68,7 @@ export function isWithinGeofence(
   userLon: number,
   venueLat: number,
   venueLon: number,
-  radiusMeters: number
+  radiusMeters: number,
 ): boolean {
   return haversineDistance(userLat, userLon, venueLat, venueLon) <= radiusMeters;
 }

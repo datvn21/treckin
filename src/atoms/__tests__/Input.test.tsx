@@ -103,7 +103,13 @@ describe("Input", () => {
   describe("Accessibility", () => {
     it("forwards ref to the input element", () => {
       let refValue: HTMLInputElement | null = null;
-      render(<Input ref={(el) => { refValue = el; }} />);
+      render(
+        <Input
+          ref={(el) => {
+            refValue = el;
+          }}
+        />,
+      );
       expect(refValue).toBeInTheDocument();
     });
 

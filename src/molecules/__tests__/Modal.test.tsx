@@ -45,11 +45,7 @@ describe("Modal", () => {
 
     it("renders description when provided", () => {
       render(
-        <Modal
-          open={true}
-          onOpenChange={vi.fn()}
-          description="Modal description text"
-        >
+        <Modal open={true} onOpenChange={vi.fn()} description="Modal description text">
           Content
         </Modal>,
       );
@@ -58,12 +54,7 @@ describe("Modal", () => {
 
     it("renders both title and description", () => {
       render(
-        <Modal
-          open={true}
-          onOpenChange={vi.fn()}
-          title="My Modal"
-          description="My description"
-        >
+        <Modal open={true} onOpenChange={vi.fn()} title="My Modal" description="My description">
           Content
         </Modal>,
       );
@@ -100,11 +91,7 @@ describe("Modal", () => {
   describe("Footer", () => {
     it("renders footer when provided", () => {
       render(
-        <Modal
-          open={true}
-          onOpenChange={vi.fn()}
-          footer={<button>Confirm</button>}
-        >
+        <Modal open={true} onOpenChange={vi.fn()} footer={<button>Confirm</button>}>
           Content
         </Modal>,
       );

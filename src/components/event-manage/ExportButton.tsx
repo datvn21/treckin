@@ -90,7 +90,7 @@ export function ExportButton({ eventId, eventTitle, className }: ExportButtonPro
           "text-ink-3 hover:text-ink-1 hover:bg-surface-raised",
           "transition-colors duration-100 focus-visible:outline-none",
           "flex items-center",
-          isExporting && "opacity-50 cursor-not-allowed"
+          isExporting && "opacity-50 cursor-not-allowed",
         )}
         aria-label={t("manage.attendees.exportOptions")}
         aria-haspopup="menu"
@@ -111,7 +111,7 @@ export function ExportButton({ eventId, eventTitle, className }: ExportButtonPro
           <div
             className={cn(
               "absolute right-0 top-full mt-1 z-40 min-w-[180px]",
-              "card shadow-lg py-1 animate-fade-in-up"
+              "card shadow-lg py-1 animate-fade-in-up",
             )}
             role="menu"
           >

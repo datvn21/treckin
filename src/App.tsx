@@ -38,17 +38,17 @@ export function App() {
             <Route index element={<AppHomePage />} />
             <Route path="home" element={<FlowGatewayPage />} />
             <Route path="join" element={<JoinEventPage />} />
-            
+
             {/* Attendee Perspective */}
             <Route path="events" element={<MyEventsPage />} />
             <Route path="events/:id" element={<EventDetailPage />} />
-            
+
             {/* Organizer Perspective */}
             <Route path="workspaces" element={<WorkspacesPage />} />
             <Route path="workspaces/:id" element={<WorkspaceDetailPage />} />
             <Route path="workspaces/:id/events/create" element={<CreateEventPage />} />
             <Route path="events/:id/manage" element={<EventManagePage />} />
-            
+
             {/* User Profile & Preferences */}
             <Route path="profile" element={<ProfilePage />} />
           </Route>

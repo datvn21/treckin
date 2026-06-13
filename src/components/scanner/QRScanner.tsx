@@ -9,14 +9,20 @@ interface QRScannerProps {
   isPaused: boolean;
 }
 
-type CameraState = "initializing" | "ready" | "paused" | "permission-denied" | "no-camera" | "error";
+type CameraState =
+  | "initializing"
+  | "ready"
+  | "paused"
+  | "permission-denied"
+  | "no-camera"
+  | "error";
 
 const SCANNER_ID = "qr-scanner-viewport";
 const DEBOUNCE_MS = 500;
 
 /**
  * QR code scanner using html5-qrcode.
- * 
+ *
  * Camera viewport is constrained to a 1:1 aspect ratio centered box
  * to match real-world QR code scanning usage.
  */
@@ -35,67 +41,75 @@ export function QRScanner({ onScan, isPaused }: QRScannerProps) {
       lastScanRef.current = now;
       onScan(decodedText);
     },
-    [onScan]
+    [onScan],
   );
 
   // Starts the camera + scanning
-  const startScanner = useCallback(async (isMounted: { current: boolean }) => {
-    try {
-      const container = document.getElementById(SCANNER_ID);
-      if (container) container.innerHTML = "";
+  const startScanner = useCallback(
+    async (isMounted: { current: boolean }) => {
+      try {
+        const container = document.getElementById(SCANNER_ID);
+        if (container) container.innerHTML = "";
 
-      const scanner = new Html5Qrcode(SCANNER_ID, { verbose: false });
-      scannerRef.current = scanner;
+        const scanner = new Html5Qrcode(SCANNER_ID, { verbose: false });
+        scannerRef.current = scanner;
 
-      await scanner.start(
-        { facingMode: "environment" },
-        { fps: 20 },
-        (decodedText) => { if (isMounted.current) handleScan(decodedText); },
-        () => { /* ignore QR detection failures */ }
-      );
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 20 },
+          (decodedText) => {
+            if (isMounted.current) handleScan(decodedText);
+          },
+          () => {
+            /* ignore QR detection failures */
+          },
+        );
 
-      if (isMounted.current) {
-        setCameraState("ready");
-      } else {
-        await scanner.stop().catch(() => {});
-        scanner.clear();
-        scannerRef.current = null;
+        if (isMounted.current) {
+          setCameraState("ready");
+        } else {
+          await scanner.stop().catch(() => {});
+          scanner.clear();
+          scannerRef.current = null;
+        }
+      } catch (err) {
+        if (!isMounted.current) return;
+
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("[QRScanner] Init error:", message);
+
+        if (message.includes("Permission") || message.includes("NotAllowedError")) {
+          setCameraState("permission-denied");
+          setErrorMessage(t("scanner.camera.permissionDenied"));
+        } else if (
+          message.includes("NotFoundError") ||
+          message.includes("DevicesNotFound") ||
+          message.includes("Requested device not found")
+        ) {
+          setCameraState("no-camera");
+          setErrorMessage(t("scanner.camera.noCamera"));
+        } else {
+          setCameraState("error");
+          setErrorMessage(message);
+        }
       }
-    } catch (err) {
-      if (!isMounted.current) return;
-
-      const message = err instanceof Error ? err.message : String(err);
-      console.error("[QRScanner] Init error:", message);
-
-      if (message.includes("Permission") || message.includes("NotAllowedError")) {
-        setCameraState("permission-denied");
-        setErrorMessage(t("scanner.camera.permissionDenied"));
-      } else if (
-        message.includes("NotFoundError") ||
-        message.includes("DevicesNotFound") ||
-        message.includes("Requested device not found")
-      ) {
-        setCameraState("no-camera");
-        setErrorMessage(t("scanner.camera.noCamera"));
-      } else {
-        setCameraState("error");
-        setErrorMessage(message);
-      }
-    }
-  }, [handleScan, t]);
+    },
+    [handleScan, t],
+  );
 
   // Stops and fully releases the camera hardware
   const stopScanner = useCallback(async () => {
     const scanner = scannerRef.current;
     if (!scanner) return;
     const state = scanner.getState();
-    if (
-      state === Html5QrcodeScannerState.SCANNING ||
-      state === Html5QrcodeScannerState.PAUSED
-    ) {
+    if (state === Html5QrcodeScannerState.SCANNING || state === Html5QrcodeScannerState.PAUSED) {
       await scanner.stop().catch(() => {});
     }
-    try { scanner.clear(); } catch { /* noop */ }
+    try {
+      scanner.clear();
+    } catch {
+      /* noop */
+    }
     scannerRef.current = null;
   }, []);
 
@@ -107,7 +121,7 @@ export function QRScanner({ onScan, isPaused }: QRScannerProps) {
       isMounted.current = false;
       void stopScanner();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Pause / resume — properly stops and restarts camera
@@ -120,9 +134,11 @@ export function QRScanner({ onScan, isPaused }: QRScannerProps) {
       setCameraState("initializing");
       const isMounted = { current: true };
       void startScanner(isMounted);
-      return () => { isMounted.current = false; };
+      return () => {
+        isMounted.current = false;
+      };
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPaused]);
 
   const isActive = cameraState === "ready";
@@ -134,10 +150,7 @@ export function QRScanner({ onScan, isPaused }: QRScannerProps) {
       <div className="relative w-full max-w-sm aspect-square flex items-center justify-center">
         <div
           id={SCANNER_ID}
-          className={cn(
-            "w-full h-full rounded-2xl overflow-hidden",
-            !isActive && "hidden"
-          )}
+          className={cn("w-full h-full rounded-2xl overflow-hidden", !isActive && "hidden")}
         />
 
         {/* QR viewfinder overlay — only visible when camera is active */}
@@ -149,7 +162,7 @@ export function QRScanner({ onScan, isPaused }: QRScannerProps) {
               {/* Transparent center square */}
               <div className="absolute inset-1/4 bg-transparent" />
             </div>
-            
+
             {/* Corner brackets on the center square */}
             <div className="absolute w-3/5 h-3/5 max-w-[240px] max-h-[240px]">
               {/* Top-left corner */}
@@ -168,12 +181,8 @@ export function QRScanner({ onScan, isPaused }: QRScannerProps) {
         {cameraState === "paused" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#1a1714] rounded-2xl z-20 animate-fade-in">
             <CameraOff className="w-16 h-16 text-[#5e5650]" strokeWidth={1.2} />
-            <p className="text-[#c2b9b3] text-base font-semibold">
-              {t("scanner.camera.paused")}
-            </p>
-            <p className="text-[#5e5650] text-xs">
-              {t("scanner.camera.pausedHint")}
-            </p>
+            <p className="text-[#c2b9b3] text-base font-semibold">{t("scanner.camera.paused")}</p>
+            <p className="text-[#5e5650] text-xs">{t("scanner.camera.pausedHint")}</p>
           </div>
         )}
 
@@ -217,9 +226,7 @@ export function QRScanner({ onScan, isPaused }: QRScannerProps) {
 
       {/* ── Instruction text ──────────────────────────── */}
       {isActive && (
-        <p className="mt-6 text-[#5e5650] text-xs text-center px-8">
-          {t("scanner.scanHint")}
-        </p>
+        <p className="mt-6 text-[#5e5650] text-xs text-center px-8">{t("scanner.scanHint")}</p>
       )}
     </div>
   );

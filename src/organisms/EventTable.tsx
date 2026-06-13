@@ -83,7 +83,7 @@ export function EventTable({
         e.title.toLowerCase().includes(q) ||
         e.location?.toLowerCase().includes(q) ||
         e.joinCode?.toLowerCase().includes(q) ||
-        e.date?.toLowerCase().includes(q)
+        e.date?.toLowerCase().includes(q),
     );
   }, [events, query]);
 
@@ -138,9 +138,7 @@ export function EventTable({
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={
-                searchPlaceholder ?? t("common.searchPlaceholder")
-              }
+              placeholder={searchPlaceholder ?? t("common.searchPlaceholder")}
               className="input pl-9 pr-9 w-full"
             />
             {query && (
@@ -205,7 +203,9 @@ export function EventTable({
           <tr className="border-b border-border-1 bg-surface-base text-caption text-ink-3 font-medium">
             <th className="text-left px-4 py-3">{t("event.table.event")}</th>
             <th className="text-left px-4 py-3 hidden sm:table-cell">{t("event.table.date")}</th>
-            <th className="text-left px-4 py-3 hidden md:table-cell">{t("event.table.location")}</th>
+            <th className="text-left px-4 py-3 hidden md:table-cell">
+              {t("event.table.location")}
+            </th>
             <th className="text-left px-4 py-3">{t("event.table.status")}</th>
             <th className="text-right px-4 py-3 pr-4">{t("event.table.actions")}</th>
           </tr>
@@ -219,7 +219,7 @@ export function EventTable({
                 onClick={isClickable ? () => onEventClick?.(event) : undefined}
                 className={cn(
                   "group transition-colors duration-150 animate-fade-in-up",
-                  isClickable && "cursor-pointer hover:bg-surface-raised"
+                  isClickable && "cursor-pointer hover:bg-surface-raised",
                 )}
                 style={{ animationDelay: `${idx * 40}ms` }}
               >
@@ -231,11 +231,11 @@ export function EventTable({
                     </span>
                     <div className="flex items-center gap-3 text-caption text-ink-3 sm:hidden">
                       {event.date && (
-                          <span className="inline-flex items-center gap-1">
-                            <CalendarDays size={11} aria-hidden="true" />
-                            {formatDate(event.date)}
-                          </span>
-                        )}
+                        <span className="inline-flex items-center gap-1">
+                          <CalendarDays size={11} aria-hidden="true" />
+                          {formatDate(event.date)}
+                        </span>
+                      )}
                       {event.location && (
                         <span className="inline-flex items-center gap-1">
                           <MapPin size={11} aria-hidden="true" />
@@ -261,7 +261,11 @@ export function EventTable({
                   <div className="flex flex-col gap-0.5 text-caption text-ink-2">
                     {event.date && (
                       <span className="inline-flex items-center gap-1.5">
-                        <CalendarDays size={12} className="text-ink-4 shrink-0" aria-hidden="true" />
+                        <CalendarDays
+                          size={12}
+                          className="text-ink-4 shrink-0"
+                          aria-hidden="true"
+                        />
                         {formatDate(event.date)}
                       </span>
                     )}

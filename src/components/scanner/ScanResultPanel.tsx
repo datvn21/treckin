@@ -35,19 +35,22 @@ function ResultIcon({ status }: { status: ScanResult["status"] }) {
 function StatusLabel({ status }: { status: ScanResult["status"] }) {
   const { t } = useTranslation();
   const map: Record<ScanResult["status"], string> = {
-    "success": t("scanner.result.success"),
+    success: t("scanner.result.success"),
     "already-checked-in": t("scanner.result.alreadyCheckedIn"),
     "invalid-qr": t("scanner.result.invalid"),
     "expired-qr": t("scanner.result.expired"),
     "outside-geofence": t("scanner.result.geofence"),
   };
   return (
-    <span className={cn(
-      "text-sm font-semibold",
-      status === "success" && "text-[#4ade80]",
-      status === "already-checked-in" && "text-[#facc15]",
-      (status === "invalid-qr" || status === "expired-qr" || status === "outside-geofence") && "text-[#f87171]"
-    )}>
+    <span
+      className={cn(
+        "text-sm font-semibold",
+        status === "success" && "text-[#4ade80]",
+        status === "already-checked-in" && "text-[#facc15]",
+        (status === "invalid-qr" || status === "expired-qr" || status === "outside-geofence") &&
+          "text-[#f87171]",
+      )}
+    >
       {map[status]}
     </span>
   );
@@ -61,7 +64,9 @@ export function ScanResultPanel({ result, onDismiss }: ScanResultPanelProps) {
     if (!result) return;
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(onDismiss, AUTO_DISMISS_MS);
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [result, onDismiss]);
 
   if (!result) return null;
@@ -74,7 +79,7 @@ export function ScanResultPanel({ result, onDismiss }: ScanResultPanelProps) {
         "fixed bottom-[72px] left-4 right-4 mx-auto max-w-sm z-50",
         "rounded-2xl border overflow-hidden",
         "bg-[#231f1c] border-[#3d3530] shadow-2xl",
-        "animate-slide-up"
+        "animate-slide-up",
       )}
       role="alert"
       aria-live="polite"
@@ -98,26 +103,18 @@ export function ScanResultPanel({ result, onDismiss }: ScanResultPanelProps) {
       {/* ── Content ───────────────────────────────────── */}
       <div className="px-4 py-4">
         {/* Message */}
-        <p className="text-sm text-[#c2b9b3] leading-relaxed mb-3">
-          {result.message}
-        </p>
+        <p className="text-sm text-[#c2b9b3] leading-relaxed mb-3">{result.message}</p>
 
         {/* Student info (if present) */}
         {hasStudent && (
           <div className="flex items-center gap-3">
-            <Avatar
-              name={result.student.name}
-              avatarUrl={result.student.avatarUrl}
-              size="md"
-            />
+            <Avatar name={result.student.name} avatarUrl={result.student.avatarUrl} size="md" />
             <div className="flex-1 min-w-0">
               <p className="text-base font-semibold text-[#f0ebe6] truncate">
                 {result.student.name}
               </p>
               {result.student.email && (
-                <p className="text-xs text-[#5e5650] truncate">
-                  {result.student.email}
-                </p>
+                <p className="text-xs text-[#5e5650] truncate">{result.student.email}</p>
               )}
             </div>
           </div>

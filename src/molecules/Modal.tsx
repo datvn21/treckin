@@ -1,27 +1,27 @@
-import * as React from 'react';
-import * as Dialog from '@radix-ui/react-dialog';
-import { X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import * as React from "react";
+import * as Dialog from "@radix-ui/react-dialog";
+import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
+type ModalSize = "sm" | "md" | "lg" | "xl" | "full";
 
 const sizeMap: Record<ModalSize, string> = {
-  sm:   'sm:max-w-sm',
-  md:   'sm:max-w-md',
-  lg:   'sm:max-w-2xl',
-  xl:   'sm:max-w-4xl',
-  full: 'sm:max-w-[min(96vw,72rem)]',
+  sm: "sm:max-w-sm",
+  md: "sm:max-w-md",
+  lg: "sm:max-w-2xl",
+  xl: "sm:max-w-4xl",
+  full: "sm:max-w-[min(96vw,72rem)]",
 };
 
 export interface ModalProps {
-  open:          boolean;
-  onOpenChange:  (open: boolean) => void;
-  title?:        string;
-  description?:  string;
-  children:      React.ReactNode;
-  footer?:       React.ReactNode;
-  size?:         ModalSize;
-  className?:    string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title?: string;
+  description?: string;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+  size?: ModalSize;
+  className?: string;
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -31,7 +31,7 @@ const Modal: React.FC<ModalProps> = ({
   description,
   children,
   footer,
-  size = 'md',
+  size = "md",
   className,
 }) => {
   return (
@@ -40,23 +40,23 @@ const Modal: React.FC<ModalProps> = ({
         {/* Backdrop */}
         <Dialog.Overlay
           className={cn(
-            'fixed inset-0 z-50 bg-black/25 backdrop-blur-sm',
-            'data-[state=open]:animate-fade-in',
-            'data-[state=closed]:animate-fade-out'
+            "fixed inset-0 z-50 bg-black/25 backdrop-blur-sm",
+            "data-[state=open]:animate-fade-in",
+            "data-[state=closed]:animate-fade-out",
           )}
         />
 
         {/* Content panel */}
         <Dialog.Content
           className={cn(
-            'fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2',
-            'w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] card-elevated flex flex-col',
-            'max-h-[calc(100dvh-1rem)] sm:max-h-[90dvh] overflow-hidden',
-            'rounded-lg outline-none',
-            'data-[state=open]:animate-modal-scale-in',
-            'data-[state=closed]:animate-modal-scale-out',
+            "fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2",
+            "w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] card-elevated flex flex-col",
+            "max-h-[calc(100dvh-1rem)] sm:max-h-[90dvh] overflow-hidden",
+            "rounded-lg outline-none",
+            "data-[state=open]:animate-modal-scale-in",
+            "data-[state=closed]:animate-modal-scale-out",
             sizeMap[size],
-            className
+            className,
           )}
         >
           {/* Header */}
@@ -76,11 +76,7 @@ const Modal: React.FC<ModalProps> = ({
               </div>
 
               <Dialog.Close asChild>
-                <button
-                  type="button"
-                  className="btn-icon shrink-0 -mr-1"
-                  aria-label="Đóng"
-                >
+                <button type="button" className="btn-icon shrink-0 -mr-1" aria-label="Đóng">
                   <X size={18} aria-hidden="true" />
                 </button>
               </Dialog.Close>
@@ -88,9 +84,7 @@ const Modal: React.FC<ModalProps> = ({
           )}
 
           {/* Body */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-5 min-h-0">
-            {children}
-          </div>
+          <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-5 min-h-0">{children}</div>
 
           {/* Footer */}
           {footer && (
@@ -104,6 +98,6 @@ const Modal: React.FC<ModalProps> = ({
   );
 };
 
-Modal.displayName = 'Modal';
+Modal.displayName = "Modal";
 
 export { Modal };

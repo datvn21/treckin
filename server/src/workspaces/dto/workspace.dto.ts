@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from "@nestjs/swagger";
 import {
   IsBoolean,
   IsEmail,
@@ -10,42 +10,38 @@ import {
   Max,
   Min,
   MinLength,
-} from 'class-validator';
-import {
-  DATA_DELETION_MODE,
-  EVENT_VISIBILITY,
-  WORKSPACE_MEMBER_ROLE,
-} from '@prisma/client';
+} from "class-validator";
+import { DATA_DELETION_MODE, EVENT_VISIBILITY, WORKSPACE_MEMBER_ROLE } from "@prisma/client";
 
 export class CreateWorkspaceDto {
-  @ApiProperty({ example: 'Acme Events Team' })
+  @ApiProperty({ example: "Acme Events Team" })
   @IsString()
   @IsNotEmpty()
   name!: string;
 
-  @ApiProperty({ example: 'acme-events', required: false })
+  @ApiProperty({ example: "acme-events", required: false })
   @IsString()
   @IsOptional()
   slug?: string;
 
-  @ApiProperty({ example: 'Operations workspace for Acme events', required: false })
+  @ApiProperty({ example: "Operations workspace for Acme events", required: false })
   @IsString()
   @IsOptional()
   description?: string;
 
-  @ApiProperty({ example: 'Asia/Bangkok', required: false })
+  @ApiProperty({ example: "Asia/Bangkok", required: false })
   @IsString()
   @IsOptional()
   timezone?: string;
 
-  @ApiProperty({ example: 'vi', required: false })
+  @ApiProperty({ example: "vi", required: false })
   @IsString()
   @IsOptional()
   locale?: string;
 }
 
 export class InviteWorkspaceMemberDto {
-  @ApiProperty({ example: 'operator@example.com' })
+  @ApiProperty({ example: "operator@example.com" })
   @IsEmail()
   email!: string;
 
@@ -60,7 +56,7 @@ export class InviteWorkspaceMemberDto {
 }
 
 export class AcceptInvitationDto {
-  @ApiProperty({ example: 'invite_token' })
+  @ApiProperty({ example: "invite_token" })
   @IsString()
   @MinLength(12)
   token!: string;
@@ -180,30 +176,29 @@ export class UpdateWorkspaceMemberRoleDto {
 }
 
 export class UpdateWorkspaceDto {
-  @ApiProperty({ example: 'Acme Events Team', required: false })
+  @ApiProperty({ example: "Acme Events Team", required: false })
   @IsString()
   @IsNotEmpty()
   @IsOptional()
   name?: string;
 
-  @ApiProperty({ example: 'acme-events', required: false })
+  @ApiProperty({ example: "acme-events", required: false })
   @IsString()
   @IsOptional()
   slug?: string;
 
-  @ApiProperty({ example: 'Operations workspace for Acme events', required: false })
+  @ApiProperty({ example: "Operations workspace for Acme events", required: false })
   @IsString()
   @IsOptional()
   description?: string;
 
-  @ApiProperty({ example: 'Asia/Bangkok', required: false })
+  @ApiProperty({ example: "Asia/Bangkok", required: false })
   @IsString()
   @IsOptional()
   timezone?: string;
 
-  @ApiProperty({ example: 'vi', required: false })
+  @ApiProperty({ example: "vi", required: false })
   @IsString()
   @IsOptional()
   locale?: string;
 }
-

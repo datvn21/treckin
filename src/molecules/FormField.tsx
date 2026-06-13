@@ -1,14 +1,14 @@
-import * as React from 'react';
-import { cn } from '@/lib/utils';
-import { Label } from '@/atoms/Label';
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import { Label } from "@/atoms/Label";
 
 export interface FormFieldProps {
-  label:     string;
-  htmlFor?:  string;
-  error?:    string;
-  hint?:     string;
+  label: string;
+  htmlFor?: string;
+  error?: string;
+  hint?: string;
   required?: boolean;
-  children:  React.ReactNode;
+  children: React.ReactNode;
   className?: string;
 }
 
@@ -22,7 +22,7 @@ const FormField: React.FC<FormFieldProps> = ({
   className,
 }) => {
   return (
-    <div className={cn('field', className)}>
+    <div className={cn("field", className)}>
       <Label htmlFor={htmlFor} required={required}>
         {label}
       </Label>
@@ -30,9 +30,7 @@ const FormField: React.FC<FormFieldProps> = ({
       {children}
 
       {/* Show hint only when no error */}
-      {hint && !error && (
-        <p className="text-xs text-ink-3 mt-0.5">{hint}</p>
-      )}
+      {hint && !error && <p className="text-xs text-ink-3 mt-0.5">{hint}</p>}
 
       {/* Error message */}
       {error && (
@@ -44,6 +42,6 @@ const FormField: React.FC<FormFieldProps> = ({
   );
 };
 
-FormField.displayName = 'FormField';
+FormField.displayName = "FormField";
 
 export { FormField };

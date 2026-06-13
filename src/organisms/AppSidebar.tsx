@@ -3,14 +3,7 @@
    ═══════════════════════════════════════════════════════════════ */
 
 import { NavLink, useNavigate } from "react-router-dom";
-import {
-  Building2,
-  User,
-  Plus,
-  LogOut,
-  Settings,
-  Ticket,
-} from "lucide-react";
+import { Building2, User, Plus, LogOut, Settings, Ticket } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/auth-store";
 import { Avatar } from "@/atoms/Avatar";
@@ -93,15 +86,8 @@ export function AppSidebar({
     <aside className="sidebar hidden lg:flex" aria-label="Main navigation">
       {/* ── Logo ── */}
       <div className="flex items-center gap-2 px-4 py-3.5 border-b border-border-1 shrink-0">
-        <img
-          src="/assets/Treckin.svg"
-          alt="Treckin"
-          className="h-6 w-auto"
-          draggable={false}
-        />
-        <span className="font-semibold text-sm text-ink-1 tracking-tight">
-          Treckin
-        </span>
+        <img src="/assets/Treckin.svg" alt="Treckin" className="h-6 w-auto" draggable={false} />
+        <span className="font-semibold text-sm text-ink-1 tracking-tight">Treckin</span>
       </div>
 
       {/* ── Primary Nav ── */}
@@ -110,9 +96,7 @@ export function AppSidebar({
           <NavLink
             key={to}
             to={to}
-            className={({ isActive }) =>
-              cn("sidebar-item", isActive && "active")
-            }
+            className={({ isActive }) => cn("sidebar-item", isActive && "active")}
           >
             <span className="shrink-0 text-current">{icon}</span>
             <span className="truncate">{label}</span>
@@ -123,9 +107,7 @@ export function AppSidebar({
       {/* ── Workspace Quick-list (organizer only) ── */}
       {mode === "organizer" && (
         <div className="sidebar-section flex-1 min-h-0 overflow-hidden flex flex-col mt-2 border-t border-border-1 pt-2">
-          <p className="sidebar-label mb-1">
-            {t("workspace.myWorkspaces")}
-          </p>
+          <p className="sidebar-label mb-1">{t("workspace.myWorkspaces")}</p>
 
           {/* Scrollable workspace list */}
           <div className="flex-1 overflow-y-auto no-scrollbar space-y-0.5 pb-1">
@@ -137,10 +119,7 @@ export function AppSidebar({
                   key={ws.id}
                   type="button"
                   onClick={() => onSelectWorkspace(ws.id)}
-                  className={cn(
-                    "sidebar-item w-full text-left",
-                    isSelected && "active"
-                  )}
+                  className={cn("sidebar-item w-full text-left", isSelected && "active")}
                   aria-current={isSelected ? "page" : undefined}
                   title={ws.name}
                 >
@@ -152,14 +131,8 @@ export function AppSidebar({
                   >
                     {letter}
                   </span>
-                  <span className="flex-1 min-w-0 truncate text-xs">
-                    {ws.name}
-                  </span>
-                  {ws._count && (
-                    <span className="sidebar-count shrink-0">
-                      {ws._count.events}
-                    </span>
-                  )}
+                  <span className="flex-1 min-w-0 truncate text-xs">{ws.name}</span>
+                  {ws._count && <span className="sidebar-count shrink-0">{ws._count.events}</span>}
                 </button>
               );
             })}
@@ -199,16 +172,9 @@ export function AppSidebar({
         {/* User info */}
         {user && (
           <div className="flex items-center gap-2 px-1">
-            <Avatar
-              src={user.avatarUrl}
-              name={user.name}
-              size="sm"
-              className="shrink-0"
-            />
+            <Avatar src={user.avatarUrl} name={user.name} size="sm" className="shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-ink-1 truncate">
-                {user.name}
-              </p>
+              <p className="text-xs font-medium text-ink-1 truncate">{user.name}</p>
               <p className="text-[10px] text-ink-4 truncate">{user.email}</p>
             </div>
             <button

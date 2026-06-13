@@ -1,10 +1,10 @@
-import { Module, type DynamicModule, Logger } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { STORAGE_PROVIDER } from './storage.interface';
-import { StorageService } from './storage.service';
-import { R2StorageProvider } from './providers/r2-storage.provider';
-import { CloudinaryProvider } from './providers/cloudinary.provider';
-import { LocalStorageProvider } from './providers/local-storage.provider';
+import { Module, type DynamicModule, Logger } from "@nestjs/common";
+import { ConfigModule, ConfigService } from "@nestjs/config";
+import { STORAGE_PROVIDER } from "./storage.interface";
+import { StorageService } from "./storage.service";
+import { R2StorageProvider } from "./providers/r2-storage.provider";
+import { CloudinaryProvider } from "./providers/cloudinary.provider";
+import { LocalStorageProvider } from "./providers/local-storage.provider";
 
 @Module({})
 export class StorageModule {
@@ -22,16 +22,16 @@ export class StorageModule {
         {
           provide: STORAGE_PROVIDER,
           useFactory: (config: ConfigService) => {
-            const provider = config.get<string>('STORAGE_PROVIDER', 'local');
+            const provider = config.get<string>("STORAGE_PROVIDER", "local");
 
             StorageModule.logger.log(`Storage provider: ${provider}`);
 
             switch (provider) {
-              case 'cloudinary':
+              case "cloudinary":
                 return new CloudinaryProvider(config);
-              case 'r2':
+              case "r2":
                 return new R2StorageProvider(config);
-              case 'local':
+              case "local":
               default:
                 return new LocalStorageProvider(config);
             }

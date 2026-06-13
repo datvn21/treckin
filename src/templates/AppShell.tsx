@@ -4,13 +4,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
-import {
-  Ticket,
-  Building2,
-  ChevronRight,
-  Plus,
-  CalendarDays,
-} from "lucide-react";
+import { Ticket, Building2, ChevronRight, Plus, CalendarDays } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
@@ -50,15 +44,15 @@ export function AppShell() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(true);
   const [myEvents, setMyEvents] = useState<{ id: string; title: string }[]>([]);
-  const [workspaceEvents, setWorkspaceEvents] = useState<{
-    id: string;
-    title: string;
-  }[]>([]);
+  const [workspaceEvents, setWorkspaceEvents] = useState<
+    {
+      id: string;
+      title: string;
+    }[]
+  >([]);
 
   /* Route context */
-  const wsMatch = location.pathname.match(
-    /^\/app\/workspaces\/([^/]+)/,
-  );
+  const wsMatch = location.pathname.match(/^\/app\/workspaces\/([^/]+)/);
   const currentWsId = wsMatch?.[1];
   const currentWs = workspaces.find((ws) => ws.id === currentWsId);
 
@@ -114,7 +108,8 @@ export function AppShell() {
     }
 
     let active = true;
-    api.get(`/events/${currentEventId}`)
+    api
+      .get(`/events/${currentEventId}`)
       .then(({ data }) => {
         if (active) setActiveEventDetail(data as any);
       })
@@ -129,16 +124,13 @@ export function AppShell() {
 
   const activeWsId =
     location.pathname.includes("/manage") && activeEventDetail
-      ? activeEventDetail.workspace?.id ||
-        (activeEventDetail as any).workspaceId
+      ? activeEventDetail.workspace?.id || (activeEventDetail as any).workspaceId
       : currentWsId;
 
   const activeWsName =
     location.pathname.includes("/manage") && activeEventDetail
       ? activeEventDetail.workspace?.name ||
-        workspaces.find(
-          (w) => w.id === (activeEventDetail as any).workspaceId,
-        )?.name
+        workspaces.find((w) => w.id === (activeEventDetail as any).workspaceId)?.name
       : currentWs?.name;
 
   const activeWs = workspaces.find((ws) => ws.id === activeWsId);
@@ -151,15 +143,11 @@ export function AppShell() {
 
     let active = true;
     api
-      .get<{ data: any[] } | any[]>(
-        `/workspaces/${activeWsId}/events`,
-      )
+      .get<{ data: any[] } | any[]>(`/workspaces/${activeWsId}/events`)
       .then(({ data }) => {
         if (active) {
           const arr = Array.isArray(data) ? data : data.data;
-          setWorkspaceEvents(
-            arr.map((e: any) => ({ id: e.id, title: e.title ?? "" })),
-          );
+          setWorkspaceEvents(arr.map((e: any) => ({ id: e.id, title: e.title ?? "" })));
         }
       })
       .catch(() => {
@@ -192,8 +180,7 @@ export function AppShell() {
 
   const handleLogoClick = () => {
     if (mode === "organizer") {
-      const id =
-        currentWsId || localStorage.getItem("lastActiveWorkspaceId");
+      const id = currentWsId || localStorage.getItem("lastActiveWorkspaceId");
       if (id && workspaces.some((w) => w.id === id)) {
         navigate(`/app/workspaces/${id}`);
       } else {
@@ -215,14 +202,7 @@ export function AppShell() {
     label: ws.name,
     to: `/app/workspaces/${ws.id}`,
     meta: ws._count ? `${ws._count.events}` : undefined,
-    icon: (
-      <Avatar
-        src={ws.logoUrl}
-        name={ws.name}
-        size="xs"
-        className="w-7 h-7"
-      />
-    ),
+    icon: <Avatar src={ws.logoUrl} name={ws.name} size="xs" className="w-7 h-7" />,
   }));
 
   const eventDropdownItems: DropdownItem[] = myEvents.map((e) => ({
@@ -251,11 +231,12 @@ export function AppShell() {
   const searchEvents =
     mode === "attendee"
       ? myEvents
-      : workspaces.flatMap((ws) =>
-          (ws as any).events?.map((e: any) => ({
-            id: e.id,
-            title: e.title ?? "",
-          })) ?? [],
+      : workspaces.flatMap(
+          (ws) =>
+            (ws as any).events?.map((e: any) => ({
+              id: e.id,
+              title: e.title ?? "",
+            })) ?? [],
         );
 
   const outletContext: AppShellContext = {
@@ -277,22 +258,12 @@ export function AppShell() {
             className="flex items-center gap-2 mr-1.5 cursor-pointer hover:opacity-80 transition-opacity focus-visible:outline-none"
             aria-label="Treckin home"
           >
-            <img
-              src="/assets/Treckin.svg"
-              alt="Treckin"
-              className="h-8 w-auto"
-              draggable={false}
-            />
-            <span className="font-bold text-lg text-ink-1 tracking-tight">
-              Treckin
-            </span>
+            <img src="/assets/Treckin.svg" alt="Treckin" className="h-8 w-auto" draggable={false} />
+            <span className="font-bold text-lg text-ink-1 tracking-tight">Treckin</span>
           </button>
 
           {/* Breadcrumb nav — desktop */}
-          <nav
-            className="hidden lg:flex items-center gap-1 ml-1"
-            aria-label="Main navigation"
-          >
+          <nav className="hidden lg:flex items-center gap-1 ml-1" aria-label="Main navigation">
             {mode === "organizer" ? (
               <>
                 <NavLink
@@ -315,10 +286,7 @@ export function AppShell() {
                 {/* Second level: Workspace name dropdown */}
                 {activeWsId && activeWsName ? (
                   <>
-                    <ChevronRight
-                      size={14}
-                      className="text-ink-4 shrink-0"
-                    />
+                    <ChevronRight size={14} className="text-ink-4 shrink-0" />
                     <NavDropdown
                       label={activeWsName}
                       headerLabel={t("workspace.myWorkspaces")}
@@ -338,9 +306,7 @@ export function AppShell() {
                       homeHref="/app/workspaces"
                       isActive={
                         location.pathname === `/app/workspaces/${activeWsId}` ||
-                        location.pathname.startsWith(
-                          `/app/workspaces/${activeWsId}/`,
-                        )
+                        location.pathname.startsWith(`/app/workspaces/${activeWsId}/`)
                       }
                       activeId={activeWsId}
                       items={wsDropdownItems}
@@ -348,8 +314,7 @@ export function AppShell() {
                       footerItem={{
                         label: t("workspace.createWorkspace"),
                         icon: <Plus size={13} />,
-                        onClick: () =>
-                          navigate("/app/workspaces?create=1"),
+                        onClick: () => navigate("/app/workspaces?create=1"),
                       }}
                       onSelect={(item) => navigate(item.to)}
                     />
@@ -357,13 +322,9 @@ export function AppShell() {
                 ) : null}
 
                 {/* Third level: Event manage */}
-                {location.pathname.includes("/manage") &&
-                activeEventDetail ? (
+                {location.pathname.includes("/manage") && activeEventDetail ? (
                   <>
-                    <ChevronRight
-                      size={14}
-                      className="text-ink-4 shrink-0"
-                    />
+                    <ChevronRight size={14} className="text-ink-4 shrink-0" />
                     <NavDropdown
                       label={activeEventDetail.title}
                       headerLabel={t("workspace.events")}
@@ -374,20 +335,14 @@ export function AppShell() {
                         </span>
                       }
                       homeHref={`/app/workspaces/${activeWsId}`}
-                      isActive={
-                        location.pathname ===
-                        `/app/events/${activeEventDetail.id}/manage`
-                      }
+                      isActive={location.pathname === `/app/events/${activeEventDetail.id}/manage`}
                       activeId={activeEventDetail.id}
                       items={wsEventsDropdownItems}
                       emptyLabel={t("event.noEvents")}
                       footerItem={{
                         label: t("event.createEvent"),
                         icon: <Plus size={13} />,
-                        onClick: () =>
-                          navigate(
-                            `/app/workspaces/${activeWsId}/events/create`,
-                          ),
+                        onClick: () => navigate(`/app/workspaces/${activeWsId}/events/create`),
                       }}
                       onSelect={(item) => navigate(item.to)}
                     />
@@ -396,10 +351,7 @@ export function AppShell() {
 
                 {location.pathname.endsWith("/events/create") ? (
                   <>
-                    <ChevronRight
-                      size={14}
-                      className="text-ink-4 shrink-0"
-                    />
+                    <ChevronRight size={14} className="text-ink-4 shrink-0" />
                     <span className="text-sm font-medium text-ink-1 max-w-[160px] truncate">
                       {t("event.createEvent")}
                     </span>
@@ -427,19 +379,14 @@ export function AppShell() {
 
                 {/* Second level: Event name dropdown */}
                 {(() => {
-                  const activeEventId =
-                    activeEventDetail?.id || currentEvent?.id;
-                  const activeEventTitle =
-                    activeEventDetail?.title || currentEvent?.title;
+                  const activeEventId = activeEventDetail?.id || currentEvent?.id;
+                  const activeEventTitle = activeEventDetail?.title || currentEvent?.title;
 
                   if (!activeEventId || !activeEventTitle) return null;
 
                   return (
                     <>
-                      <ChevronRight
-                        size={14}
-                        className="text-ink-4 shrink-0"
-                      />
+                      <ChevronRight size={14} className="text-ink-4 shrink-0" />
                       <NavDropdown
                         label={activeEventTitle}
                         headerLabel={t("nav.events")}

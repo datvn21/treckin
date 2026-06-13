@@ -20,7 +20,6 @@ import { setFlowPreference } from "@/lib/flow-preference";
 import { useDocumentTitle } from "@/hooks";
 import { parseApiError } from "@/lib/parseApiError";
 
-
 interface ApiWorkspace {
   id: string;
   name: string;
@@ -33,7 +32,6 @@ interface ApiWorkspace {
 interface WorkspaceCardItem extends ApiWorkspace {
   role: "OWNER" | "MEMBER";
 }
-
 
 export function WorkspacesPage() {
   const { t } = useTranslation();
@@ -58,7 +56,7 @@ export function WorkspacesPage() {
         arr.map((ws) => ({
           ...ws,
           role: ws.role ?? ws.members?.[0]?.role ?? "MEMBER",
-        }))
+        })),
       );
     } catch (err) {
       toast.error(parseApiError(err, t("common.loadFailed")));
@@ -96,14 +94,10 @@ export function WorkspacesPage() {
       <PageHeader
         title={t("workspace.myWorkspaces")}
         subtitle={
-          !loading ? t('workspace.workspacesCount', { count: workspaces.length }) : undefined
+          !loading ? t("workspace.workspacesCount", { count: workspaces.length }) : undefined
         }
         action={
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setCreateOpen(true)}
-          >
+          <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
             <Plus size={15} />
             {t("workspace.createWorkspace")}
           </Button>
@@ -140,7 +134,12 @@ export function WorkspacesPage() {
       {/* Create Workspace Modal */}
       <Modal
         open={createOpen}
-        onOpenChange={(v) => { if (!v) { setCreateOpen(false); setNewName(""); } }}
+        onOpenChange={(v) => {
+          if (!v) {
+            setCreateOpen(false);
+            setNewName("");
+          }
+        }}
         title={t("workspace.createWorkspace")}
         size="sm"
         footer={

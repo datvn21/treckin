@@ -14,13 +14,13 @@ interface BottomNavProps {
 }
 
 const ATTENDEE_TABS = [
-  { to: "/app/join",    icon: Ticket,    labelKey: "nav.events"   },
-  { to: "/app/profile", icon: User,      labelKey: "nav.profile"  },
+  { to: "/app/join", icon: Ticket, labelKey: "nav.events" },
+  { to: "/app/profile", icon: User, labelKey: "nav.profile" },
 ] as const;
 
 const ORGANIZER_TABS = [
   { to: "/app/workspaces", icon: Building2, labelKey: "nav.workspace" },
-  { to: "/app/profile",    icon: User,      labelKey: "nav.profile"   },
+  { to: "/app/profile", icon: User, labelKey: "nav.profile" },
 ] as const;
 
 const SWIPE_THRESHOLD = 50; // px
@@ -36,9 +36,7 @@ export function BottomNav({ mode }: BottomNavProps) {
   const touchStartY = useRef<number | null>(null);
 
   /* Current tab index from URL */
-  const currentIdx = TABS.findIndex((tab) =>
-    location.pathname.startsWith(tab.to)
-  );
+  const currentIdx = TABS.findIndex((tab) => location.pathname.startsWith(tab.to));
 
   /* ── Swipe gesture handlers ── */
   const onTouchStart = (e: React.TouchEvent) => {
@@ -88,9 +86,7 @@ export function BottomNav({ mode }: BottomNavProps) {
         <NavLink
           key={to}
           to={to}
-          className={({ isActive }) =>
-            cn("bottom-nav-item", isActive && "active")
-          }
+          className={({ isActive }) => cn("bottom-nav-item", isActive && "active")}
           aria-label={t(labelKey)}
         >
           <Icon size={24} strokeWidth={1.75} aria-hidden />

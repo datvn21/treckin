@@ -113,7 +113,11 @@ describe("Button", () => {
     it("forwards ref to the button element", () => {
       let refValue: HTMLButtonElement | null = null;
       render(
-        <Button ref={(el) => { refValue = el; }}>
+        <Button
+          ref={(el) => {
+            refValue = el;
+          }}
+        >
           Ref Button
         </Button>,
       );

@@ -53,18 +53,19 @@ interface EventCheckinSettingsPanelProps {
   eventId: string;
 }
 
-
 function formFromSettings(settings: EventSettings): SettingsFormState {
   return {
     attendancePolicy: settings.attendancePolicy,
-    requiredBoardCount: settings.requiredBoardCount == null ? "" : String(settings.requiredBoardCount),
+    requiredBoardCount:
+      settings.requiredBoardCount == null ? "" : String(settings.requiredBoardCount),
     checkinModes: settings.checkinModes ?? ["ATTENDEE_CREDENTIAL", "BOARD_QR"],
     eventQrBehavior: settings.eventQrBehavior,
     qrTtlSeconds: String(settings.qrTtlSeconds ?? 30),
     credentialGraceSeconds: String(settings.credentialGraceSeconds ?? 120),
     offlineSyncEnabled: Boolean(settings.offlineSyncEnabled),
     geofenceEnabled: Boolean(settings.geofenceEnabled),
-    geofenceRadiusMeters: settings.geofenceRadiusMeters == null ? "" : String(settings.geofenceRadiusMeters),
+    geofenceRadiusMeters:
+      settings.geofenceRadiusMeters == null ? "" : String(settings.geofenceRadiusMeters),
     manualCheckinEnabled: Boolean(settings.manualCheckinEnabled),
     manualCorrectionEnabled: Boolean(settings.manualCorrectionEnabled),
     requireCorrectionReason: Boolean(settings.requireCorrectionReason),
@@ -158,14 +159,18 @@ export function EventCheckinSettingsPanel({ eventId }: EventCheckinSettingsPanel
         credentialGraceSeconds: numberOrUndefined(form.credentialGraceSeconds),
         offlineSyncEnabled: form.offlineSyncEnabled,
         geofenceEnabled: form.geofenceEnabled,
-        geofenceRadiusMeters: form.geofenceEnabled ? numberOrUndefined(form.geofenceRadiusMeters) : undefined,
+        geofenceRadiusMeters: form.geofenceEnabled
+          ? numberOrUndefined(form.geofenceRadiusMeters)
+          : undefined,
         manualCheckinEnabled: form.manualCheckinEnabled,
         manualCorrectionEnabled: form.manualCorrectionEnabled,
         requireCorrectionReason: form.requireCorrectionReason,
         certificateEnabled: form.certificateEnabled,
         attendanceProofEnabled: form.attendanceProofEnabled,
       });
-      toast.success(t("eventManage.checkinSettings.saveSuccess", { defaultValue: "Check-in settings saved." }));
+      toast.success(
+        t("eventManage.checkinSettings.saveSuccess", { defaultValue: "Check-in settings saved." }),
+      );
       await load();
     } catch (err) {
       toast.error(parseApiError(err, t("event.updateFailed")));
@@ -192,7 +197,9 @@ export function EventCheckinSettingsPanel({ eventId }: EventCheckinSettingsPanel
           <FormField label={t("event.attendancePolicy")}>
             <Select
               value={form.attendancePolicy}
-              onChange={(e) => setForm({ ...form, attendancePolicy: e.target.value as AttendancePolicy })}
+              onChange={(e) =>
+                setForm({ ...form, attendancePolicy: e.target.value as AttendancePolicy })
+              }
             >
               {Object.entries(attendanceLabels).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -236,13 +243,17 @@ export function EventCheckinSettingsPanel({ eventId }: EventCheckinSettingsPanel
           <FormField label={t("event.qrBehavior")}>
             <Select
               value={form.eventQrBehavior}
-              onChange={(e) => setForm({ ...form, eventQrBehavior: e.target.value as EventQrBehavior })}
+              onChange={(e) =>
+                setForm({ ...form, eventQrBehavior: e.target.value as EventQrBehavior })
+              }
             >
               <option value="JOIN_ONLY">{t("event.joinOnly")}</option>
               <option value="JOIN_AND_CHECKIN">{t("event.joinAndCheckin")}</option>
             </Select>
           </FormField>
-          <FormField label={t("eventManage.checkinSettings.qrTtl", { defaultValue: "QR TTL (seconds)" })}>
+          <FormField
+            label={t("eventManage.checkinSettings.qrTtl", { defaultValue: "QR TTL (seconds)" })}
+          >
             <Input
               type="number"
               min={5}
@@ -251,7 +262,9 @@ export function EventCheckinSettingsPanel({ eventId }: EventCheckinSettingsPanel
               onChange={(e) => setForm({ ...form, qrTtlSeconds: e.target.value })}
             />
           </FormField>
-          <FormField label={t("eventManage.checkinSettings.grace", { defaultValue: "Grace (seconds)" })}>
+          <FormField
+            label={t("eventManage.checkinSettings.grace", { defaultValue: "Grace (seconds)" })}
+          >
             <Input
               type="number"
               min={0}
@@ -276,7 +289,11 @@ export function EventCheckinSettingsPanel({ eventId }: EventCheckinSettingsPanel
         </div>
 
         {form.geofenceEnabled && (
-          <FormField label={t("eventManage.checkinSettings.geofenceRadius", { defaultValue: "Geofence radius (meters)" })}>
+          <FormField
+            label={t("eventManage.checkinSettings.geofenceRadius", {
+              defaultValue: "Geofence radius (meters)",
+            })}
+          >
             <Input
               type="number"
               min={10}
@@ -294,22 +311,30 @@ export function EventCheckinSettingsPanel({ eventId }: EventCheckinSettingsPanel
         </p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <ToggleRow
-            label={t("eventManage.checkinSettings.manualCheckin", { defaultValue: "Manual check-in" })}
+            label={t("eventManage.checkinSettings.manualCheckin", {
+              defaultValue: "Manual check-in",
+            })}
             checked={form.manualCheckinEnabled}
             onChange={(checked) => setForm({ ...form, manualCheckinEnabled: checked })}
           />
           <ToggleRow
-            label={t("eventManage.checkinSettings.manualCorrection", { defaultValue: "Manual correction" })}
+            label={t("eventManage.checkinSettings.manualCorrection", {
+              defaultValue: "Manual correction",
+            })}
             checked={form.manualCorrectionEnabled}
             onChange={(checked) => setForm({ ...form, manualCorrectionEnabled: checked })}
           />
           <ToggleRow
-            label={t("eventManage.checkinSettings.correctionReason", { defaultValue: "Require correction reason" })}
+            label={t("eventManage.checkinSettings.correctionReason", {
+              defaultValue: "Require correction reason",
+            })}
             checked={form.requireCorrectionReason}
             onChange={(checked) => setForm({ ...form, requireCorrectionReason: checked })}
           />
           <ToggleRow
-            label={t("eventManage.checkinSettings.attendanceProof", { defaultValue: "Attendance proof" })}
+            label={t("eventManage.checkinSettings.attendanceProof", {
+              defaultValue: "Attendance proof",
+            })}
             checked={form.attendanceProofEnabled}
             onChange={(checked) => setForm({ ...form, attendanceProofEnabled: checked })}
           />

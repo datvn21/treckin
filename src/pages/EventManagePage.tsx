@@ -9,11 +9,25 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   ScanQrCode,
-  X, Wifi, WifiOff,
-  Camera, CameraOff, Loader2, VideoOff, Pause, Play,
-  ArrowLeft, CheckCircle, Clock, XCircle, AlertCircle,
-  ArrowDownLeft, ArrowUpRight,
-  Copy, Check, ExternalLink,
+  X,
+  Wifi,
+  WifiOff,
+  Camera,
+  CameraOff,
+  Loader2,
+  VideoOff,
+  Pause,
+  Play,
+  ArrowLeft,
+  CheckCircle,
+  Clock,
+  XCircle,
+  AlertCircle,
+  ArrowDownLeft,
+  ArrowUpRight,
+  Copy,
+  Check,
+  ExternalLink,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
@@ -32,9 +46,14 @@ import { useAuthStore } from "@/stores/auth-store";
 import { getSocket, joinEventRoom, leaveEventRoom } from "@/lib/socket";
 import { cn } from "@/lib/utils";
 import { useDocumentTitle } from "@/hooks";
-import type { CheckinRecord, CheckinDirection, ScanResult, ScanStatus, SocketCheckinPayload } from "@/types";
+import type {
+  CheckinRecord,
+  CheckinDirection,
+  ScanResult,
+  ScanStatus,
+  SocketCheckinPayload,
+} from "@/types";
 import { SocketEvent } from "@/types";
-
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface EventDetail {
@@ -71,19 +90,23 @@ interface BoardInfo {
 // Maps raw backend event status strings to display variants
 function statusVariant(s: string): "green" | "blue" | "gray" | "red" {
   switch (s?.toUpperCase()) {
-    case "ONGOING":   return "green";
-    case "COMPLETED": return "gray";
-    case "CANCELLED": return "red";
-    default:          return "blue";
+    case "ONGOING":
+      return "green";
+    case "COMPLETED":
+      return "gray";
+    case "CANCELLED":
+      return "red";
+    default:
+      return "blue";
   }
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function getStatusLabel(s: string, t: (key: string) => string): string {
   const map: Record<string, string> = {
-    ONGOING:   t("manage.status.active"),
+    ONGOING: t("manage.status.active"),
     PUBLISHED: t("manage.status.upcoming"),
-    DRAFT:     t("manage.status.upcoming"),
+    DRAFT: t("manage.status.upcoming"),
     COMPLETED: t("manage.status.completed"),
     CANCELLED: t("manage.status.cancelled"),
   };
@@ -94,11 +117,19 @@ function formatTime(ts: string): string {
   try {
     const d = new Date(ts);
     return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  } catch { return ""; }
+  } catch {
+    return "";
+  }
 }
 
 // ── Inline Scanner Component ──────────────────────────────────────────────
-type CameraState = "initializing" | "ready" | "paused" | "permission-denied" | "no-camera" | "error";
+type CameraState =
+  | "initializing"
+  | "ready"
+  | "paused"
+  | "permission-denied"
+  | "no-camera"
+  | "error";
 
 interface InlineQRScannerProps {
   onScan: (decodedText: string) => void;
@@ -114,45 +145,57 @@ function InlineQRScanner({ onScan, isPaused }: InlineQRScannerProps) {
   const SCANNER_ID = "inline-qr-scanner";
   const DEBOUNCE_MS = 800;
 
-  const handleScan = useCallback((decodedText: string) => {
-    const now = Date.now();
-    if (now - lastScanRef.current < DEBOUNCE_MS) return;
-    lastScanRef.current = now;
-    onScan(decodedText);
-  }, [onScan]);
+  const handleScan = useCallback(
+    (decodedText: string) => {
+      const now = Date.now();
+      if (now - lastScanRef.current < DEBOUNCE_MS) return;
+      lastScanRef.current = now;
+      onScan(decodedText);
+    },
+    [onScan],
+  );
 
-  const startScanner = useCallback(async (isMounted: { current: boolean }) => {
-    try {
-      const container = document.getElementById(SCANNER_ID);
-      if (container) container.innerHTML = "";
+  const startScanner = useCallback(
+    async (isMounted: { current: boolean }) => {
+      try {
+        const container = document.getElementById(SCANNER_ID);
+        if (container) container.innerHTML = "";
 
-      const scanner = new Html5Qrcode(SCANNER_ID, { verbose: false });
-      scannerRef.current = scanner;
+        const scanner = new Html5Qrcode(SCANNER_ID, { verbose: false });
+        scannerRef.current = scanner;
 
-      await scanner.start(
-        { facingMode: "environment" },
-        { fps: 15 },
-        (text) => { if (isMounted.current) handleScan(text); },
-        () => {}
-      );
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 15 },
+          (text) => {
+            if (isMounted.current) handleScan(text);
+          },
+          () => {},
+        );
 
-      if (isMounted.current) setCameraState("ready");
-      else { await scanner.stop().catch(() => {}); scanner.clear(); scannerRef.current = null; }
-    } catch (err) {
-      if (!isMounted.current) return;
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes("Permission") || msg.includes("NotAllowedError")) {
-        setCameraState("permission-denied");
-        setErrorMessage(t("scanner.camera.permissionDenied"));
-      } else if (msg.includes("NotFoundError") || msg.includes("DevicesNotFound")) {
-        setCameraState("no-camera");
-        setErrorMessage(t("scanner.camera.noCamera"));
-      } else {
-        setCameraState("error");
-        setErrorMessage(msg);
+        if (isMounted.current) setCameraState("ready");
+        else {
+          await scanner.stop().catch(() => {});
+          scanner.clear();
+          scannerRef.current = null;
+        }
+      } catch (err) {
+        if (!isMounted.current) return;
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg.includes("Permission") || msg.includes("NotAllowedError")) {
+          setCameraState("permission-denied");
+          setErrorMessage(t("scanner.camera.permissionDenied"));
+        } else if (msg.includes("NotFoundError") || msg.includes("DevicesNotFound")) {
+          setCameraState("no-camera");
+          setErrorMessage(t("scanner.camera.noCamera"));
+        } else {
+          setCameraState("error");
+          setErrorMessage(msg);
+        }
       }
-    }
-  }, [handleScan, t]);
+    },
+    [handleScan, t],
+  );
 
   const stopScanner = useCallback(async () => {
     const s = scannerRef.current;
@@ -161,15 +204,20 @@ function InlineQRScanner({ onScan, isPaused }: InlineQRScannerProps) {
     if (st === Html5QrcodeScannerState.SCANNING || st === Html5QrcodeScannerState.PAUSED) {
       await s.stop().catch(() => {});
     }
-    try { s.clear(); } catch {}
+    try {
+      s.clear();
+    } catch {}
     scannerRef.current = null;
   }, []);
 
   useEffect(() => {
     const isMounted = { current: true };
     void startScanner(isMounted);
-    return () => { isMounted.current = false; void stopScanner(); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      isMounted.current = false;
+      void stopScanner();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -179,9 +227,11 @@ function InlineQRScanner({ onScan, isPaused }: InlineQRScannerProps) {
       setCameraState("initializing");
       const isMounted = { current: true };
       void startScanner(isMounted);
-      return () => { isMounted.current = false; };
+      return () => {
+        isMounted.current = false;
+      };
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPaused]);
 
   const isActive = cameraState === "ready";
@@ -227,9 +277,13 @@ function InlineQRScanner({ onScan, isPaused }: InlineQRScannerProps) {
       {cameraState === "permission-denied" && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#1a1714] z-20 p-6 text-center">
           <CameraOff className="w-12 h-12 text-[#e4a020]" strokeWidth={1.2} />
-          <p className="text-[#f0ebe6] font-semibold text-base">{t("scanner.camera.permissionTitle")}</p>
+          <p className="text-[#f0ebe6] font-semibold text-base">
+            {t("scanner.camera.permissionTitle")}
+          </p>
           <p className="text-[#8f857f] text-xs max-w-[240px]">{errorMessage}</p>
-          <p className="text-[#5e5650] text-xs max-w-[240px]">{t("scanner.camera.permissionHint")}</p>
+          <p className="text-[#5e5650] text-xs max-w-[240px]">
+            {t("scanner.camera.permissionHint")}
+          </p>
         </div>
       )}
 
@@ -237,7 +291,9 @@ function InlineQRScanner({ onScan, isPaused }: InlineQRScannerProps) {
       {cameraState === "no-camera" && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#1a1714] z-20 p-6 text-center">
           <VideoOff className="w-12 h-12 text-[#f87171]" strokeWidth={1.2} />
-          <p className="text-[#f0ebe6] font-semibold text-base">{t("scanner.camera.noCameraTitle")}</p>
+          <p className="text-[#f0ebe6] font-semibold text-base">
+            {t("scanner.camera.noCameraTitle")}
+          </p>
           <p className="text-[#8f857f] text-xs max-w-[240px]">{errorMessage}</p>
         </div>
       )}
@@ -267,36 +323,52 @@ const AUTO_DISMISS_MS = 4000;
 function ResultIcon({ status }: { status: ScanResult["status"] }) {
   const cls = "w-8 h-8 flex-shrink-0";
   switch (status) {
-    case "success":           return <CheckCircle className={cn(cls, "text-[#12a150]")} strokeWidth={1.5} />;
-    case "already-checked-in": return <Clock className={cn(cls, "text-[#b45309]")} strokeWidth={1.5} />;
-    case "invalid-qr":         return <XCircle className={cn(cls, "text-[#dc2626]")} strokeWidth={1.5} />;
-    case "expired-qr":        return <AlertCircle className={cn(cls, "text-[#d97706]")} strokeWidth={1.5} />;
-    case "outside-geofence":   return <AlertCircle className={cn(cls, "text-[#d97706]")} strokeWidth={1.5} />;
-    default: return null;
+    case "success":
+      return <CheckCircle className={cn(cls, "text-[#12a150]")} strokeWidth={1.5} />;
+    case "already-checked-in":
+      return <Clock className={cn(cls, "text-[#b45309]")} strokeWidth={1.5} />;
+    case "invalid-qr":
+      return <XCircle className={cn(cls, "text-[#dc2626]")} strokeWidth={1.5} />;
+    case "expired-qr":
+      return <AlertCircle className={cn(cls, "text-[#d97706]")} strokeWidth={1.5} />;
+    case "outside-geofence":
+      return <AlertCircle className={cn(cls, "text-[#d97706]")} strokeWidth={1.5} />;
+    default:
+      return null;
   }
 }
 
 function ResultLabel({ status }: { status: ScanResult["status"] }) {
   const { t } = useTranslation();
   const map: Record<string, string> = {
-    "success": t("scanner.result.success"),
+    success: t("scanner.result.success"),
     "already-checked-in": t("scanner.result.alreadyCheckedIn"),
     "invalid-qr": t("scanner.result.invalid"),
     "expired-qr": t("scanner.result.expired"),
     "outside-geofence": t("scanner.result.geofence"),
   };
   return (
-    <span className={cn("text-sm font-semibold",
-      status === "success" && "text-[#12a150]",
-      status === "already-checked-in" && "text-[#b45309]",
-      (status === "invalid-qr" || status === "expired-qr" || status === "outside-geofence") && "text-[#dc2626]"
-    )}>
+    <span
+      className={cn(
+        "text-sm font-semibold",
+        status === "success" && "text-[#12a150]",
+        status === "already-checked-in" && "text-[#b45309]",
+        (status === "invalid-qr" || status === "expired-qr" || status === "outside-geofence") &&
+          "text-[#dc2626]",
+      )}
+    >
       {map[status] ?? status}
     </span>
   );
 }
 
-function ScanResultToast({ result, onDismiss }: { result: ScanResult | null; onDismiss: () => void }) {
+function ScanResultToast({
+  result,
+  onDismiss,
+}: {
+  result: ScanResult | null;
+  onDismiss: () => void;
+}) {
   const { t } = useTranslation();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -304,7 +376,9 @@ function ScanResultToast({ result, onDismiss }: { result: ScanResult | null; onD
     if (!result) return;
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(onDismiss, AUTO_DISMISS_MS);
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [result, onDismiss]);
 
   if (!result) return null;
@@ -341,7 +415,9 @@ function ScanResultToast({ result, onDismiss }: { result: ScanResult | null; onD
         {result.status === "already-checked-in" && result.originalCheckin && (
           <div className="mt-2 flex items-center gap-1.5 text-[10px] text-[#8f857f]">
             <Clock className="w-3 h-3 flex-shrink-0" strokeWidth={1.5} />
-            <span>{result.originalCheckin.boardName} · {formatTime(result.originalCheckin.timestamp)}</span>
+            <span>
+              {result.originalCheckin.boardName} · {formatTime(result.originalCheckin.timestamp)}
+            </span>
           </div>
         )}
       </div>
@@ -353,10 +429,11 @@ function ScanResultToast({ result, onDismiss }: { result: ScanResult | null; onD
 function OnlineDot({ isOnline }: { isOnline: boolean }) {
   return (
     <div className="flex items-center gap-1.5">
-      {isOnline
-        ? <Wifi className="w-3.5 h-3.5 text-[#12a150]" strokeWidth={1.5} />
-        : <WifiOff className="w-3.5 h-3.5 text-[#dc2626]" strokeWidth={1.5} />
-      }
+      {isOnline ? (
+        <Wifi className="w-3.5 h-3.5 text-[#12a150]" strokeWidth={1.5} />
+      ) : (
+        <WifiOff className="w-3.5 h-3.5 text-[#dc2626]" strokeWidth={1.5} />
+      )}
       <span className={cn("text-xs font-medium", isOnline ? "text-[#12a150]" : "text-[#dc2626]")}>
         {isOnline ? "Online" : "Offline"}
       </span>
@@ -377,14 +454,21 @@ function RecentCheckins({ checkins }: { checkins: CheckinRecord[] }) {
       {checkins.slice(0, 8).map((c) => {
         const isIn = c.direction === "IN";
         return (
-          <div key={c.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#f7f5f2] border border-[#e4deda]">
-            <div className={cn("flex items-center justify-center w-6 h-6 rounded-full",
-              isIn ? "bg-[#dcfce7] text-[#12a150]" : "bg-[#fee2e2] text-[#dc2626]"
-            )}>
-              {isIn
-                ? <ArrowDownLeft className="w-3 h-3" strokeWidth={2} />
-                : <ArrowUpRight className="w-3 h-3" strokeWidth={2} />
-              }
+          <div
+            key={c.id}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#f7f5f2] border border-[#e4deda]"
+          >
+            <div
+              className={cn(
+                "flex items-center justify-center w-6 h-6 rounded-full",
+                isIn ? "bg-[#dcfce7] text-[#12a150]" : "bg-[#fee2e2] text-[#dc2626]",
+              )}
+            >
+              {isIn ? (
+                <ArrowDownLeft className="w-3 h-3" strokeWidth={2} />
+              ) : (
+                <ArrowUpRight className="w-3 h-3" strokeWidth={2} />
+              )}
             </div>
             <Avatar name={c.userName} size="xs" />
             <div className="flex-1 min-w-0">
@@ -422,38 +506,55 @@ function EventQRCard({ event, board }: { event: EventDetail; board: BoardInfo | 
     <div className="card p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-[#1e1919]">{t("eventDetail.credential")}</h3>
-        {board && (
-          <Badge variant="green">{board.name}</Badge>
-        )}
+        {board && <Badge variant="green">{board.name}</Badge>}
       </div>
       <div className="flex items-start gap-4">
         {/* QR Code */}
         <div className="flex-shrink-0 flex flex-col items-center gap-2">
           <div className="p-3 bg-white rounded-xl border border-[#e4deda]">
-            <QRCodeSVG value={qrPayload} size={100} bgColor="transparent" fgColor="#1e1919" level="M" includeMargin={false} />
+            <QRCodeSVG
+              value={qrPayload}
+              size={100}
+              bgColor="transparent"
+              fgColor="#1e1919"
+              level="M"
+              includeMargin={false}
+            />
           </div>
         </div>
 
         {/* Code + Info */}
         <div className="flex-1 min-w-0 space-y-3">
           <div>
-            <p className="text-[10px] text-[#776e6b] uppercase tracking-wider mb-1">{t("event.joinCode")}</p>
+            <p className="text-[10px] text-[#776e6b] uppercase tracking-wider mb-1">
+              {t("event.joinCode")}
+            </p>
             <div className="flex items-center gap-2">
-              <p className="font-mono text-2xl font-bold tracking-widest text-[#1e1919]">{shortCode}</p>
+              <p className="font-mono text-2xl font-bold tracking-widest text-[#1e1919]">
+                {shortCode}
+              </p>
               <button
                 type="button"
                 onClick={handleCopy}
                 className="flex items-center justify-center w-7 h-7 rounded-lg text-[#776e6b] hover:text-[#1e1919] hover:bg-[#f2efe9] transition-colors"
                 title={t("event.copyCode")}
               >
-                {copied ? <Check className="w-3.5 h-3.5" strokeWidth={2} /> : <Copy className="w-3.5 h-3.5" strokeWidth={1.5} />}
+                {copied ? (
+                  <Check className="w-3.5 h-3.5" strokeWidth={2} />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" strokeWidth={1.5} />
+                )}
               </button>
             </div>
           </div>
           <div className="space-y-1">
-            <p className="text-xs text-[#776e6b]">{t("event.date")}: {event.date}</p>
+            <p className="text-xs text-[#776e6b]">
+              {t("event.date")}: {event.date}
+            </p>
             {event.location && (
-              <p className="text-xs text-[#776e6b]">{t("event.location")}: {event.location}</p>
+              <p className="text-xs text-[#776e6b]">
+                {t("event.location")}: {event.location}
+              </p>
             )}
           </div>
         </div>
@@ -501,7 +602,9 @@ export function EventManagePage() {
         return updated;
       });
       setTotalCheckins(payload.totalCheckins);
-      setEvent((prev) => prev ? { ...prev, _count: { ...prev._count!, checkins: payload.totalCheckins } } : prev);
+      setEvent((prev) =>
+        prev ? { ...prev, _count: { ...prev._count!, checkins: payload.totalCheckins } } : prev,
+      );
     };
     socket.on(SocketEvent.CHECKIN_SUCCESS, handleCheckin);
     return () => {
@@ -529,11 +632,11 @@ export function EventManagePage() {
     }
   }, [id, t, toast, activeBoardId]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
-  useDocumentTitle(
-    event?.title ? `${t("manage.title")} · ${event.title}` : t("manage.title")
-  );
+  useDocumentTitle(event?.title ? `${t("manage.title")} · ${event.title}` : t("manage.title"));
 
   // ── Computed ────────────────────────────────────────────
   const totalReg = event?._count?.registrations ?? 0;
@@ -542,112 +645,176 @@ export function EventManagePage() {
   const activeBoard = event?.boards?.find((b) => b.id === activeBoardId) ?? null;
 
   // ── Scan handlers ─────────────────────────────────────────
-  const handleScan = useCallback(async (decodedText: string) => {
-    if (!activeBoardId || !id || !event) return;
-    try {
-      const { data } = await api.post<{
-        success: boolean;
-        checkinRecord: { id: string; userId: string; eventId: string; boardId: string; direction: CheckinDirection; timestamp: string; user: { id: string; name: string; email: string } };
-      }>("/checkin/by-personal-qr", {
-        hash: decodedText,
-        boardId: activeBoardId,
-        eventId: id,
-        direction: "IN",
-      });
-
-      const result: ScanResult = data.success
-        ? {
-            status: "success",
-            message: t("scanner.success"),
-            student: { id: data.checkinRecord.user.id, name: data.checkinRecord.user.name, email: data.checkinRecord.user.email, avatarUrl: "" },
-            checkinRecord: {
-              id: data.checkinRecord.id, userId: data.checkinRecord.userId,
-              userName: data.checkinRecord.user.name, eventId: data.checkinRecord.eventId,
-              boardId: data.checkinRecord.boardId, boardName: activeBoard?.name ?? "",
-              direction: data.checkinRecord.direction, timestamp: data.checkinRecord.timestamp,
-              method: "qr",
-            },
-          }
-        : {
-            status: "already-checked-in",
-            message: t("scanner.alreadyCheckedIn"),
-            student: { id: data.checkinRecord.user.id, name: data.checkinRecord.user.name, email: data.checkinRecord.user.email, avatarUrl: "" },
-            originalCheckin: { boardName: activeBoard?.name ?? "", timestamp: data.checkinRecord.timestamp },
+  const handleScan = useCallback(
+    async (decodedText: string) => {
+      if (!activeBoardId || !id || !event) return;
+      try {
+        const { data } = await api.post<{
+          success: boolean;
+          checkinRecord: {
+            id: string;
+            userId: string;
+            eventId: string;
+            boardId: string;
+            direction: CheckinDirection;
+            timestamp: string;
+            user: { id: string; name: string; email: string };
           };
+        }>("/checkin/by-personal-qr", {
+          hash: decodedText,
+          boardId: activeBoardId,
+          eventId: id,
+          direction: "IN",
+        });
 
-      setScanResult(result);
-      if (result.status === "success" && result.checkinRecord) {
-        setRecentCheckins((prev) => [result.checkinRecord!, ...prev].slice(0, 20));
-        setTotalCheckins((n) => n + 1);
+        const result: ScanResult = data.success
+          ? {
+              status: "success",
+              message: t("scanner.success"),
+              student: {
+                id: data.checkinRecord.user.id,
+                name: data.checkinRecord.user.name,
+                email: data.checkinRecord.user.email,
+                avatarUrl: "",
+              },
+              checkinRecord: {
+                id: data.checkinRecord.id,
+                userId: data.checkinRecord.userId,
+                userName: data.checkinRecord.user.name,
+                eventId: data.checkinRecord.eventId,
+                boardId: data.checkinRecord.boardId,
+                boardName: activeBoard?.name ?? "",
+                direction: data.checkinRecord.direction,
+                timestamp: data.checkinRecord.timestamp,
+                method: "qr",
+              },
+            }
+          : {
+              status: "already-checked-in",
+              message: t("scanner.alreadyCheckedIn"),
+              student: {
+                id: data.checkinRecord.user.id,
+                name: data.checkinRecord.user.name,
+                email: data.checkinRecord.user.email,
+                avatarUrl: "",
+              },
+              originalCheckin: {
+                boardName: activeBoard?.name ?? "",
+                timestamp: data.checkinRecord.timestamp,
+              },
+            };
+
+        setScanResult(result);
+        if (result.status === "success" && result.checkinRecord) {
+          setRecentCheckins((prev) => [result.checkinRecord!, ...prev].slice(0, 20));
+          setTotalCheckins((n) => n + 1);
+        }
+      } catch (err) {
+        const msg = parseApiError(err, t("scanner.invalidQr"));
+        let status: ScanStatus = "invalid-qr";
+        const lower = msg.toLowerCase();
+        if (lower.includes("expired") || lower.includes("hết hạn")) status = "expired-qr";
+        else if (lower.includes("geofence") || lower.includes("khoảng cách"))
+          status = "outside-geofence";
+        setScanResult({ status, message: msg });
       }
-    } catch (err) {
-      const msg = parseApiError(err, t("scanner.invalidQr"));
-      let status: ScanStatus = "invalid-qr";
-      const lower = msg.toLowerCase();
-      if (lower.includes("expired") || lower.includes("hết hạn")) status = "expired-qr";
-      else if (lower.includes("geofence") || lower.includes("khoảng cách")) status = "outside-geofence";
-      setScanResult({ status, message: msg });
-    }
-  }, [activeBoardId, id, activeBoard, t]);
+    },
+    [activeBoardId, id, activeBoard, t],
+  );
 
-  const handleShortCodeSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    const code = shortCode.trim().toUpperCase();
-    if (!code || code.length !== 6 || !activeBoardId || !id || !event) return;
-    setIsSubmittingCode(true);
-    try {
-      const { data } = await api.post<{
-        success: boolean;
-        checkinRecord: { id: string; userId: string; eventId: string; boardId: string; direction: CheckinDirection; timestamp: string; user: { id: string; name: string; email: string } };
-      }>("/checkin/by-short-code", {
-        code, boardId: activeBoardId, eventId: id, direction: "IN",
-      });
-
-      const result: ScanResult = data.success
-        ? {
-            status: "success",
-            message: t("scanner.success"),
-            student: { id: data.checkinRecord.user.id, name: data.checkinRecord.user.name, email: data.checkinRecord.user.email, avatarUrl: "" },
-            checkinRecord: {
-              id: data.checkinRecord.id, userId: data.checkinRecord.userId,
-              userName: data.checkinRecord.user.name, eventId: data.checkinRecord.eventId,
-              boardId: data.checkinRecord.boardId, boardName: activeBoard?.name ?? "",
-              direction: data.checkinRecord.direction, timestamp: data.checkinRecord.timestamp,
-              method: "qr",
-            },
-          }
-        : {
-            status: "already-checked-in",
-            message: t("scanner.alreadyCheckedIn"),
-            student: { id: data.checkinRecord.user.id, name: data.checkinRecord.user.name, email: data.checkinRecord.user.email, avatarUrl: "" },
-            originalCheckin: { boardName: activeBoard?.name ?? "", timestamp: data.checkinRecord.timestamp },
+  const handleShortCodeSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      const code = shortCode.trim().toUpperCase();
+      if (!code || code.length !== 6 || !activeBoardId || !id || !event) return;
+      setIsSubmittingCode(true);
+      try {
+        const { data } = await api.post<{
+          success: boolean;
+          checkinRecord: {
+            id: string;
+            userId: string;
+            eventId: string;
+            boardId: string;
+            direction: CheckinDirection;
+            timestamp: string;
+            user: { id: string; name: string; email: string };
           };
+        }>("/checkin/by-short-code", {
+          code,
+          boardId: activeBoardId,
+          eventId: id,
+          direction: "IN",
+        });
 
-      setScanResult(result);
-      if (result.status === "success" && result.checkinRecord) {
-        setRecentCheckins((prev) => [result.checkinRecord!, ...prev].slice(0, 20));
-        setTotalCheckins((n) => n + 1);
+        const result: ScanResult = data.success
+          ? {
+              status: "success",
+              message: t("scanner.success"),
+              student: {
+                id: data.checkinRecord.user.id,
+                name: data.checkinRecord.user.name,
+                email: data.checkinRecord.user.email,
+                avatarUrl: "",
+              },
+              checkinRecord: {
+                id: data.checkinRecord.id,
+                userId: data.checkinRecord.userId,
+                userName: data.checkinRecord.user.name,
+                eventId: data.checkinRecord.eventId,
+                boardId: data.checkinRecord.boardId,
+                boardName: activeBoard?.name ?? "",
+                direction: data.checkinRecord.direction,
+                timestamp: data.checkinRecord.timestamp,
+                method: "qr",
+              },
+            }
+          : {
+              status: "already-checked-in",
+              message: t("scanner.alreadyCheckedIn"),
+              student: {
+                id: data.checkinRecord.user.id,
+                name: data.checkinRecord.user.name,
+                email: data.checkinRecord.user.email,
+                avatarUrl: "",
+              },
+              originalCheckin: {
+                boardName: activeBoard?.name ?? "",
+                timestamp: data.checkinRecord.timestamp,
+              },
+            };
+
+        setScanResult(result);
+        if (result.status === "success" && result.checkinRecord) {
+          setRecentCheckins((prev) => [result.checkinRecord!, ...prev].slice(0, 20));
+          setTotalCheckins((n) => n + 1);
+        }
+        setShortCode("");
+      } catch (err) {
+        setScanResult({
+          status: "invalid-qr",
+          message: parseApiError(err, t("scanner.invalidQr")),
+        });
+        setShortCode("");
+      } finally {
+        setIsSubmittingCode(false);
       }
-      setShortCode("");
-    } catch (err) {
-      setScanResult({ status: "invalid-qr", message: parseApiError(err, t("scanner.invalidQr")) });
-      setShortCode("");
-    } finally {
-      setIsSubmittingCode(false);
-    }
-  }, [shortCode, activeBoardId, id, activeBoard, t]);
+    },
+    [shortCode, activeBoardId, id, activeBoard, t],
+  );
 
-  const closePath = event?.workspaceId
-    ? `/app/workspaces/${event.workspaceId}`
-    : "/app/workspaces";
+  const closePath = event?.workspaceId ? `/app/workspaces/${event.workspaceId}` : "/app/workspaces";
 
   // ── Loading ─────────────────────────────────────────────
   if (loading) {
     return (
       <div>
         <div className="flex justify-end mb-4">
-          <button type="button" onClick={() => navigate(closePath)}
-            className="flex items-center justify-center w-8 h-8 rounded-full border border-[#e4deda] text-[#776e6b] hover:text-[#1e1919] hover:bg-[#f2efe9] transition-colors">
+          <button
+            type="button"
+            onClick={() => navigate(closePath)}
+            className="flex items-center justify-center w-8 h-8 rounded-full border border-[#e4deda] text-[#776e6b] hover:text-[#1e1919] hover:bg-[#f2efe9] transition-colors"
+          >
             <X size={15} />
           </button>
         </div>
@@ -661,8 +828,11 @@ export function EventManagePage() {
     return (
       <div>
         <div className="flex justify-end mb-4">
-          <button type="button" onClick={() => navigate(closePath)}
-            className="flex items-center justify-center w-8 h-8 rounded-full border border-[#e4deda] text-[#776e6b] hover:text-[#1e1919] hover:bg-[#f2efe9] transition-colors">
+          <button
+            type="button"
+            onClick={() => navigate(closePath)}
+            className="flex items-center justify-center w-8 h-8 rounded-full border border-[#e4deda] text-[#776e6b] hover:text-[#1e1919] hover:bg-[#f2efe9] transition-colors"
+          >
             <X size={15} />
           </button>
         </div>
@@ -679,8 +849,11 @@ export function EventManagePage() {
       {/* ── Topbar ─────────────────────────────────────── */}
       <div className="sticky top-0 z-20 bg-white border-b border-[#e4deda] px-4 py-3">
         <div className="max-w-5xl mx-auto flex items-center gap-3">
-          <button type="button" onClick={() => navigate(closePath)}
-            className="flex items-center justify-center w-9 h-9 rounded-lg text-[#776e6b] hover:text-[#1e1919] hover:bg-[#f2efe9] transition-colors">
+          <button
+            type="button"
+            onClick={() => navigate(closePath)}
+            className="flex items-center justify-center w-9 h-9 rounded-lg text-[#776e6b] hover:text-[#1e1919] hover:bg-[#f2efe9] transition-colors"
+          >
             <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
           </button>
           <div className="flex-1 min-w-0">
@@ -690,10 +863,12 @@ export function EventManagePage() {
               <OnlineDot isOnline={isOnline && socketConnected} />
             </div>
           </div>
-          <button type="button"
+          <button
+            type="button"
             onClick={() => navigate(`/app/events/${id}`)}
             className="flex items-center justify-center w-9 h-9 rounded-lg text-[#776e6b] hover:text-[#1e1919] hover:bg-[#f2efe9] transition-colors"
-            title={t("manage.viewAsAttendee")}>
+            title={t("manage.viewAsAttendee")}
+          >
             <ExternalLink className="w-4 h-4" strokeWidth={1.5} />
           </button>
         </div>
@@ -712,7 +887,9 @@ export function EventManagePage() {
           </div>
           <div className="card p-4 flex flex-col gap-1">
             <p className="text-xs text-[#776e6b] font-medium">{t("manage.checkinRate")}</p>
-            <p className="text-2xl font-semibold tabular-nums" style={{ color: rateColor }}>{rate}%</p>
+            <p className="text-2xl font-semibold tabular-nums" style={{ color: rateColor }}>
+              {rate}%
+            </p>
           </div>
         </div>
 
@@ -723,19 +900,23 @@ export function EventManagePage() {
               <button
                 key={board.id}
                 type="button"
-                onClick={() => { setActiveBoardId(board.id); }}
+                onClick={() => {
+                  setActiveBoardId(board.id);
+                }}
                 className={cn(
                   "flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium whitespace-nowrap transition-colors",
                   activeBoardId === board.id
                     ? "bg-[#0061fe] text-white border-transparent"
-                    : "bg-white text-[#4a4543] border-[#e4deda] hover:border-[#cfc8c3]"
+                    : "bg-white text-[#4a4543] border-[#e4deda] hover:border-[#cfc8c3]",
                 )}
               >
                 <span>{board.name}</span>
-                <span className={cn(
-                  "text-[10px] px-1.5 py-0.5 rounded-full font-semibold tabular-nums",
-                  activeBoardId === board.id ? "bg-white/20" : "bg-[#f2efe9]"
-                )}>
+                <span
+                  className={cn(
+                    "text-[10px] px-1.5 py-0.5 rounded-full font-semibold tabular-nums",
+                    activeBoardId === board.id ? "bg-white/20" : "bg-[#f2efe9]",
+                  )}
+                >
                   {board.checkinCount}
                 </span>
               </button>
@@ -747,7 +928,7 @@ export function EventManagePage() {
                 "flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium whitespace-nowrap transition-colors",
                 scannerOpen
                   ? "bg-[#0061fe] text-white border-transparent"
-                  : "bg-white text-[#0061fe] border-[#b8d0ff] hover:bg-[#edf3ff]"
+                  : "bg-white text-[#0061fe] border-[#b8d0ff] hover:bg-[#edf3ff]",
               )}
             >
               <ScanQrCode className="w-4 h-4" strokeWidth={1.5} />
@@ -770,32 +951,46 @@ export function EventManagePage() {
               <div className="flex items-center gap-1.5">
                 {/* Scan mode toggle */}
                 <div className="flex items-center bg-[#f2efe9] rounded-lg p-0.5 gap-0.5">
-                  <button type="button"
+                  <button
+                    type="button"
                     onClick={() => setScanMode("camera")}
-                    className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
-                      scanMode === "camera" ? "bg-white text-[#1e1919] shadow-sm" : "text-[#776e6b]"
-                    )}>
+                    className={cn(
+                      "px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                      scanMode === "camera"
+                        ? "bg-white text-[#1e1919] shadow-sm"
+                        : "text-[#776e6b]",
+                    )}
+                  >
                     <Camera className="w-3.5 h-3.5" strokeWidth={1.5} />
                   </button>
-                  <button type="button"
+                  <button
+                    type="button"
                     onClick={() => setScanMode("code")}
-                    className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
-                      scanMode === "code" ? "bg-white text-[#1e1919] shadow-sm" : "text-[#776e6b]"
-                    )}>
+                    className={cn(
+                      "px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                      scanMode === "code" ? "bg-white text-[#1e1919] shadow-sm" : "text-[#776e6b]",
+                    )}
+                  >
                     {t("scanner.enterCode")}
                   </button>
                 </div>
                 {/* Pause */}
-                <button type="button"
+                <button
+                  type="button"
                   onClick={() => setIsPaused((v) => !v)}
                   className={cn(
                     "flex items-center justify-center w-8 h-8 rounded-lg transition-colors",
                     isPaused
                       ? "bg-[#12a150] text-white hover:bg-[#0f8f42]"
-                      : "text-[#776e6b] hover:text-[#1e1919] hover:bg-[#f2efe9]"
+                      : "text-[#776e6b] hover:text-[#1e1919] hover:bg-[#f2efe9]",
                   )}
-                  title={isPaused ? t("scanner.resume") : t("scanner.pause")}>
-                  {isPaused ? <Play className="w-4 h-4" strokeWidth={1.5} /> : <Pause className="w-4 h-4" strokeWidth={1.5} />}
+                  title={isPaused ? t("scanner.resume") : t("scanner.pause")}
+                >
+                  {isPaused ? (
+                    <Play className="w-4 h-4" strokeWidth={1.5} />
+                  ) : (
+                    <Pause className="w-4 h-4" strokeWidth={1.5} />
+                  )}
                 </button>
               </div>
             </div>
@@ -808,18 +1003,28 @@ export function EventManagePage() {
                   {scanMode === "camera" ? (
                     <InlineQRScanner onScan={handleScan} isPaused={isPaused} />
                   ) : (
-                    <form onSubmit={(e) => void handleShortCodeSubmit(e)} className="flex flex-col gap-3">
+                    <form
+                      onSubmit={(e) => void handleShortCodeSubmit(e)}
+                      className="flex flex-col gap-3"
+                    >
                       <Input
                         type="text"
                         value={shortCode}
-                        onChange={(e) => setShortCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+                        onChange={(e) =>
+                          setShortCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))
+                        }
                         placeholder={t("scanner.enterCodePlaceholder")}
                         className="text-center text-xl font-mono tracking-widest uppercase"
                         maxLength={6}
                         autoFocus
                         autoComplete="off"
                       />
-                      <Button type="submit" variant="primary" disabled={shortCode.length !== 6} isLoading={isSubmittingCode}>
+                      <Button
+                        type="submit"
+                        variant="primary"
+                        disabled={shortCode.length !== 6}
+                        isLoading={isSubmittingCode}
+                      >
                         {t("scanner.submit")}
                       </Button>
                     </form>

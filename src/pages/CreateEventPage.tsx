@@ -123,8 +123,14 @@ export function CreateEventPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!validate1()) { setStep(1); return; }
-    if (!validate2()) { setStep(2); return; }
+    if (!validate1()) {
+      setStep(1);
+      return;
+    }
+    if (!validate2()) {
+      setStep(2);
+      return;
+    }
 
     const boardNames = splitList(form.boards);
     const payload = {
@@ -150,10 +156,7 @@ export function CreateEventPage() {
 
     setSubmitting(true);
     try {
-      const { data } = await api.post<{ id: string }>(
-        `/workspaces/${workspaceId}/events`,
-        payload,
-      );
+      const { data } = await api.post<{ id: string }>(`/workspaces/${workspaceId}/events`, payload);
       toast.success(t("event.createSuccess"));
       navigate(`/app/events/${data.id}/manage`);
     } catch (err) {
@@ -172,10 +175,7 @@ export function CreateEventPage() {
 
   return (
     <>
-      <PageHeader
-        title={t("event.createEvent")}
-        closeTo={`/app/workspaces/${workspaceId}`}
-      />
+      <PageHeader title={t("event.createEvent")} closeTo={`/app/workspaces/${workspaceId}`} />
 
       <StepIndicator current={step} total={TOTAL_STEPS} />
 
@@ -219,7 +219,12 @@ export function CreateEventPage() {
                   />
                 </FormField>
 
-                <FormField label={t("event.location")} htmlFor="ev-location" required error={errors.location}>
+                <FormField
+                  label={t("event.location")}
+                  htmlFor="ev-location"
+                  required
+                  error={errors.location}
+                >
                   <input
                     id="ev-location"
                     className={cn("input", errors.location && "input-error")}
@@ -231,7 +236,12 @@ export function CreateEventPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <FormField label={t("event.startTime")} htmlFor="ev-start" required error={errors.startTime}>
+                <FormField
+                  label={t("event.startTime")}
+                  htmlFor="ev-start"
+                  required
+                  error={errors.startTime}
+                >
                   <input
                     id="ev-start"
                     type="time"
@@ -241,7 +251,12 @@ export function CreateEventPage() {
                   />
                 </FormField>
 
-                <FormField label={t("event.endTime")} htmlFor="ev-end" required error={errors.endTime}>
+                <FormField
+                  label={t("event.endTime")}
+                  htmlFor="ev-end"
+                  required
+                  error={errors.endTime}
+                >
                   <input
                     id="ev-end"
                     type="time"
@@ -385,7 +400,11 @@ export function CreateEventPage() {
           {/* Step 4: Access control */}
           {step === 4 && (
             <>
-              <FormField label={t("event.allowedDomains")} htmlFor="ev-domains" hint={t("event.allowedDomainsHelp")}>
+              <FormField
+                label={t("event.allowedDomains")}
+                htmlFor="ev-domains"
+                hint={t("event.allowedDomainsHelp")}
+              >
                 <textarea
                   id="ev-domains"
                   className="input font-code resize-none"

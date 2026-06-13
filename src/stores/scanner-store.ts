@@ -115,6 +115,6 @@ export const useScannerStore = create<ScannerState>()(
       partialize: (state) => ({
         offlineQueue: state.offlineQueue,
       }),
-    }
-  )
+    },
+  ),
 );

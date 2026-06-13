@@ -72,11 +72,7 @@ function mapRegistration(reg: ApiRegistration): AttendeeRow {
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export function EventAttendeesTable({
-  eventId,
-  onLoad,
-  refreshTick,
-}: EventAttendeesPanelProps) {
+export function EventAttendeesTable({ eventId, onLoad, refreshTick }: EventAttendeesPanelProps) {
   const { t } = useTranslation();
   const toast = useToast();
 
@@ -90,7 +86,7 @@ export function EventAttendeesTable({
   const load = async () => {
     try {
       const { data } = await api.get<{ data: ApiRegistration[] } | ApiRegistration[]>(
-        `/events/${eventId}/registrations`
+        `/events/${eventId}/registrations`,
       );
       const list = Array.isArray(data) ? data : data.data;
       const mapped = list.map(mapRegistration);
@@ -140,7 +136,7 @@ export function EventAttendeesTable({
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
-        (r) => r.name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q)
+        (r) => r.name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q),
       );
     }
     return list;
@@ -150,9 +146,13 @@ export function EventAttendeesTable({
 
   // ── Filter pills ──────────────────────────────────────────────
   const FILTERS: { key: FilterKey; label: string; count: number }[] = [
-    { key: "all",            label: t("common.all"),               count: rows.length },
-    { key: "checked-in",     label: t("manage.attendees.checkedIn"),  count: checkedInCount },
-    { key: "not-checked-in", label: t("manage.attendees.notCheckedIn"), count: rows.length - checkedInCount },
+    { key: "all", label: t("common.all"), count: rows.length },
+    { key: "checked-in", label: t("manage.attendees.checkedIn"), count: checkedInCount },
+    {
+      key: "not-checked-in",
+      label: t("manage.attendees.notCheckedIn"),
+      count: rows.length - checkedInCount,
+    },
   ];
 
   if (loading) return <SkeletonList count={5} />;
@@ -182,14 +182,14 @@ export function EventAttendeesTable({
               "px-3 py-1.5 text-xs font-semibold rounded-full border transition-all duration-100 flex items-center gap-1.5 outline-none",
               filter === f.key
                 ? "bg-primary text-white border-primary shadow-sm"
-                : "bg-surface text-ink-3 border-border-1 hover:border-border-2 hover:text-ink-1"
+                : "bg-surface text-ink-3 border-border-1 hover:border-border-2 hover:text-ink-1",
             )}
           >
             <span>{f.label}</span>
             <span
               className={cn(
                 "px-1.5 py-0.5 text-[10px] rounded-full font-bold",
-                filter === f.key ? "bg-white/20 text-white" : "bg-surface-raised text-ink-4"
+                filter === f.key ? "bg-white/20 text-white" : "bg-surface-raised text-ink-4",
               )}
             >
               {f.count}
@@ -200,18 +200,23 @@ export function EventAttendeesTable({
 
       {/* Table */}
       {filtered.length === 0 ? (
-        <EmptyState
-          title={t("common.noResults")}
-          icon={<Users size={24} />}
-        />
+        <EmptyState title={t("common.noResults")} icon={<Users size={24} />} />
       ) : (
         <div className="card overflow-hidden">
           {/* Table header — hidden on mobile */}
           <div className="hidden sm:grid grid-cols-[auto_1fr_1fr_auto] items-center gap-3 px-4 py-2.5 border-b border-border-1 bg-surface-raised">
-            <span className="text-xs font-semibold text-ink-4 uppercase tracking-wide w-6 text-center">#</span>
-            <span className="text-xs font-semibold text-ink-4 uppercase tracking-wide">{t("manage.attendees.name")}</span>
-            <span className="text-xs font-semibold text-ink-4 uppercase tracking-wide">{t("manage.attendees.board")}</span>
-            <span className="text-xs font-semibold text-ink-4 uppercase tracking-wide text-right">{t("manage.attendees.time")}</span>
+            <span className="text-xs font-semibold text-ink-4 uppercase tracking-wide w-6 text-center">
+              #
+            </span>
+            <span className="text-xs font-semibold text-ink-4 uppercase tracking-wide">
+              {t("manage.attendees.name")}
+            </span>
+            <span className="text-xs font-semibold text-ink-4 uppercase tracking-wide">
+              {t("manage.attendees.board")}
+            </span>
+            <span className="text-xs font-semibold text-ink-4 uppercase tracking-wide text-right">
+              {t("manage.attendees.time")}
+            </span>
           </div>
 
           {/* Rows */}
@@ -225,7 +230,7 @@ export function EventAttendeesTable({
                 className={cn(
                   "grid grid-cols-[auto_1fr] sm:grid-cols-[auto_1fr_1fr_auto] items-center gap-3 px-4 py-3",
                   "border-b border-border-1 last:border-b-0 transition-colors duration-300",
-                  isNew && "bg-success/8 animate-pulse-once"
+                  isNew && "bg-success/8 animate-pulse-once",
                 )}
               >
                 {/* Index */}
@@ -244,9 +249,7 @@ export function EventAttendeesTable({
                   {hasCheckin ? (
                     <p className="text-xs text-ink-2 truncate">
                       {row.boardName ?? "—"}
-                      {row.sessionName && (
-                        <span className="text-ink-4"> · {row.sessionName}</span>
-                      )}
+                      {row.sessionName && <span className="text-ink-4"> · {row.sessionName}</span>}
                     </p>
                   ) : (
                     <span className="text-xs text-ink-4">—</span>

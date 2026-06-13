@@ -2,7 +2,7 @@
 // Each concrete provider (R2, Cloudinary) implements this contract.
 // The active provider is selected at runtime via STORAGE_PROVIDER env.
 
-export const STORAGE_PROVIDER = 'STORAGE_PROVIDER';
+export const STORAGE_PROVIDER = "STORAGE_PROVIDER";
 
 export interface UploadResult {
   /** Publicly accessible CDN URL */
@@ -10,7 +10,7 @@ export interface UploadResult {
   /** Storage key or public_id (used for deletion) */
   key: string;
   /** Which provider handled the upload */
-  provider: 'r2' | 'cloudinary' | 'local';
+  provider: "r2" | "cloudinary" | "local";
 }
 
 export interface UploadOptions {

@@ -16,9 +16,7 @@ const baseResult: ScanResult = {
 
 describe("ScanResultPanel", () => {
   it("renders nothing when result is null", () => {
-    const { container } = render(
-      <ScanResultPanel result={null} onDismiss={vi.fn()} />,
-    );
+    const { container } = render(<ScanResultPanel result={null} onDismiss={vi.fn()} />);
     expect(container.innerHTML).toBe("");
   });
 

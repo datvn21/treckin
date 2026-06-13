@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { v2 as cloudinary, type UploadApiResponse } from 'cloudinary';
-import type { StorageProvider, UploadOptions, UploadResult } from '../storage.interface';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { v2 as cloudinary, type UploadApiResponse } from "cloudinary";
+import type { StorageProvider, UploadOptions, UploadResult } from "../storage.interface";
 
 @Injectable()
 export class CloudinaryProvider implements StorageProvider {
@@ -9,29 +9,29 @@ export class CloudinaryProvider implements StorageProvider {
 
   constructor(private readonly config: ConfigService) {
     cloudinary.config({
-      cloud_name: this.config.getOrThrow<string>('CLOUDINARY_CLOUD_NAME'),
-      api_key: this.config.getOrThrow<string>('CLOUDINARY_API_KEY'),
-      api_secret: this.config.getOrThrow<string>('CLOUDINARY_API_SECRET'),
+      cloud_name: this.config.getOrThrow<string>("CLOUDINARY_CLOUD_NAME"),
+      api_key: this.config.getOrThrow<string>("CLOUDINARY_API_KEY"),
+      api_secret: this.config.getOrThrow<string>("CLOUDINARY_API_SECRET"),
     });
 
-    this.logger.log('Cloudinary storage provider initialized');
+    this.logger.log("Cloudinary storage provider initialized");
   }
 
   async upload(buffer: Buffer, opts: UploadOptions): Promise<UploadResult> {
-    const publicId = `${opts.folder}/${opts.filename.replace(/\.[^.]+$/, '')}`;
+    const publicId = `${opts.folder}/${opts.filename.replace(/\.[^.]+$/, "")}`;
 
     const result = await new Promise<UploadApiResponse>((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {
           public_id: publicId,
-          resource_type: 'image',
+          resource_type: "image",
           overwrite: true,
           invalidate: true,
-          format: 'webp',
+          format: "webp",
         },
         (error, result) => {
           if (error || !result) {
-            reject(error ?? new Error('Cloudinary upload returned no result'));
+            reject(error ?? new Error("Cloudinary upload returned no result"));
           } else {
             resolve(result);
           }
@@ -46,13 +46,13 @@ export class CloudinaryProvider implements StorageProvider {
     return {
       publicUrl: result.secure_url,
       key: result.public_id,
-      provider: 'cloudinary',
+      provider: "cloudinary",
     };
   }
 
   async delete(key: string): Promise<void> {
     try {
-      await cloudinary.uploader.destroy(key, { resource_type: 'image' });
+      await cloudinary.uploader.destroy(key, { resource_type: "image" });
       this.logger.log(`Deleted from Cloudinary: ${key}`);
     } catch (error) {
       this.logger.warn(`Failed to delete from Cloudinary: ${key}`, error);

@@ -2,7 +2,7 @@
   "name": "treckin",
   "private": true,
   "version": "1.0.0",
-  "description": "Treckin (University Edition) — High-concurrency, real-time, multi-board event check-in platform.",
+  "description": "Treckin - High-concurrency, real-time, multi-board event check-in platform.",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -71,7 +71,7 @@
     "globals": "^16.0.0",
     "husky": "^9.1.7",
     "jsdom": "^26.1.0",
-    "lint-staged": "^16.1.0",
+    "lint-staged": "^16.4.0",
     "msw": "^2.8.4",
     "postcss": "^8.5.4",
     "prettier": "^3.5.3",

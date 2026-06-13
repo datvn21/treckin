@@ -17,7 +17,7 @@ describe("useDocumentTitle", () => {
   describe("Initial behavior", () => {
     it("sets title to 'Treckin' when no title is provided", () => {
       renderHook(() => useDocumentTitle());
-      
+
       act(() => {
         vi.runAllTimers();
       });
@@ -27,7 +27,7 @@ describe("useDocumentTitle", () => {
 
     it("sets title with suffix when title is provided", () => {
       renderHook(() => useDocumentTitle("Dashboard"));
-      
+
       act(() => {
         vi.runAllTimers();
       });
@@ -38,10 +38,9 @@ describe("useDocumentTitle", () => {
 
   describe("Title updates", () => {
     it("updates title when title prop changes", () => {
-      const { rerender } = renderHook(
-        ({ title }: { title?: string }) => useDocumentTitle(title),
-        { initialProps: { title: undefined as string | undefined } },
-      );
+      const { rerender } = renderHook(({ title }: { title?: string }) => useDocumentTitle(title), {
+        initialProps: { title: undefined as string | undefined },
+      });
 
       act(() => {
         vi.runAllTimers();
@@ -57,10 +56,9 @@ describe("useDocumentTitle", () => {
     });
 
     it("removes custom title when set to undefined", () => {
-      const { rerender } = renderHook(
-        ({ title }: { title?: string }) => useDocumentTitle(title),
-        { initialProps: { title: "Event Details" } },
-      );
+      const { rerender } = renderHook(({ title }: { title?: string }) => useDocumentTitle(title), {
+        initialProps: { title: "Event Details" },
+      });
 
       act(() => {
         vi.runAllTimers();
@@ -79,7 +77,7 @@ describe("useDocumentTitle", () => {
   describe("Title formatting", () => {
     it("handles empty string title", () => {
       renderHook(() => useDocumentTitle(""));
-      
+
       act(() => {
         vi.runAllTimers();
       });
@@ -89,7 +87,7 @@ describe("useDocumentTitle", () => {
 
     it("handles special characters in title", () => {
       renderHook(() => useDocumentTitle("Event: Test & Demo <2024>"));
-      
+
       act(() => {
         vi.runAllTimers();
       });

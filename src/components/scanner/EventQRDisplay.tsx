@@ -38,16 +38,18 @@ export function EventQRDisplay({
       <div className="text-center space-y-1">
         <p className="text-sm font-semibold text-[#f0ebe6]">{eventName}</p>
         <div className="flex items-center justify-center gap-1.5">
-          <span className={cn(
-            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
-            isIn ? "bg-[#4ade80]/10 text-[#4ade80]" : "bg-[#f87171]/10 text-[#f87171]"
-          )}>
-              {isIn ? (
-                <ArrowDownLeft className="w-3 h-3" strokeWidth={2} />
-              ) : (
-                <ArrowUpRight className="w-3 h-3" strokeWidth={2} />
-              )}
-              {isIn ? t("scanner.directionIn") : t("scanner.directionOut")}
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
+              isIn ? "bg-[#4ade80]/10 text-[#4ade80]" : "bg-[#f87171]/10 text-[#f87171]",
+            )}
+          >
+            {isIn ? (
+              <ArrowDownLeft className="w-3 h-3" strokeWidth={2} />
+            ) : (
+              <ArrowUpRight className="w-3 h-3" strokeWidth={2} />
+            )}
+            {isIn ? t("scanner.directionIn") : t("scanner.directionOut")}
           </span>
           <span className="text-xs text-[#5e5650]">{boardName}</span>
         </div>
@@ -62,10 +64,12 @@ export function EventQRDisplay({
       >
         <div className="relative w-64 h-64 rounded-2xl overflow-hidden">
           {/* QR code side */}
-          <div className={cn(
-            "absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 bg-[#231f1c] border border-[#3d3530] transition-transform duration-300",
-            isFlipped && "-translate-x-full opacity-0"
-          )}>
+          <div
+            className={cn(
+              "absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 bg-[#231f1c] border border-[#3d3530] transition-transform duration-300",
+              isFlipped && "-translate-x-full opacity-0",
+            )}
+          >
             <QRCodeSVG
               value={qrPayload}
               size={192}
@@ -74,21 +78,23 @@ export function EventQRDisplay({
               level="M"
               includeMargin={false}
             />
-            <p className="text-xs text-[#5e5650]">
-              {t("scanner.scanToCheckin")}
-            </p>
+            <p className="text-xs text-[#5e5650]">{t("scanner.scanToCheckin")}</p>
           </div>
 
           {/* Info side */}
-          <div className={cn(
-            "absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 bg-[#231f1c] border border-[#3d3530] transition-transform duration-300",
-            !isFlipped && "translate-x-full opacity-0"
-          )}>
+          <div
+            className={cn(
+              "absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 bg-[#231f1c] border border-[#3d3530] transition-transform duration-300",
+              !isFlipped && "translate-x-full opacity-0",
+            )}
+          >
             <div className="flex flex-col items-center gap-2">
-              <span className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-base font-bold",
-                isIn ? "bg-[#4ade80]/10 text-[#4ade80]" : "bg-[#f87171]/10 text-[#f87171]"
-              )}>
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-base font-bold",
+                  isIn ? "bg-[#4ade80]/10 text-[#4ade80]" : "bg-[#f87171]/10 text-[#f87171]",
+                )}
+              >
                 {isIn ? (
                   <ArrowDownLeft className="w-5 h-5" strokeWidth={2} />
                 ) : (
@@ -97,17 +103,13 @@ export function EventQRDisplay({
                 {isIn ? t("scanner.directionIn") : t("scanner.directionOut")}
               </span>
             </div>
-            <p className="text-sm text-[#8f857f] text-center">
-              {t("scanner.flipHint")}
-            </p>
+            <p className="text-sm text-[#8f857f] text-center">{t("scanner.flipHint")}</p>
           </div>
         </div>
       </button>
 
       {/* Instruction */}
-      <p className="text-xs text-[#5e5650] text-center max-w-xs">
-        {t("scanner.displayBoardDesc")}
-      </p>
+      <p className="text-xs text-[#5e5650] text-center max-w-xs">{t("scanner.displayBoardDesc")}</p>
     </div>
   );
 }

@@ -7,7 +7,14 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
-  CalendarDays, MapPin, CheckCircle2, Clock, Users, ShieldCheck, QrCode, X,
+  CalendarDays,
+  MapPin,
+  CheckCircle2,
+  Clock,
+  Users,
+  ShieldCheck,
+  QrCode,
+  X,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useToast } from "@/molecules/Toast";
@@ -20,7 +27,6 @@ import { QRCodeDisplay } from "@/components/student/QRCodeDisplay";
 import { cn } from "@/lib/utils";
 import { useDocumentTitle } from "@/hooks";
 import { parseApiError } from "@/lib/parseApiError";
-
 
 // ── Types ─────────────────────────────────────────────────────────
 interface ApiEventDetail {
@@ -43,13 +49,16 @@ interface ApiEventDetail {
 
 type EventStatus = "ONGOING" | "PUBLISHED" | "DRAFT" | "COMPLETED" | "CANCELLED";
 
-
 function mapStatusVariant(s: string): "green" | "blue" | "gray" | "red" | "yellow" {
   switch (s?.toUpperCase() as EventStatus) {
-    case "ONGOING":   return "green";
-    case "COMPLETED": return "gray";
-    case "CANCELLED": return "red";
-    default:          return "blue";
+    case "ONGOING":
+      return "green";
+    case "COMPLETED":
+      return "gray";
+    case "CANCELLED":
+      return "red";
+    default:
+      return "blue";
   }
 }
 
@@ -66,7 +75,7 @@ export function EventDetailPage() {
   const [event, setEvent] = useState<ApiEventDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>(
-    searchParams.get("tab") === "credential" ? "credential" : "detail"
+    searchParams.get("tab") === "credential" ? "credential" : "detail",
   );
 
   const isRegistered = (event?.registrations?.length ?? 0) > 0;
@@ -86,7 +95,9 @@ export function EventDetailPage() {
     }
   }, [id, t, toast]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   useEffect(() => {
     if (searchParams.get("tab") === "credential") setActiveTab("credential");
@@ -130,10 +141,7 @@ export function EventDetailPage() {
           </button>
         </div>
         <PageHeader title={t("eventDetail.notFound")} />
-        <EmptyState
-          title={t("eventDetail.notFound")}
-          description={t("eventDetail.notFoundDesc")}
-        />
+        <EmptyState title={t("eventDetail.notFound")} description={t("eventDetail.notFoundDesc")} />
       </div>
     );
   }
@@ -141,9 +149,9 @@ export function EventDetailPage() {
   // ── Helpers using i18n ──
   function statusLabel(s: string): string {
     const map: Record<string, string> = {
-      ONGOING:   t("eventDetail.status.active"),
+      ONGOING: t("eventDetail.status.active"),
       PUBLISHED: t("eventDetail.status.upcoming"),
-      DRAFT:     t("eventDetail.status.upcoming"),
+      DRAFT: t("eventDetail.status.upcoming"),
       COMPLETED: t("eventDetail.status.completed"),
       CANCELLED: t("eventDetail.status.cancelled"),
     };
@@ -152,20 +160,18 @@ export function EventDetailPage() {
 
   function policyLabel(p?: string): string {
     const map: Record<string, string> = {
-      SINGLE_IN:          t("event.singleIn"),
-      IN_OUT:             t("event.inOut"),
+      SINGLE_IN: t("event.singleIn"),
+      IN_OUT: t("event.inOut"),
       BOARD_REQUIREMENTS: t("event.boardRequirements"),
     };
-    return (p && map[p]) ? map[p] : "—";
+    return p && map[p] ? map[p] : "—";
   }
 
   function modesLabel(modes?: string[]): string {
     if (!modes?.length) return "—";
     return modes
       .map((m) =>
-        m === "ATTENDEE_CREDENTIAL"
-          ? t("event.scannerScanQr")
-          : t("event.attendeeScanBoard")
+        m === "ATTENDEE_CREDENTIAL" ? t("event.scannerScanQr") : t("event.attendeeScanBoard"),
       )
       .join(", ");
   }
@@ -266,24 +272,29 @@ export function EventDetailPage() {
           </div>
 
           {/* Boards section (if BOARD_REQUIREMENTS) */}
-          {event.attendancePolicy === "BOARD_REQUIREMENTS" && event.boards && event.boards.length > 0 && (
-            <div className="card overflow-hidden">
-              <div className="px-4 py-3 border-b border-border-1">
-                <p className="text-section-title text-ink-1">{t("event.boards")}</p>
-                {event.requiredBoardCount && (
-                  <p className="text-caption text-ink-3 mt-0.5">
-                    {t("eventDetail.boardsRequired", { count: event.requiredBoardCount })}
-                  </p>
-                )}
-              </div>
-              {event.boards.map((board) => (
-                <div key={board.id} className="flex items-center gap-3 px-4 py-3 border-b border-border-1 last:border-b-0">
-                  <div className="w-2 h-2 rounded-full bg-primary-muted border border-primary-border shrink-0" />
-                  <span className="text-sm text-ink-2">{board.name}</span>
+          {event.attendancePolicy === "BOARD_REQUIREMENTS" &&
+            event.boards &&
+            event.boards.length > 0 && (
+              <div className="card overflow-hidden">
+                <div className="px-4 py-3 border-b border-border-1">
+                  <p className="text-section-title text-ink-1">{t("event.boards")}</p>
+                  {event.requiredBoardCount && (
+                    <p className="text-caption text-ink-3 mt-0.5">
+                      {t("eventDetail.boardsRequired", { count: event.requiredBoardCount })}
+                    </p>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
+                {event.boards.map((board) => (
+                  <div
+                    key={board.id}
+                    className="flex items-center gap-3 px-4 py-3 border-b border-border-1 last:border-b-0"
+                  >
+                    <div className="w-2 h-2 rounded-full bg-primary-muted border border-primary-border shrink-0" />
+                    <span className="text-sm text-ink-2">{board.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
 
           {/* Stats */}
           <div className="grid grid-cols-2 gap-3">
@@ -322,11 +333,7 @@ export function EventDetailPage() {
               description={t("eventDetail.notRegisteredDesc")}
               icon={<QrCode size={24} />}
               action={
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => navigate("/app/join")}
-                >
+                <Button variant="primary" size="sm" onClick={() => navigate("/app/join")}>
                   {t("event.joinEvent")}
                 </Button>
               }

@@ -62,9 +62,7 @@ export function PageHeader({
             <h1 className="page-title truncate">{title}</h1>
             {badge}
           </div>
-          {subtitle && (
-            <p className="section-subtitle">{subtitle}</p>
-          )}
+          {subtitle && <p className="section-subtitle">{subtitle}</p>}
         </div>
       </div>
 

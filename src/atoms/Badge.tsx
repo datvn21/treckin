@@ -1,15 +1,15 @@
-import * as React from 'react';
-import { cn } from '@/lib/utils';
-import { Dot } from './Dot';
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import { Dot } from "./Dot";
 
-type BadgeVariant = 'blue' | 'green' | 'yellow' | 'red' | 'gray';
+type BadgeVariant = "blue" | "green" | "yellow" | "red" | "gray";
 
-const variantToColor: Record<BadgeVariant, 'green' | 'yellow' | 'red' | 'gray' | 'blue'> = {
-  blue:   'blue',
-  green:  'green',
-  yellow: 'yellow',
-  red:    'red',
-  gray:   'gray',
+const variantToColor: Record<BadgeVariant, "green" | "yellow" | "red" | "gray" | "blue"> = {
+  blue: "blue",
+  green: "green",
+  yellow: "yellow",
+  red: "red",
+  gray: "gray",
 };
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
@@ -19,7 +19,7 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 const Badge: React.FC<BadgeProps> = ({
   className,
-  variant = 'gray',
+  variant = "gray",
   dot = false,
   children,
   ...props
@@ -32,6 +32,6 @@ const Badge: React.FC<BadgeProps> = ({
   );
 };
 
-Badge.displayName = 'Badge';
+Badge.displayName = "Badge";
 
 export { Badge };

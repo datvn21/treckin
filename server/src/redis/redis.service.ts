@@ -1,12 +1,7 @@
-import {
-  Injectable,
-  OnModuleInit,
-  OnModuleDestroy,
-  Logger,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import Redis from 'ioredis';
-import { v4 as uuidv4 } from 'uuid';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import Redis from "ioredis";
+import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
@@ -17,25 +12,25 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit(): Promise<void> {
     this.client = new Redis({
-      host: this.configService.get<string>('REDIS_HOST', 'localhost'),
-      port: this.configService.get<number>('REDIS_PORT', 6379),
-      password: this.configService.get<string>('REDIS_PASSWORD') || undefined,
+      host: this.configService.get<string>("REDIS_HOST", "localhost"),
+      port: this.configService.get<number>("REDIS_PORT", 6379),
+      password: this.configService.get<string>("REDIS_PASSWORD") || undefined,
       retryStrategy: (times: number) => {
         if (times > 3) {
-          this.logger.error('Redis connection failed after 3 retries');
+          this.logger.error("Redis connection failed after 3 retries");
           return null;
         }
         return Math.min(times * 200, 2000);
       },
     });
 
-    this.client.on('connect', () => this.logger.log('Connected to Redis'));
-    this.client.on('error', (err) => this.logger.error('Redis error', err));
+    this.client.on("connect", () => this.logger.log("Connected to Redis"));
+    this.client.on("error", (err) => this.logger.error("Redis error", err));
   }
 
   async onModuleDestroy(): Promise<void> {
     await this.client.quit();
-    this.logger.log('Disconnected from Redis');
+    this.logger.log("Disconnected from Redis");
   }
 
   // ── Basic Operations ──────────────────────────────────────
@@ -70,9 +65,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    */
   async acquireLock(key: string, ttlSeconds: number): Promise<string | null> {
     const lockValue = uuidv4();
-    const result = await this.client.set(key, lockValue, 'EX', ttlSeconds, 'NX');
+    const result = await this.client.set(key, lockValue, "EX", ttlSeconds, "NX");
 
-    if (result === 'OK') {
+    if (result === "OK") {
       this.logger.debug(`Lock acquired: ${key}`);
       return lockValue;
     }

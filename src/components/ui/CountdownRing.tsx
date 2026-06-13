@@ -56,12 +56,7 @@ export function CountdownRing({
       aria-valuemin={0}
       aria-valuemax={duration}
     >
-      <svg
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
-        className="-rotate-90"
-      >
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
         {/* Background track */}
         <circle
           cx={size / 2}
@@ -88,12 +83,7 @@ export function CountdownRing({
       </svg>
 
       {/* Center label */}
-      <span
-        className={cn(
-          "absolute font-ui text-data-lg tabular-nums",
-          textColorClass,
-        )}
-      >
+      <span className={cn("absolute font-ui text-data-lg tabular-nums", textColorClass)}>
         {remaining}
       </span>
     </div>

@@ -9,7 +9,7 @@ describe("Toast", () => {
   // ── Reset singleton state between tests ──
   beforeEach(() => {
     // Clear the singleton state by dismissing all toasts
-    const listeners = (toast as unknown as { dismiss: (id: string) => void });
+    const listeners = toast as unknown as { dismiss: (id: string) => void };
     // Reset the singleton items directly
     vi.useFakeTimers();
   });
@@ -118,54 +118,54 @@ describe("Toast", () => {
       vi.useRealTimers();
       const clearTimeoutSpy = vi.spyOn(global, "clearTimeout");
       const setTimeoutSpy = vi.spyOn(global, "setTimeout");
-      
+
       render(<Toaster />);
       toast.success("Auto-dismiss");
-      
+
       // Check that setTimeout was called
       expect(setTimeoutSpy).toHaveBeenCalled();
-      
+
       // The first setTimeout call should be for auto-dismiss
       const timeoutCall = setTimeoutSpy.mock.calls[0];
       expect(timeoutCall[1]).toBe(4000);
-      
+
       setTimeoutSpy.mockRestore();
       clearTimeoutSpy.mockRestore();
     });
 
     it("error toast has 6000ms auto-dismiss", () => {
       const setTimeoutSpy = vi.spyOn(global, "setTimeout");
-      
+
       render(<Toaster />);
       toast.error("Error toast");
-      
+
       const timeoutCall = setTimeoutSpy.mock.calls[0];
       expect(timeoutCall[1]).toBe(6000);
-      
+
       setTimeoutSpy.mockRestore();
     });
 
     it("info toast has 4000ms auto-dismiss", () => {
       const setTimeoutSpy = vi.spyOn(global, "setTimeout");
-      
+
       render(<Toaster />);
       toast.info("Info toast");
-      
+
       const timeoutCall = setTimeoutSpy.mock.calls[0];
       expect(timeoutCall[1]).toBe(4000);
-      
+
       setTimeoutSpy.mockRestore();
     });
 
     it("loading toast does not auto-dismiss", () => {
       const setTimeoutSpy = vi.spyOn(global, "setTimeout");
-      
+
       render(<Toaster />);
       toast.loading("Loading forever");
-      
+
       // No setTimeout for loading toasts
       expect(setTimeoutSpy).not.toHaveBeenCalled();
-      
+
       setTimeoutSpy.mockRestore();
     });
   });

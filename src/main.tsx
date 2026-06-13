@@ -4,7 +4,7 @@ import { App } from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Toaster } from "./molecules/Toast";
 import "./index.css";
-import "./i18n/index";  // initializes i18next (side-effect import)
+import "./i18n/index"; // initializes i18next (side-effect import)
 import { useThemeStore } from "./stores/theme-store";
 
 // Apply persisted theme immediately to prevent flash of wrong theme
@@ -27,7 +27,6 @@ if (import.meta.env.DEV && "serviceWorker" in navigator) {
     }
   });
 }
-
 
 // Suppress Google GSI double-initialization warning in React Strict Mode (Dev only)
 if (import.meta.env.DEV) {
@@ -73,7 +72,6 @@ if (import.meta.env.DEV) {
     },
   });
 }
-
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

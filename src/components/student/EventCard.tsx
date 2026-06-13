@@ -9,10 +9,7 @@ interface EventCardProps {
   showStatus?: boolean;
 }
 
-const STATUS_CONFIG: Record<
-  EventStatus,
-  { label: string; className: string }
-> = {
+const STATUS_CONFIG: Record<EventStatus, { label: string; className: string }> = {
   active: { label: "Đang diễn ra", className: "badge-green" },
   upcoming: { label: "Sắp tới", className: "badge-warning" },
   completed: {
@@ -35,18 +32,11 @@ export function EventCard({ event, isActive = false, showStatus = true }: EventC
   const statusConfig = STATUS_CONFIG[event.status];
 
   return (
-    <article
-      className={cn(
-        "ticket-card",
-        isActive && "border-l-4 border-primary",
-      )}
-    >
+    <article className={cn("ticket-card", isActive && "border-l-4 border-primary")}>
       <div className="flex items-start justify-between gap-3">
         {/* ── Event Details ── */}
         <div className="flex-1 min-w-0 space-y-2">
-          <h3 className="font-semibold text-xl text-ink-1 truncate">
-            {event.title}
-          </h3>
+          <h3 className="font-semibold text-xl text-ink-1 truncate">{event.title}</h3>
 
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2 text-xs text-ink-3">
@@ -74,16 +64,10 @@ export function EventCard({ event, isActive = false, showStatus = true }: EventC
       {/* ── Checkin Stats ── */}
       <div className="mt-3 pt-3 border-t border-neutral-200 flex items-center gap-4">
         <div className="text-xs text-ink-3">
-          <span className="font-semibold text-ink-1">
-            {event.totalCheckins}
-          </span>
-          /{event.totalRegistered} đã điểm danh
+          <span className="font-semibold text-ink-1">{event.totalCheckins}</span>/
+          {event.totalRegistered} đã điểm danh
         </div>
-        {event.boardCount > 0 && (
-          <div className="text-xs text-ink-3">
-            {event.boardCount} bảng
-          </div>
-        )}
+        {event.boardCount > 0 && <div className="text-xs text-ink-3">{event.boardCount} bảng</div>}
       </div>
     </article>
   );

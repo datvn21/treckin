@@ -18,7 +18,6 @@ import type { EventItem as EventItemType } from "@/molecules/EventCard";
 import { useDocumentTitle } from "@/hooks";
 import { parseApiError } from "@/lib/parseApiError";
 
-
 // ── API shape from /me/events?view=attending ─────────────────────────────────
 interface ApiEvent {
   id: string;
@@ -44,7 +43,6 @@ function mapEvent(e: ApiEvent): EventItemType {
     totalRegistered: e._count?.registrations ?? 0,
   };
 }
-
 
 export function MyEventsPage() {
   const { t } = useTranslation();
@@ -84,17 +82,9 @@ export function MyEventsPage() {
     <>
       <PageHeader
         title={t("event.myEvents")}
-        subtitle={
-          !loading
-            ? t("event.eventsCount", { count: events.length })
-            : undefined
-        }
+        subtitle={!loading ? t("event.eventsCount", { count: events.length }) : undefined}
         action={
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => navigate("/app/join")}
-          >
+          <Button variant="primary" size="sm" onClick={() => navigate("/app/join")}>
             {t("join.title")}
           </Button>
         }
@@ -109,11 +99,7 @@ export function MyEventsPage() {
         emptyIcon={<CalendarDays size={24} />}
         onEventClick={(ev) => navigate(`/app/events/${ev.id}`)}
         emptyAction={
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => navigate("/app/join")}
-          >
+          <Button variant="primary" size="sm" onClick={() => navigate("/app/join")}>
             {t("join.title")}
           </Button>
         }

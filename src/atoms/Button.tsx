@@ -1,32 +1,31 @@
-import * as React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-const buttonVariants = cva('btn', {
+const buttonVariants = cva("btn", {
   variants: {
     variant: {
-      primary: 'btn-primary',
-      default: 'btn-default',
-      ghost:   'btn-ghost',
-      danger:  'btn-danger',
-      icon:    'btn-icon',
+      primary: "btn-primary",
+      default: "btn-default",
+      ghost: "btn-ghost",
+      danger: "btn-danger",
+      icon: "btn-icon",
     },
     size: {
-      sm: 'btn-sm',
-      md: '',
-      lg: 'btn-lg',
+      sm: "btn-sm",
+      md: "",
+      lg: "btn-lg",
     },
   },
   defaultVariants: {
-    variant: 'default',
-    size: 'md',
+    variant: "default",
+    size: "md",
   },
 });
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   isLoading?: boolean;
 }
 
@@ -39,15 +38,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || isLoading}
         {...props}
       >
-        {isLoading && (
-          <Loader2 className="animate-spin" aria-hidden="true" size={16} />
-        )}
+        {isLoading && <Loader2 className="animate-spin" aria-hidden="true" size={16} />}
         {children}
       </button>
     );
-  }
+  },
 );
 
-Button.displayName = 'Button';
+Button.displayName = "Button";
 
 export { Button, buttonVariants };

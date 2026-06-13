@@ -1,12 +1,12 @@
-import * as React from 'react';
-import { Inbox } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import * as React from "react";
+import { Inbox } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface EmptyStateProps extends React.HTMLAttributes<HTMLDivElement> {
-  icon?:        React.ReactNode;
-  title:        string;
+  icon?: React.ReactNode;
+  title: string;
   description?: string;
-  action?:      React.ReactNode;
+  action?: React.ReactNode;
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({
@@ -18,10 +18,8 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   ...props
 }) => {
   return (
-    <div className={cn('empty animate-fade-in-up', className)} {...props}>
-      <div className="empty-icon">
-        {icon ?? <Inbox size={24} aria-hidden="true" />}
-      </div>
+    <div className={cn("empty animate-fade-in-up", className)} {...props}>
+      <div className="empty-icon">{icon ?? <Inbox size={24} aria-hidden="true" />}</div>
       <div className="flex flex-col items-center gap-1">
         <h3>{title}</h3>
         {description && <p>{description}</p>}
@@ -31,6 +29,6 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   );
 };
 
-EmptyState.displayName = 'EmptyState';
+EmptyState.displayName = "EmptyState";
 
 export { EmptyState };

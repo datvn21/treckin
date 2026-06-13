@@ -1,8 +1,8 @@
-import * as React from 'react';
-import * as RadixAvatar from '@radix-ui/react-avatar';
-import { cn, getAvatarUrl } from '@/lib/utils';
+import * as React from "react";
+import * as RadixAvatar from "@radix-ui/react-avatar";
+import { cn, getAvatarUrl } from "@/lib/utils";
 
-type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl";
 
 export interface AvatarProps extends React.HTMLAttributes<HTMLSpanElement> {
   src?: string | null;
@@ -18,13 +18,7 @@ const sizeClasses: Record<AvatarSize, string> = {
   xl: "w-16 h-16 text-xl",
 };
 
-const Avatar: React.FC<AvatarProps> = ({
-  className,
-  src,
-  name,
-  size = 'md',
-  ...props
-}) => {
+const Avatar: React.FC<AvatarProps> = ({ className, src, name, size = "md", ...props }) => {
   const avatarSrc = src || getAvatarUrl(name);
 
   return (
@@ -32,7 +26,7 @@ const Avatar: React.FC<AvatarProps> = ({
       className={cn(
         "avatar rounded-full overflow-hidden shrink-0 flex items-center justify-center font-semibold text-white",
         sizeClasses[size],
-        className
+        className,
       )}
       {...props}
     >
@@ -55,6 +49,6 @@ const Avatar: React.FC<AvatarProps> = ({
   );
 };
 
-Avatar.displayName = 'Avatar';
+Avatar.displayName = "Avatar";
 
 export { Avatar };

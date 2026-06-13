@@ -1,8 +1,7 @@
-import * as React from 'react';
-import { cn } from '@/lib/utils';
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
-export interface SelectProps
-  extends React.SelectHTMLAttributes<HTMLSelectElement> {
+export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   error?: string;
 }
 
@@ -12,12 +11,8 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       <div className="w-full">
         <select
           ref={ref}
-          className={cn(
-            'input',
-            error && 'border-danger focus:border-danger',
-            className
-          )}
-          aria-invalid={error ? 'true' : undefined}
+          className={cn("input", error && "border-danger focus:border-danger", className)}
+          aria-invalid={error ? "true" : undefined}
           aria-describedby={error ? `${props.id}-error` : undefined}
           {...props}
         >
@@ -34,9 +29,9 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
-Select.displayName = 'Select';
+Select.displayName = "Select";
 
 export { Select };

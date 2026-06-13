@@ -73,9 +73,7 @@ export function leaveEventRoom(eventId: string): void {
  * Subscribe to incoming checkin events.
  * Returns an unsubscribe function.
  */
-export function onCheckinEvent(
-  handler: (data: unknown) => void
-): () => void {
+export function onCheckinEvent(handler: (data: unknown) => void): () => void {
   const s = getSocket();
   s.on("checkin", handler);
   return () => s.off("checkin", handler);

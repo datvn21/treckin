@@ -23,7 +23,6 @@ import { cn } from "@/lib/utils";
 import { useDocumentTitle } from "@/hooks";
 import { parseApiError } from "@/lib/parseApiError";
 
-
 // ── Types ────────────────────────────────────────────────────────────────────
 interface WsMember {
   id: string;
@@ -96,7 +95,6 @@ function mapEvent(e: ApiEvent): EventItem {
   };
 }
 
-
 type Tab = "events" | "members" | "settings";
 type WorkspaceRole = "OWNER" | "ADMIN" | "MEMBER" | "VIEWER";
 type EventFilter = "all" | "upcoming" | "active" | "completed" | "cancelled";
@@ -118,8 +116,6 @@ export function WorkspaceDetailPage() {
 
   const isOwner = ws?.role === "OWNER";
   const isWorkspaceAdmin = ws?.role === "OWNER" || ws?.role === "ADMIN";
-
-
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -232,13 +228,7 @@ export function WorkspaceDetailPage() {
           events: ws._count?.events ?? 0,
           members: ws._count?.members ?? 0,
         })}
-        avatar={
-          <Avatar
-            src={ws.logoUrl}
-            name={ws.name}
-            size="lg"
-          />
-        }
+        avatar={<Avatar src={ws.logoUrl} name={ws.name} size="lg" />}
         actions={headerActions}
         className=""
       />
@@ -266,16 +256,27 @@ export function WorkspaceDetailPage() {
             {(
               [
                 { key: "all", label: t("common.all", { defaultValue: "Tất cả" }) },
-                { key: "upcoming", label: t("eventDetail.status.upcoming", { defaultValue: "Sắp tới" }) },
-                { key: "active", label: t("eventDetail.status.active", { defaultValue: "Đang diễn ra" }) },
-                { key: "completed", label: t("eventDetail.status.completed", { defaultValue: "Đã kết thúc" }) },
-                { key: "cancelled", label: t("eventDetail.status.cancelled", { defaultValue: "Đã huỷ" }) },
+                {
+                  key: "upcoming",
+                  label: t("eventDetail.status.upcoming", { defaultValue: "Sắp tới" }),
+                },
+                {
+                  key: "active",
+                  label: t("eventDetail.status.active", { defaultValue: "Đang diễn ra" }),
+                },
+                {
+                  key: "completed",
+                  label: t("eventDetail.status.completed", { defaultValue: "Đã kết thúc" }),
+                },
+                {
+                  key: "cancelled",
+                  label: t("eventDetail.status.cancelled", { defaultValue: "Đã huỷ" }),
+                },
               ] as const
             ).map((f) => {
               const isActive = eventFilter === f.key;
-              const count = f.key === "all"
-                ? events.length
-                : events.filter((e) => e.status === f.key).length;
+              const count =
+                f.key === "all" ? events.length : events.filter((e) => e.status === f.key).length;
 
               return (
                 <button
@@ -286,16 +287,16 @@ export function WorkspaceDetailPage() {
                     "px-3.5 py-1.5 text-xs font-semibold rounded-full border transition-all duration-100 flex items-center gap-2 outline-none",
                     isActive
                       ? "bg-primary text-white border-primary shadow-sm"
-                      : "bg-surface text-ink-3 border-border-1 hover:border-border-2 hover:text-ink-1"
+                      : "bg-surface text-ink-3 border-border-1 hover:border-border-2 hover:text-ink-1",
                   )}
                 >
                   <span>{f.label}</span>
-                  <span className={cn(
-                    "px-1.5 py-0.5 text-[10px] rounded-full font-bold",
-                    isActive
-                      ? "bg-white/20 text-white"
-                      : "bg-surface-raised text-ink-4"
-                  )}>
+                  <span
+                    className={cn(
+                      "px-1.5 py-0.5 text-[10px] rounded-full font-bold",
+                      isActive ? "bg-white/20 text-white" : "bg-surface-raised text-ink-4",
+                    )}
+                  >
                     {count}
                   </span>
                 </button>
@@ -322,7 +323,9 @@ export function WorkspaceDetailPage() {
               ) : undefined
             }
             onEventClick={(ev) =>
-              isWorkspaceAdmin ? navigate(`/app/events/${ev.id}/manage`) : navigate(`/app/events/${ev.id}`)
+              isWorkspaceAdmin
+                ? navigate(`/app/events/${ev.id}/manage`)
+                : navigate(`/app/events/${ev.id}`)
             }
           />
         </div>
@@ -353,7 +356,6 @@ export function WorkspaceDetailPage() {
           }}
         />
       )}
-
     </div>
   );
 }

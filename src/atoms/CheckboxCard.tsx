@@ -2,8 +2,10 @@ import * as React from "react";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export interface CheckboxCardProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type" | "onChange"> {
+export interface CheckboxCardProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "type" | "onChange"
+> {
   label: React.ReactNode;
   description?: React.ReactNode;
   checked: boolean;
@@ -12,7 +14,10 @@ export interface CheckboxCardProps
 }
 
 const CheckboxCard = React.forwardRef<HTMLInputElement, CheckboxCardProps>(
-  ({ id, label, description, checked, onChange, disabled, className, variant = "card", ...props }, ref) => {
+  (
+    { id, label, description, checked, onChange, disabled, className, variant = "card", ...props },
+    ref,
+  ) => {
     return (
       <label
         htmlFor={id}
@@ -23,9 +28,7 @@ const CheckboxCard = React.forwardRef<HTMLInputElement, CheckboxCardProps>(
           variant === "card"
             ? "rounded-[22px] px-4 py-4 bg-surface hover:border-border-2"
             : "rounded-xl px-3 py-3 bg-transparent",
-          checked
-            ? "border-primary-border bg-primary-muted"
-            : "border-border-1",
+          checked ? "border-primary-border bg-primary-muted" : "border-border-1",
           className,
         )}
       >

@@ -11,10 +11,7 @@ interface StepIndicatorProps {
 
 export function StepIndicator({ current, total }: StepIndicatorProps) {
   return (
-    <div
-      className="flex items-center gap-1.5 mb-6"
-      aria-label={`Step ${current} of ${total}`}
-    >
+    <div className="flex items-center gap-1.5 mb-6" aria-label={`Step ${current} of ${total}`}>
       {Array.from({ length: total }, (_, i) => (
         <span key={i} className="flex items-center gap-1.5">
           <span
@@ -31,10 +28,7 @@ export function StepIndicator({ current, total }: StepIndicatorProps) {
           </span>
           {i < total - 1 && (
             <span
-              className={cn(
-                "flex-1 h-0.5 w-8",
-                i + 1 < current ? "bg-primary" : "bg-border-1",
-              )}
+              className={cn("flex-1 h-0.5 w-8", i + 1 < current ? "bg-primary" : "bg-border-1")}
             />
           )}
         </span>

@@ -42,7 +42,12 @@ export function AuthLayout({ children, onBack }: AuthLayoutProps) {
             </button>
           )}
           <div className="flex items-center gap-3 select-none pointer-events-none">
-            <img src="/assets/Treckin.svg" alt="Treckin" className="h-10 w-auto" draggable={false} />
+            <img
+              src="/assets/Treckin.svg"
+              alt="Treckin"
+              className="h-10 w-auto"
+              draggable={false}
+            />
             <span className="text-2xl font-bold text-ink-1 tracking-tight">Treckin</span>
           </div>
         </div>

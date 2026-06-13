@@ -1,21 +1,21 @@
-import * as React from 'react';
-import { Search, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import * as React from "react";
+import { Search, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface SearchBarProps {
-  value:        string;
-  onChange:     (value: string) => void;
+  value: string;
+  onChange: (value: string) => void;
   placeholder?: string;
-  debounceMs?:  number;
-  className?:   string;
-  id?:          string;
+  debounceMs?: number;
+  className?: string;
+  id?: string;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
   value,
   onChange,
-  placeholder = 'Tìm kiếm…',
-  debounceMs  = 300,
+  placeholder = "Tìm kiếm…",
+  debounceMs = 300,
   className,
   id,
 }) => {
@@ -36,17 +36,20 @@ const SearchBar: React.FC<SearchBarProps> = ({
   };
 
   const handleClear = () => {
-    setLocalValue('');
-    onChange('');
+    setLocalValue("");
+    onChange("");
   };
 
   // Cleanup timer on unmount
-  React.useEffect(() => () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-  }, []);
+  React.useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    },
+    [],
+  );
 
   return (
-    <div className={cn('relative w-full', className)}>
+    <div className={cn("relative w-full", className)}>
       {/* Search icon */}
       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4 pointer-events-none">
         <Search size={15} aria-hidden="true" />
@@ -71,7 +74,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           onClick={handleClear}
           className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-ink-4 hover:text-ink-1 transition-colors"
           aria-label="Xóa tìm kiếm"
-          style={{ minHeight: 'auto', minWidth: 'auto' }}
+          style={{ minHeight: "auto", minWidth: "auto" }}
         >
           <X size={14} aria-hidden="true" />
         </button>
@@ -80,6 +83,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
   );
 };
 
-SearchBar.displayName = 'SearchBar';
+SearchBar.displayName = "SearchBar";
 
 export { SearchBar };

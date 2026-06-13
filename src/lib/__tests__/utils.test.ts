@@ -1,11 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  cn,
-  getAvatarUrl,
-  haversineDistance,
-  isWithinGeofence,
-  generateOfflineId,
-} from "../utils";
+import { cn, getAvatarUrl, haversineDistance, isWithinGeofence, generateOfflineId } from "../utils";
 
 describe("cn()", () => {
   it("merges class names", () => {
@@ -71,7 +65,7 @@ describe("isWithinGeofence()", () => {
 
   it("returns true when user is within radius", () => {
     // ~100m away from venue
-    expect(isWithinGeofence(10.7335, 106.7000, venueLat, venueLon, radiusMeters)).toBe(true);
+    expect(isWithinGeofence(10.7335, 106.7, venueLat, venueLon, radiusMeters)).toBe(true);
   });
 
   it("returns false when user is outside radius", () => {
