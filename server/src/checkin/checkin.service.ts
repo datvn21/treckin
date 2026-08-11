@@ -234,14 +234,14 @@ export class CheckinService {
         throw new BadRequestException("Attendee not found");
       }
       assertEmailEligible(attendee.email, event, "Attendee is not eligible for this event");
-    await this.db.db
-      .insert(eventRegistrations)
-      .values({ eventId: qrData.eventId, userId: attendeeUserId })
-      .onConflictDoUpdate({
-        target: [eventRegistrations.userId, eventRegistrations.eventId],
-        set: { status: "APPROVED" },
-      });
-  }
+      await this.db.db
+        .insert(eventRegistrations)
+        .values({ eventId: qrData.eventId, userId: attendeeUserId })
+        .onConflictDoUpdate({
+          target: [eventRegistrations.userId, eventRegistrations.eventId],
+          set: { status: "APPROVED" },
+        });
+    }
 
     return this.createPolicyCheckin(attendeeUserId, qrData.eventId, qrData.boardId, {
       ...options,

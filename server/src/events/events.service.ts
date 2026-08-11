@@ -1228,13 +1228,6 @@ export class EventsService {
     return member;
   }
 
-  private async requireWorkspaceOwner(workspaceId: string, userId: string) {
-    const member = await this.requireWorkspaceMember(workspaceId, userId);
-    if (member.role !== "OWNER") {
-      throw new ForbiddenException("Workspace owner permission required");
-    }
-    return member;
-  }
 
   private async isWorkspaceAdmin(workspaceId: string, userId: string) {
     const [member] = await this.db.db
@@ -1622,13 +1615,9 @@ export class EventsService {
   }
 
   private resolveCheckinModes(modes: CheckinMode[] | undefined): CheckinMode[] {
-    const resolved = modes?.length
-      ? [...new Set(modes)]
-      : ["ATTENDEE_CREDENTIAL", "BOARD_QR"];
-    if (resolved.length < 1) {
-      throw new BadRequestException("At least one check-in mode is required");
-    }
-    return resolved as CheckinMode[];
+    return modes?.length
+      ? ([...new Set(modes)] as CheckinMode[])
+      : ["ATTENDEE_CREDENTIAL", "BOARD_QR"] as CheckinMode[];
   }
 
   private normalizeFieldKey(input: string) {

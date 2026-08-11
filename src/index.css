@@ -42,25 +42,25 @@
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
 
-  /* ── Colors · Light Mode (Phase 2: Dropbox-inspired warm palette) ── */
-  --color-canvas: #f7f5f2; /* warm cream canvas */
+  /* ── Colors · Light Mode (Neutral Slate palette) ── */
+  --color-canvas: #f9fafb; /* clean neutral canvas */
   --color-surface: #ffffff;
-  --color-surface-raised: #f2efe9; /* warm tinted surface */
+  --color-surface-raised: #f3f4f6; /* neutral raised surface */
 
-  --color-primary: #0061fe; /* Dropbox blue */
+  --color-primary: #0061fe; /* Primary blue */
   --color-primary-hover: #004fd6;
   --color-primary-muted: #edf3ff;
   --color-primary-border: #b8d0ff;
   --color-primary-text: #004fd6;
 
-  --color-ink-1: #1e1919; /* warm dark graphite */
-  --color-ink-2: #4a4543;
-  --color-ink-3: #776e6b;
-  --color-ink-4: #a89e9b;
+  --color-ink-1: #111827; /* neutral dark graphite */
+  --color-ink-2: #374151;
+  --color-ink-3: #6b7280;
+  --color-ink-4: #9ca3af;
 
-  --color-border-1: #e4deda; /* warm gray border */
-  --color-border-2: #cfc8c3;
-  --color-border-3: #b0a9a4;
+  --color-border-1: #e5e7eb; /* neutral border */
+  --color-border-2: #d1d5db;
+  --color-border-3: #9ca3af;
 
   --color-success: #12a150;
   --color-success-bg: #f0fdf5;
@@ -77,24 +77,24 @@
 
 /* Dark mode overrides */
 :root.dark {
-  --color-canvas: #1a1714; /* warm dark canvas */
-  --color-surface: #231f1c; /* warm dark surface */
-  --color-surface-raised: #2c2724; /* slightly lighter warm dark */
+  --color-canvas: #0f172a; /* neutral slate dark canvas */
+  --color-surface: #1e293b; /* slate dark surface */
+  --color-surface-raised: #334155; /* slightly lighter slate dark */
 
-  --color-primary: #0061fe; /* Dropbox blue (same as light mode) */
+  --color-primary: #0061fe; /* Primary blue */
   --color-primary-hover: #004fd6;
   --color-primary-muted: #0d2040;
   --color-primary-border: #1e4480;
   --color-primary-text: #80bcff;
 
-  --color-ink-1: #f0ebe6; /* warm light text */
-  --color-ink-2: #c2b9b3;
-  --color-ink-3: #8f857f;
-  --color-ink-4: #5e5650;
+  --color-ink-1: #f8fafc; /* neutral light text */
+  --color-ink-2: #cbd5e1;
+  --color-ink-3: #94a3b8;
+  --color-ink-4: #64748b;
 
-  --color-border-1: #3d3530; /* warm dark border */
-  --color-border-2: #524840;
-  --color-border-3: #6e6058;
+  --color-border-1: #334155; /* slate dark border */
+  --color-border-2: #475569;
+  --color-border-3: #64748b;
 
   --color-success: #2dd068;
   --color-success-bg: #0a2218;

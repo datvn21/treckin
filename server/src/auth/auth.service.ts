@@ -183,9 +183,11 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
+  private static readonly SCRYPT_KEY_LENGTH = 64;
+
   private async hashPassword(password: string): Promise<string> {
     const salt = randomBytes(16).toString("hex");
-    const derivedKey = (await scrypt(password, salt, 64)) as Buffer;
+    const derivedKey = (await scrypt(password, salt, AuthService.SCRYPT_KEY_LENGTH)) as Buffer;
     return `${salt}:${derivedKey.toString("hex")}`;
   }
 
@@ -194,8 +196,9 @@ export class AuthService {
     if (!salt || !storedKey) return false;
 
     const storedBuffer = Buffer.from(storedKey, "hex");
-    const derivedKey = (await scrypt(password, salt, storedBuffer.length)) as Buffer;
-    return storedBuffer.length === derivedKey.length && timingSafeEqual(storedBuffer, derivedKey);
+    if (storedBuffer.length !== AuthService.SCRYPT_KEY_LENGTH) return false;
+    const derivedKey = (await scrypt(password, salt, AuthService.SCRYPT_KEY_LENGTH)) as Buffer;
+    return timingSafeEqual(storedBuffer, derivedKey);
   }
 
   private formatAuthResponse(user: DbUser, tokens: TokenPair): AuthResponse {

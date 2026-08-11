@@ -27,7 +27,7 @@ interface CheckinBroadcast {
 
 @WebSocketGateway({
   cors: {
-    origin: "*",
+    origin: process.env["CORS_ORIGIN"] || "http://localhost:5173",
     credentials: true,
   },
   namespace: "/events",
@@ -39,6 +39,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(EventsGateway.name);
 
   constructor(private readonly jwtService: JwtService) {}
+
 
   // ── Connection Lifecycle ──────────────────────────────────
 
@@ -70,7 +71,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   // ── Room Management ───────────────────────────────────────
 
-  @SubscribeMessage("joinEvent")
+  @SubscribeMessage("event:join")
   handleJoinEvent(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { eventId: string },
@@ -87,7 +88,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  @SubscribeMessage("leaveEvent")
+  @SubscribeMessage("event:leave")
   handleLeaveEvent(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { eventId: string },
@@ -112,7 +113,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
    */
   broadcastCheckin(eventId: string, data: CheckinBroadcast): void {
     const room = `event:${eventId}`;
-    this.server.to(room).emit("checkin", data);
+    this.server.to(room).emit("checkin:success", data);
 
     this.logger.debug(`Broadcast checkin to room ${room}: user=${data.userId}`);
   }

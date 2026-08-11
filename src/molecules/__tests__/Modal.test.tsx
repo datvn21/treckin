@@ -157,7 +157,7 @@ describe("Modal", () => {
         </Modal>,
       );
       const dialog = screen.getByRole("dialog");
-      expect(dialog).toHaveClass("sm:max-w-\\[min\\(96vw\\,72rem\\)\\]");
+      expect(dialog).toHaveClass("sm:max-w-[min(96vw,72rem)]");
     });
   });
 
