@@ -57,6 +57,16 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return result === 1;
   }
 
+  /** Health-check helper. Returns true when Redis replies with `PONG`. */
+  async ping(): Promise<boolean> {
+    try {
+      const reply = await this.client.ping();
+      return reply === "PONG";
+    } catch {
+      return false;
+    }
+  }
+
   // ── Distributed Lock ──────────────────────────────────────
 
   /**

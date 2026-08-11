@@ -1,4 +1,4 @@
-import { CHECKIN_DIRECTION } from "@prisma/client";
+import { CHECKIN_DIRECTION_VALUES } from "../../database/schema/enums";
 import {
   IsEnum,
   IsNotEmpty,
@@ -11,6 +11,10 @@ import {
   Min,
 } from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+
+export const CHECKIN_DIRECTION = Object.fromEntries(
+  CHECKIN_DIRECTION_VALUES.map((v) => [v, v]),
+) as { [K in (typeof CHECKIN_DIRECTION_VALUES)[number]]: K };
 
 export class ScanCheckinDto {
   @ApiProperty({ description: "QR hash obtained from scanning" })
@@ -31,7 +35,7 @@ export class ScanCheckinDto {
   @ApiPropertyOptional({ enum: CHECKIN_DIRECTION, default: CHECKIN_DIRECTION.IN })
   @IsEnum(CHECKIN_DIRECTION)
   @IsOptional()
-  direction?: CHECKIN_DIRECTION;
+  direction?: (typeof CHECKIN_DIRECTION_VALUES)[number];
 
   @ApiPropertyOptional({ description: "Scanner/attendee latitude for geofence validation" })
   @IsNumber()
@@ -75,7 +79,7 @@ export class ShortCodeCheckinDto {
   @ApiPropertyOptional({ enum: CHECKIN_DIRECTION, default: CHECKIN_DIRECTION.IN })
   @IsEnum(CHECKIN_DIRECTION)
   @IsOptional()
-  direction?: CHECKIN_DIRECTION;
+  direction?: (typeof CHECKIN_DIRECTION_VALUES)[number];
 
   @ApiPropertyOptional({ description: "Scanner latitude for geofence validation" })
   @IsNumber()

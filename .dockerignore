@@ -1,43 +1,29 @@
-# Dependencies
-node_modules/
+node_modules
+**/node_modules
+dist
+**/dist
+.vite
+coverage
+test-results
+*.log
+npm-debug.log*
 
-# Build output
-dist/
-.vite/
-
-# Version control
-.git/
+.git
 .gitignore
+.gitattributes
+.husky
+.vscode
+.idea
+*.swp
+*.swo
+*~
 
-# Environment files (secrets should be passed via Docker env, not baked in)
 .env
 .env.local
 .env.*.local
 
-# Test artifacts
-test-results/
-coverage/
-
-# Dev tools
-.husky/
-.prettier*
-.eslint*
-commitlint.config.js
-
-# Editor
-.vscode/
-.idea/
-*.suo
-*.user
-
-# Logs
-npm-debug.log*
-*.log
-
-# Docker files (not needed in container)
-docker-compose*.yml
-Dockerfile
-
-# Misc
+server
+docs
 README.md
 *.md
+.cursor

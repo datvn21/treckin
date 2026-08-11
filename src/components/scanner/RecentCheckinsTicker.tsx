@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
 import { Avatar } from "@/atoms/Avatar";
 import { cn } from "@/lib/utils";
 import type { CheckinRecord } from "@/types";
@@ -11,8 +10,6 @@ interface RecentCheckinsTickerProps {
 }
 
 export function RecentCheckinsTicker({ checkins }: RecentCheckinsTickerProps) {
-  const { t } = useTranslation();
-
   const recent = useMemo(() => checkins.slice(0, 5), [checkins]);
 
   if (recent.length === 0) return null;
@@ -40,7 +37,7 @@ export function RecentCheckinsTicker({ checkins }: RecentCheckinsTickerProps) {
               </div>
 
               {/* Avatar */}
-              <Avatar name={checkin.userName} avatarUrl={undefined} size="sm" />
+              <Avatar name={checkin.userName} size="sm" />
 
               {/* Name + time */}
               <div className="flex flex-col">

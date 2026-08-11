@@ -85,9 +85,9 @@ describe("useOfflineSync", () => {
       });
     });
 
-    it("does not trigger sync when already online (no transition)", () => {
-      const { api } = await import("@/lib/api");
-      const mockPost = vi.mocked(api.post);
+    it("does not trigger sync when already online (no transition)", async () => {
+      const { api } = vi.mocked(await import("@/lib/api"));
+      const mockPost = api.post;
 
       useScannerStore.getState().queueOffline({
         hash: "test-hash",
@@ -141,9 +141,9 @@ describe("useOfflineSync", () => {
       });
     });
 
-    it("does not trigger sync when queue is empty", () => {
-      const { api } = await import("@/lib/api");
-      const mockPost = vi.mocked(api.post);
+    it("does not trigger sync when queue is empty", async () => {
+      const { api } = vi.mocked(await import("@/lib/api"));
+      const mockPost = api.post;
 
       Object.defineProperty(navigator, "onLine", {
         writable: true,
@@ -228,7 +228,7 @@ describe("useOfflineSync", () => {
       await waitFor(() => {
         // One failed item should remain
         expect(useScannerStore.getState().offlineQueue).toHaveLength(1);
-        expect(useScannerStore.getState().offlineQueue[0].hash).toBe("hash-2");
+        expect(useScannerStore.getState().offlineQueue[0]?.hash).toBe("hash-2");
       });
     });
   });
@@ -256,7 +256,7 @@ describe("useOfflineSync", () => {
       await waitFor(() => {
         // Queue should still have the failed item
         expect(useScannerStore.getState().offlineQueue).toHaveLength(1);
-        expect(useScannerStore.getState().offlineQueue[0].hash).toBe("failed-hash");
+        expect(useScannerStore.getState().offlineQueue[0]?.hash).toBe("failed-hash");
       });
     });
 
@@ -324,6 +324,8 @@ describe("useOfflineSync", () => {
 
       // Mount another hook - should not trigger a second sync
       const { result: result2 } = renderHook(() => useOfflineSync());
+      // Reference result2 so the variable isn't flagged as unused
+      void result2;
 
       // Only one sync should have been called
       expect(mockPost).toHaveBeenCalledTimes(1);

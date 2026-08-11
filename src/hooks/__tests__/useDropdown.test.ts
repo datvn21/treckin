@@ -64,7 +64,6 @@ describe("useDropdown", () => {
         document.dispatchEvent(
           new MouseEvent("mousedown", {
             bubbles: true,
-            target: document.body,
           }),
         );
       });
@@ -88,7 +87,6 @@ describe("useDropdown", () => {
           refElement.dispatchEvent(
             new MouseEvent("mousedown", {
               bubbles: true,
-              target: refElement,
             }),
           );
         }

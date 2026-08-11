@@ -1,8 +1,11 @@
 import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from "@nestjs/swagger";
-import { CHECKIN_MODE } from "@prisma/client";
 import { CheckinService } from "./checkin.service";
-import { BoardQrCheckinDto, ScanCheckinDto, ShortCodeCheckinDto } from "./dto/scan-checkin.dto";
+import {
+  BoardQrCheckinDto,
+  ScanCheckinDto,
+  ShortCodeCheckinDto,
+} from "./dto/scan-checkin.dto";
 import { BulkSyncDto } from "./dto/bulk-sync.dto";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { CurrentUser, JwtPayload } from "../common/decorators/current-user.decorator";
@@ -26,7 +29,7 @@ export class CheckinController {
   @ApiResponse({ status: 409, description: "Lock contention — try again" })
   async scan(@Body() dto: ScanCheckinDto, @CurrentUser() user: JwtPayload) {
     await this.eventsService.canScanEvent(dto.eventId, user.sub);
-    await this.eventsService.requireCheckinMode(dto.eventId, CHECKIN_MODE.ATTENDEE_CREDENTIAL);
+    await this.eventsService.requireCheckinMode(dto.eventId, "ATTENDEE_CREDENTIAL");
     return this.checkinService.scanCheckin(dto.hash, dto.boardId, dto.eventId, user.sub, {
       direction: dto.direction,
       latitude: dto.latitude,
@@ -41,7 +44,7 @@ export class CheckinController {
   @ApiOperation({ summary: "Scanner checks in an attendee by scanning their personal QR" })
   async scanPersonalQr(@Body() dto: ScanCheckinDto, @CurrentUser() user: JwtPayload) {
     await this.eventsService.canScanEvent(dto.eventId, user.sub);
-    await this.eventsService.requireCheckinMode(dto.eventId, CHECKIN_MODE.ATTENDEE_CREDENTIAL);
+    await this.eventsService.requireCheckinMode(dto.eventId, "ATTENDEE_CREDENTIAL");
     return this.checkinService.scanPersonalQr(dto.hash, dto.boardId, dto.eventId, {
       scannedById: user.sub,
       direction: dto.direction,
@@ -75,7 +78,7 @@ export class CheckinController {
   @ApiResponse({ status: 400, description: "Code not found, expired, or already used" })
   async scanByShortCode(@Body() dto: ShortCodeCheckinDto, @CurrentUser() user: JwtPayload) {
     await this.eventsService.canScanEvent(dto.eventId, user.sub);
-    await this.eventsService.requireCheckinMode(dto.eventId, CHECKIN_MODE.ATTENDEE_CREDENTIAL);
+    await this.eventsService.requireCheckinMode(dto.eventId, "ATTENDEE_CREDENTIAL");
     return this.checkinService.scanByShortCode(dto.code, dto.boardId, dto.eventId, {
       scannedById: user.sub,
       direction: dto.direction,

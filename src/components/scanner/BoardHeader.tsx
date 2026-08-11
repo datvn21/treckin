@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronDown, ChevronUp, Pause, Play, Wifi, WifiOff, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Board, BoardStatus } from "@/types";
+import type { Board } from "@/types";
 
 interface BoardHeaderProps {
   eventName: string;
@@ -128,7 +128,7 @@ export function BoardHeader({
                       "w-2 h-2 rounded-full flex-none",
                       board.status === "active" && "bg-[#4ade80]",
                       board.status === "paused" && "bg-[#facc15]",
-                      board.status === "inactive" && "bg-[#5e5650]",
+                      board.status === "closed" && "bg-[#5e5650]",
                     )}
                   />
                 </button>

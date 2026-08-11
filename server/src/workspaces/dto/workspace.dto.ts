@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsBoolean,
   IsEmail,
@@ -11,7 +11,23 @@ import {
   Min,
   MinLength,
 } from "class-validator";
-import { DATA_DELETION_MODE, EVENT_VISIBILITY, WORKSPACE_MEMBER_ROLE } from "@prisma/client";
+import {
+  DATA_DELETION_MODE_VALUES,
+  EVENT_VISIBILITY_VALUES,
+  WORKSPACE_MEMBER_ROLE_VALUES,
+} from "../../database/schema/enums";
+
+export const DATA_DELETION_MODE = Object.fromEntries(
+  DATA_DELETION_MODE_VALUES.map((v) => [v, v]),
+) as { [K in (typeof DATA_DELETION_MODE_VALUES)[number]]: K };
+
+export const EVENT_VISIBILITY = Object.fromEntries(
+  EVENT_VISIBILITY_VALUES.map((v) => [v, v]),
+) as { [K in (typeof EVENT_VISIBILITY_VALUES)[number]]: K };
+
+export const WORKSPACE_MEMBER_ROLE = Object.fromEntries(
+  WORKSPACE_MEMBER_ROLE_VALUES.map((v) => [v, v]),
+) as { [K in (typeof WORKSPACE_MEMBER_ROLE_VALUES)[number]]: K };
 
 export class CreateWorkspaceDto {
   @ApiProperty({ example: "Acme Events Team" })
@@ -52,7 +68,7 @@ export class InviteWorkspaceMemberDto {
   })
   @IsEnum(WORKSPACE_MEMBER_ROLE)
   @IsOptional()
-  role?: WORKSPACE_MEMBER_ROLE;
+  role?: (typeof WORKSPACE_MEMBER_ROLE)[keyof typeof WORKSPACE_MEMBER_ROLE];
 }
 
 export class AcceptInvitationDto {
@@ -93,7 +109,7 @@ export class UpdateWorkspaceSettingsDto {
   @ApiProperty({ enum: EVENT_VISIBILITY, required: false })
   @IsEnum(EVENT_VISIBILITY)
   @IsOptional()
-  defaultEventVisibility?: EVENT_VISIBILITY;
+  defaultEventVisibility?: (typeof EVENT_VISIBILITY)[keyof typeof EVENT_VISIBILITY];
 
   @ApiProperty({ example: 30, required: false })
   @IsInt()
@@ -159,7 +175,7 @@ export class UpdateWorkspacePolicyDto {
   @ApiProperty({ enum: DATA_DELETION_MODE, required: false })
   @IsEnum(DATA_DELETION_MODE)
   @IsOptional()
-  dataDeletionMode?: DATA_DELETION_MODE;
+  dataDeletionMode?: (typeof DATA_DELETION_MODE)[keyof typeof DATA_DELETION_MODE];
 
   @ApiProperty({ example: 30, required: false })
   @IsInt()
@@ -172,7 +188,7 @@ export class UpdateWorkspacePolicyDto {
 export class UpdateWorkspaceMemberRoleDto {
   @ApiProperty({ enum: WORKSPACE_MEMBER_ROLE })
   @IsEnum(WORKSPACE_MEMBER_ROLE)
-  role!: WORKSPACE_MEMBER_ROLE;
+  role!: (typeof WORKSPACE_MEMBER_ROLE)[keyof typeof WORKSPACE_MEMBER_ROLE];
 }
 
 export class UpdateWorkspaceDto {

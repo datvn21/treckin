@@ -427,13 +427,13 @@ Recommended channels:
 
 ## Immediate Implementation Scope
 
-The first code change should focus on Prisma schema expansion only:
+The first code change should focus on Drizzle schema expansion only:
 
 - Add enums.
 - Add models.
 - Add relation fields.
 - Add indexes.
 - Preserve current MVP fields.
-- Run Prisma format/validation.
+- Run `drizzle-kit generate` to produce migrations.
 
 API, services, UI, background jobs, and migrations should be implemented in separate follow-up phases after the foundation schema is stable.

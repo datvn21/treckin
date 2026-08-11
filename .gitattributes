@@ -1,0 +1,20 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Force LF line endings on shell scripts so they keep working inside the
+# Linux containers after being authored on Windows. Also keep *.png / *.jpg as
+# binary so Git doesn't try to fix their line endings.
+# ──────────────────────────────────────────────────────────────────────────────
+
+*.sh       text eol=lf
+*.bash     text eol=lf
+
+# Keep binary asset line endings untouched
+*.png      binary
+*.jpg      binary
+*.jpeg     binary
+*.gif      binary
+*.ico      binary
+*.webp     binary
+*.woff     binary
+*.woff2    binary
+*.ttf      binary
+*.eot      binary

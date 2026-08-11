@@ -50,3 +50,14 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# ── Docker (local overrides, not for the repo) ──
+docker-compose.override.yml
+docker-compose.local.yml
+
+# Agent skills generated or installed locally.
+# Existing tracked project skills remain tracked; new local installs stay out of git
+# unless explicitly force-added.
+.agents/**
+
+skills-lock.json

@@ -8,9 +8,7 @@ const waitForUpdate = () => new Promise((resolve) => setTimeout(resolve, 0));
 describe("Toast", () => {
   // ── Reset singleton state between tests ──
   beforeEach(() => {
-    // Clear the singleton state by dismissing all toasts
-    const listeners = toast as unknown as { dismiss: (id: string) => void };
-    // Reset the singleton items directly
+    // Reset the singleton state by clearing toasts
     vi.useFakeTimers();
   });
 
@@ -127,7 +125,7 @@ describe("Toast", () => {
 
       // The first setTimeout call should be for auto-dismiss
       const timeoutCall = setTimeoutSpy.mock.calls[0];
-      expect(timeoutCall[1]).toBe(4000);
+      expect(timeoutCall?.[1]).toBe(4000);
 
       setTimeoutSpy.mockRestore();
       clearTimeoutSpy.mockRestore();
@@ -140,7 +138,7 @@ describe("Toast", () => {
       toast.error("Error toast");
 
       const timeoutCall = setTimeoutSpy.mock.calls[0];
-      expect(timeoutCall[1]).toBe(6000);
+      expect(timeoutCall?.[1]).toBe(6000);
 
       setTimeoutSpy.mockRestore();
     });
@@ -152,7 +150,7 @@ describe("Toast", () => {
       toast.info("Info toast");
 
       const timeoutCall = setTimeoutSpy.mock.calls[0];
-      expect(timeoutCall[1]).toBe(4000);
+      expect(timeoutCall?.[1]).toBe(4000);
 
       setTimeoutSpy.mockRestore();
     });

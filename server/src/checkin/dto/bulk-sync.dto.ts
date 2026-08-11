@@ -10,7 +10,11 @@ import {
 } from "class-validator";
 import { Type } from "class-transformer";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { CHECKIN_DIRECTION } from "@prisma/client";
+import { CHECKIN_DIRECTION_VALUES } from "../../database/schema/enums";
+
+export const CHECKIN_DIRECTION = Object.fromEntries(
+  CHECKIN_DIRECTION_VALUES.map((v) => [v, v]),
+) as { [K in (typeof CHECKIN_DIRECTION_VALUES)[number]]: K };
 
 export class OfflineCheckinDto {
   @ApiProperty({ description: "QR code hash / token string" })
@@ -31,7 +35,7 @@ export class OfflineCheckinDto {
   @ApiPropertyOptional({ enum: CHECKIN_DIRECTION, default: CHECKIN_DIRECTION.IN })
   @IsEnum(CHECKIN_DIRECTION)
   @IsOptional()
-  direction?: CHECKIN_DIRECTION;
+  direction?: (typeof CHECKIN_DIRECTION_VALUES)[number];
 }
 
 export class BulkSyncDto {

@@ -1,11 +1,10 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { ATTENDANCE_POLICY, CHECKIN_MODE, EVENT_QR_BEHAVIOR, EVENT_STATUS } from "@prisma/client";
+import { ATTENDANCE_POLICY, CHECKIN_MODE, EVENT_QR_BEHAVIOR, EVENT_STATUS } from "./enums";
 import {
   IsArray,
   IsBoolean,
   IsDateString,
   IsEnum,
-  IsInt,
   IsNumber,
   IsOptional,
   IsString,
@@ -52,12 +51,12 @@ export class UpdateEventDto {
   @ApiPropertyOptional({ enum: EVENT_STATUS })
   @IsEnum(EVENT_STATUS)
   @IsOptional()
-  status?: EVENT_STATUS;
+  status?: keyof typeof EVENT_STATUS;
 
   @ApiPropertyOptional({ enum: ATTENDANCE_POLICY })
   @IsEnum(ATTENDANCE_POLICY)
   @IsOptional()
-  attendancePolicy?: ATTENDANCE_POLICY;
+  attendancePolicy?: keyof typeof ATTENDANCE_POLICY;
 
   @ApiPropertyOptional()
   @IsNumber()
@@ -88,12 +87,12 @@ export class UpdateEventDto {
   @IsArray()
   @IsEnum(CHECKIN_MODE, { each: true })
   @IsOptional()
-  checkinModes?: CHECKIN_MODE[];
+  checkinModes?: (keyof typeof CHECKIN_MODE)[];
 
   @ApiPropertyOptional({ enum: EVENT_QR_BEHAVIOR })
   @IsEnum(EVENT_QR_BEHAVIOR)
   @IsOptional()
-  eventQrBehavior?: EVENT_QR_BEHAVIOR;
+  eventQrBehavior?: keyof typeof EVENT_QR_BEHAVIOR;
 
   @ApiPropertyOptional({
     example: 120,

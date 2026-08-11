@@ -13,15 +13,6 @@ import type { EventItem } from "@/molecules/EventCard";
 export type { EventItem };
 
 // ─── Status helpers (mirrors EventCard) ───────────────────────────────────────
-type DotColor = "green" | "yellow" | "red" | "gray" | "blue";
-
-const STATUS_DOT_COLOR: Record<string, DotColor> = {
-  active: "green",
-  upcoming: "blue",
-  completed: "gray",
-  cancelled: "red",
-};
-
 const STATUS_BADGE_CLASS: Record<string, string> = {
   active: "badge-green",
   upcoming: "badge-blue",

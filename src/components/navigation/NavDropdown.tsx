@@ -1,9 +1,8 @@
 /* ── NavDropdown — breadcrumb dropdown for workspaces & events ── */
 import { NavLink, useLocation } from "react-router-dom";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useDropdown } from "@/hooks/useDropdown";
 import { cn } from "@/lib/utils";
-import type { Workspace } from "@/templates/AppShell";
 
 export interface DropdownItem {
   id: string;

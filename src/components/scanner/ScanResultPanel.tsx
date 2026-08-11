@@ -27,6 +27,8 @@ function ResultIcon({ status }: { status: ScanResult["status"] }) {
       return <AlertCircle className={cn(className, "text-[#f97316]")} strokeWidth={1.5} />;
     case "outside-geofence":
       return <AlertTriangle className={cn(className, "text-[#f97316]")} strokeWidth={1.5} />;
+    case "race-condition":
+      return <AlertTriangle className={cn(className, "text-[#facc15]")} strokeWidth={1.5} />;
     default:
       return null;
   }
@@ -39,6 +41,7 @@ function StatusLabel({ status }: { status: ScanResult["status"] }) {
     "already-checked-in": t("scanner.result.alreadyCheckedIn"),
     "invalid-qr": t("scanner.result.invalid"),
     "expired-qr": t("scanner.result.expired"),
+    "race-condition": t("scanner.result.raceCondition", "Race condition detected"),
     "outside-geofence": t("scanner.result.geofence"),
   };
   return (
@@ -47,7 +50,7 @@ function StatusLabel({ status }: { status: ScanResult["status"] }) {
         "text-sm font-semibold",
         status === "success" && "text-[#4ade80]",
         status === "already-checked-in" && "text-[#facc15]",
-        (status === "invalid-qr" || status === "expired-qr" || status === "outside-geofence") &&
+        (status === "invalid-qr" || status === "expired-qr" || status === "outside-geofence" || status === "race-condition") &&
           "text-[#f87171]",
       )}
     >
@@ -70,8 +73,6 @@ export function ScanResultPanel({ result, onDismiss }: ScanResultPanelProps) {
   }, [result, onDismiss]);
 
   if (!result) return null;
-
-  const hasStudent = !!result.student;
 
   return (
     <div
@@ -106,9 +107,9 @@ export function ScanResultPanel({ result, onDismiss }: ScanResultPanelProps) {
         <p className="text-sm text-[#c2b9b3] leading-relaxed mb-3">{result.message}</p>
 
         {/* Student info (if present) */}
-        {hasStudent && (
+        {result.student && (
           <div className="flex items-center gap-3">
-            <Avatar name={result.student.name} avatarUrl={result.student.avatarUrl} size="md" />
+            <Avatar name={result.student.name} src={result.student.avatarUrl} size="md" />
             <div className="flex-1 min-w-0">
               <p className="text-base font-semibold text-[#f0ebe6] truncate">
                 {result.student.name}

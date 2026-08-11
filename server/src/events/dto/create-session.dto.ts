@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { SESSION_STATUS } from "@prisma/client";
-import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
+import { SESSION_STATUS } from "./enums";
+import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Min } from "class-validator";
 
 export class CreateEventSessionDto {
   @ApiProperty({ example: "Morning session" })
@@ -34,7 +34,7 @@ export class CreateEventSessionDto {
   @ApiPropertyOptional({ enum: SESSION_STATUS, default: SESSION_STATUS.SCHEDULED })
   @IsEnum(SESSION_STATUS)
   @IsOptional()
-  status?: SESSION_STATUS;
+  status?: keyof typeof SESSION_STATUS;
 
   @ApiPropertyOptional({ example: "2026-06-15T07:45:00.000Z" })
   @IsDateString()

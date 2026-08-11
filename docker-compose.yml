@@ -1,119 +1,119 @@
-version: '3.8'
-
 services:
-  # -------------------------------------------------------------
-  # PostgreSQL Database - Optimized for memory
-  # -------------------------------------------------------------
   postgres:
     image: postgres:16-alpine
     container_name: treckin-postgres
-    restart: always
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres_dev_pwd}
-      POSTGRES_DB: ${DB_NAME:-treckin_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-${DB_PASSWORD:-postgres_dev_pwd}}
+      POSTGRES_DB: ${POSTGRES_DB:-treckin_db}
+    command:
+      - postgres
+      - -c
+      - max_connections=80
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=64MB
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    # Optimize Postgres parameters for lower memory usage (approx 100-150MB RAM limit)
-    command: >
-      postgres 
-      -c max_connections=50 
-      -c shared_buffers=128MB 
-      -c work_mem=4MB 
-      -c maintenance_work_mem=32MB 
-      -c effective_cache_size=256MB
-    # postgres is NOT exposed to host — only accessible within the Docker network
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 30s
-    deploy:
-      resources:
-        limits:
-          memory: 256M
+      retries: 10
+      start_period: 20s
 
-  # -------------------------------------------------------------
-  # Redis Cache & Socket Adapter - Optimized for memory
-  # -------------------------------------------------------------
   redis:
     image: redis:7-alpine
     container_name: treckin-redis
-    restart: always
-    # Limit Redis memory usage to 128MB and auto-evict using LRU when full
-    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
-    # redis is NOT exposed to host — only accessible within the Docker network
+    restart: unless-stopped
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
-      timeout: 3s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 150M
+      timeout: 5s
+      retries: 10
 
-  # -------------------------------------------------------------
-  # NestJS Backend API
-  # -------------------------------------------------------------
+  migrate:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: production
+    container_name: treckin-migrate
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-${DB_PASSWORD:-postgres_dev_pwd}}@postgres:5432/${POSTGRES_DB:-treckin_db}
+    command: ["node", "scripts/migrate.mjs"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   backend:
     build:
       context: ./server
       dockerfile: Dockerfile
+      target: production
     container_name: treckin-backend
-    restart: always
+    restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 4000
-      DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-postgres_dev_pwd}@postgres:5432/${DB_NAME:-treckin_db}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-${DB_PASSWORD:-postgres_dev_pwd}}@postgres:5432/${POSTGRES_DB:-treckin_db}
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      REDIS_PASSWORD: ""
-      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-me}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
       JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-15m}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-7d}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-your-google-client-id}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-your-google-client-secret}
-      QR_HMAC_SECRET: ${QR_HMAC_SECRET:-your-hmac-secret-key-change-me}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      QR_HMAC_SECRET: ${QR_HMAC_SECRET:-change-me-in-production}
       QR_TTL_SECONDS: ${QR_TTL_SECONDS:-30}
-      CORS_ORIGIN: http://localhost # Served via Nginx on port 80
-      # Limit node memory footprint
-      NODE_OPTIONS: "--max-old-space-size=512"
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
+      LOCAL_STORAGE_BASE_URL: ${LOCAL_STORAGE_BASE_URL:-http://localhost}
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+      R2_BUCKET_NAME: ${R2_BUCKET_NAME:-treckin-avatars}
+      R2_PUBLIC_URL: ${R2_PUBLIC_URL:-}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+    volumes:
+      - backend_public:/app/public
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:4000/api/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    deploy:
-      resources:
-        limits:
-          memory: 512M
+      migrate:
+        condition: service_completed_successfully
 
-  # -------------------------------------------------------------
-  # Vite React Frontend + Nginx (Reverse Proxy & Static Server)
-  # -------------------------------------------------------------
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
+      target: production
+      args:
+        VITE_API_URL: ${VITE_API_URL:-/api}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL:-/}
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-your-google-client-id.apps.googleusercontent.com}
+        VITE_GEOFENCE_RADIUS_METERS: ${VITE_GEOFENCE_RADIUS_METERS:-500}
     container_name: treckin-frontend
-    restart: always
+    restart: unless-stopped
     ports:
-      - "80:80"
+      - "${FRONTEND_PORT:-80}:80"
     depends_on:
       backend:
         condition: service_healthy
-    deploy:
-      resources:
-        limits:
-          memory: 64M
 
 volumes:
-  pgdata:
+  postgres_data:
+  redis_data:
+  backend_public:

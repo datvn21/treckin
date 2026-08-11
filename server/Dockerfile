@@ -1,46 +1,48 @@
-# ==========================================
-# Dockerfile - NestJS Backend
-# ==========================================
+FROM node:20-alpine AS deps
 
-# Stage 1: Build
-FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Install dependencies needed for compiling prisma and node-gyp if any
-RUN apk add --no-cache openssl
+RUN apk add --no-cache libc6-compat
 
 COPY package*.json ./
 RUN npm ci
 
-COPY . .
+FROM deps AS build
 
-# Generate Prisma Client
-RUN npx prisma generate
+COPY nest-cli.json ./
+COPY tsconfig.json ./
+COPY drizzle.config.ts ./
+COPY scripts ./scripts
+COPY drizzle ./drizzle
+COPY src ./src
 
-# Build NestJS application
 RUN npm run build
 
-# Stage 2: Production Runner
-FROM node:20-alpine AS runner
+FROM node:20-alpine AS production
+
 WORKDIR /app
 
-# Install openssl for Prisma runtime
-RUN apk add --no-cache openssl
-
-COPY package*.json ./
-# Install only production dependencies
-RUN npm ci --only=production
-
-# Copy compiled code and prisma schema
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
-# Copy generated Prisma Client
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
+RUN apk add --no-cache libc6-compat
 
 ENV NODE_ENV=production
 ENV PORT=4000
-ENV NODE_OPTIONS="--max-old-space-size=512"
+ENV NODE_OPTIONS=--max-old-space-size=512
+
+COPY package*.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/scripts ./scripts
+COPY --from=build /app/drizzle ./drizzle
+
+RUN mkdir -p public/avatars/user public/avatars/workspace \
+  && chown -R node:node /app/public
+
+USER node
 
 EXPOSE 4000
-CMD ["node", "dist/main"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:4000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+
+CMD ["node", "dist/main.js"]

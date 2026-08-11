@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { FIELD_TYPE } from "@prisma/client";
+import { FIELD_TYPE } from "./enums";
 import { IsBoolean, IsEnum, IsInt, IsObject, IsOptional, IsString, Min } from "class-validator";
 
 export class CreateAttendeeFieldDto {
@@ -13,7 +13,7 @@ export class CreateAttendeeFieldDto {
 
   @ApiProperty({ enum: FIELD_TYPE })
   @IsEnum(FIELD_TYPE)
-  type!: FIELD_TYPE;
+  type!: keyof typeof FIELD_TYPE;
 
   @ApiPropertyOptional({ default: false })
   @IsBoolean()

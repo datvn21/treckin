@@ -5,30 +5,46 @@ import {
   ForbiddenException,
   Logger,
 } from "@nestjs/common";
+import { and, eq, sql } from "drizzle-orm";
+import { DatabaseService } from "../database/database.service";
 import {
-  ATTENDANCE_POLICY,
-  BOARD_STATUS,
-  CHECKIN_DIRECTION,
-  CHECKIN_METHOD,
-  CHECKIN_SOURCE,
-  CHECKIN_MODE,
-  EVENT_STATUS,
-  EVENT_QR_BEHAVIOR,
-  Prisma,
-  SESSION_STATUS,
-} from "@prisma/client";
-import { PrismaService } from "../prisma/prisma.service";
+  ATTENDANCE_POLICY_VALUES,
+  BOARD_STATUS_VALUES,
+  CHECKIN_DIRECTION_VALUES,
+  CHECKIN_METHOD_VALUES,
+  CHECKIN_MODE_VALUES,
+  CHECKIN_SOURCE_VALUES,
+  EVENT_QR_BEHAVIOR_VALUES,
+  EVENT_STATUS_VALUES,
+  SESSION_STATUS_VALUES,
+  boards,
+  checkinRecords,
+  eventRegistrations,
+  events,
+  eventSessions,
+  users,
+} from "../database/schema";
 import { RedisService } from "../redis/redis.service";
 import { QrService } from "../qr/qr.service";
 import { EventsGateway } from "../gateway/events.gateway";
 import { OfflineCheckinDto } from "./dto/bulk-sync.dto";
 import { assertEmailEligible } from "../events/event-eligibility";
 
+type AttendancePolicy = (typeof ATTENDANCE_POLICY_VALUES)[number];
+type BoardStatus = (typeof BOARD_STATUS_VALUES)[number];
+type CheckinDirection = (typeof CHECKIN_DIRECTION_VALUES)[number];
+type CheckinMethod = (typeof CHECKIN_METHOD_VALUES)[number];
+type CheckinMode = (typeof CHECKIN_MODE_VALUES)[number];
+type CheckinSource = (typeof CHECKIN_SOURCE_VALUES)[number];
+type EventQrBehavior = (typeof EVENT_QR_BEHAVIOR_VALUES)[number];
+type EventStatus = (typeof EVENT_STATUS_VALUES)[number];
+type SessionStatus = (typeof SESSION_STATUS_VALUES)[number];
+
 export interface ScanResult {
   success: boolean;
   message: string;
   attendance?: {
-    policy: ATTENDANCE_POLICY;
+    policy: AttendancePolicy;
     completed: boolean;
     completedBoardCount?: number;
     requiredBoardCount?: number;
@@ -41,10 +57,10 @@ export interface ScanResult {
     sessionId?: string | null;
     sessionName?: string | null;
     outsideSession?: boolean;
-    direction: CHECKIN_DIRECTION;
+    direction: CheckinDirection;
     timestamp: Date;
-    method: CHECKIN_METHOD;
-    source: CHECKIN_SOURCE;
+    method: CheckinMethod;
+    source: CheckinSource;
     user: {
       id: string;
       name: string;
@@ -66,36 +82,49 @@ export interface BulkSyncResult {
 }
 
 interface ScanOptions {
-  direction?: CHECKIN_DIRECTION;
+  direction?: CheckinDirection;
   latitude?: number;
   longitude?: number;
   scannedById?: string;
-  source?: CHECKIN_SOURCE;
+  source?: CheckinSource;
   timestamp?: Date;
 }
 
-type EventWithBoards = Prisma.EventGetPayload<{
-  include: {
-    boards: { select: { id: true } };
-    sessions: {
-      select: {
-        id: true;
-        title: true;
-        startsAt: true;
-        endsAt: true;
-        status: true;
-        isDefault: true;
-      };
-    };
-  };
-}>;
+interface EventWithBoards {
+  id: string;
+  registrationEnabled: boolean;
+  checkinModes: CheckinMode[];
+  eventQrBehavior: EventQrBehavior;
+  allowedDomains: string[];
+  allowedEmails: string[];
+  blockedEmails: string[];
+  status: EventStatus;
+  startTime: Date;
+  endTime: Date;
+  attendancePolicy: AttendancePolicy;
+  requiredBoardCount: number | null;
+  credentialGraceSeconds: number;
+  customSessionsEnabled: boolean;
+  latitude: number | null;
+  longitude: number | null;
+  geofenceRadius: number | null;
+  boards: Array<{ id: string }>;
+  sessions: Array<{
+    id: string;
+    title: string;
+    startsAt: Date;
+    endsAt: Date;
+    status: SessionStatus;
+    isDefault: boolean;
+  }>;
+}
 
 @Injectable()
 export class CheckinService {
   private readonly logger = new Logger(CheckinService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly db: DatabaseService,
     private readonly redisService: RedisService,
     private readonly qrService: QrService,
     private readonly eventsGateway: EventsGateway,
@@ -115,7 +144,7 @@ export class CheckinService {
     return this.scanPersonalQr(hash, boardId, eventId, {
       ...options,
       scannedById: scannerUserId,
-      source: options.source ?? CHECKIN_SOURCE.PERSONAL_QR,
+      source: options.source ?? "PERSONAL_QR",
     });
   }
 
@@ -125,15 +154,13 @@ export class CheckinService {
     eventId: string,
     options: ScanOptions = {},
   ): Promise<ScanResult> {
-    // Load credentialGraceSeconds from event for offline-sync grace window
-    const eventForGrace = await this.prisma.event.findUnique({
-      where: { id: eventId },
-      select: { credentialGraceSeconds: true },
-    });
+    const [eventForGrace] = await this.db.db
+      .select({ credentialGraceSeconds: events.credentialGraceSeconds })
+      .from(events)
+      .where(eq(events.id, eventId))
+      .limit(1);
     const graceMs = (eventForGrace?.credentialGraceSeconds ?? 120) * 1000;
-    // Online scans: graceMs is 0 (Redis TTL already enforces expiry).
-    // Offline syncs pass options.source === OFFLINE_SYNC, so use grace only there.
-    const effectiveGraceMs = options.source === CHECKIN_SOURCE.OFFLINE_SYNC ? graceMs : 0;
+    const effectiveGraceMs = options.source === "OFFLINE_SYNC" ? graceMs : 0;
 
     const qrData = await this.qrService.validateToken(hash, effectiveGraceMs);
     if (!qrData || qrData.type !== "PERSONAL") {
@@ -143,7 +170,6 @@ export class CheckinService {
       throw new BadRequestException("QR code does not match this event");
     }
 
-    // Enforce JTI single-use
     if (await this.qrService.isJtiConsumed(qrData.jti)) {
       throw new BadRequestException("QR code has already been used");
     }
@@ -151,10 +177,6 @@ export class CheckinService {
     return this.createPolicyCheckin(qrData.userId, eventId, boardId, options, hash);
   }
 
-  /**
-   * Scan using a 6-character short code instead of a QR image.
-   * Resolves the code to its credential hash, then delegates to scanPersonalQr.
-   */
   async scanByShortCode(
     code: string,
     boardId: string,
@@ -178,53 +200,52 @@ export class CheckinService {
       throw new BadRequestException("QR code expired or invalid");
     }
 
-    const event = await this.prisma.event.findUnique({
-      where: { id: qrData.eventId },
-      select: {
-        id: true,
-        registrationEnabled: true,
-        checkinModes: true,
-        eventQrBehavior: true,
-        allowedDomains: true,
-        allowedEmails: true,
-        blockedEmails: true,
-      },
-    });
+    const [event] = await this.db.db
+      .select({
+        id: events.id,
+        registrationEnabled: events.registrationEnabled,
+        checkinModes: events.checkinModes,
+        eventQrBehavior: events.eventQrBehavior,
+        allowedDomains: events.allowedDomains,
+        allowedEmails: events.allowedEmails,
+        blockedEmails: events.blockedEmails,
+      })
+      .from(events)
+      .where(eq(events.id, qrData.eventId))
+      .limit(1);
     if (!event) {
       throw new BadRequestException("Event not found");
     }
-    if (!event.checkinModes.includes(CHECKIN_MODE.BOARD_QR)) {
+    if (!event.checkinModes.includes("BOARD_QR")) {
       throw new ForbiddenException("This event does not allow board QR check-in");
     }
 
-    if (event.eventQrBehavior === EVENT_QR_BEHAVIOR.JOIN_AND_CHECKIN) {
+    if (event.eventQrBehavior === "JOIN_AND_CHECKIN") {
       if (!event.registrationEnabled) {
         throw new ForbiddenException("Event registration is closed");
       }
-      const attendee = await this.prisma.user.findUnique({
-        where: { id: attendeeUserId },
-        select: { email: true },
-      });
+      const [attendee] = await this.db.db
+        .select({ email: users.email })
+        .from(users)
+        .where(eq(users.id, attendeeUserId))
+        .limit(1);
       if (!attendee) {
         throw new BadRequestException("Attendee not found");
       }
       assertEmailEligible(attendee.email, event, "Attendee is not eligible for this event");
-      await this.prisma.eventRegistration.upsert({
-        where: {
-          one_registration_per_event: {
-            eventId: qrData.eventId,
-            userId: attendeeUserId,
-          },
-        },
-        update: {},
-        create: { eventId: qrData.eventId, userId: attendeeUserId },
+    await this.db.db
+      .insert(eventRegistrations)
+      .values({ eventId: qrData.eventId, userId: attendeeUserId })
+      .onConflictDoUpdate({
+        target: [eventRegistrations.userId, eventRegistrations.eventId],
+        set: { status: "APPROVED" },
       });
-    }
+  }
 
     return this.createPolicyCheckin(attendeeUserId, qrData.eventId, qrData.boardId, {
       ...options,
       direction: qrData.direction,
-      source: CHECKIN_SOURCE.BOARD_QR,
+      source: "BOARD_QR",
     });
   }
 
@@ -240,17 +261,18 @@ export class CheckinService {
       let resolvedUserId = "unknown";
       let resolvedEventId = "unknown";
       try {
-        const board = await this.prisma.board.findUnique({
-          where: { id: item.boardId },
-          select: { eventId: true },
-        });
+        const [board] = await this.db.db
+          .select({ eventId: boards.eventId })
+          .from(boards)
+          .where(eq(boards.id, item.boardId))
+          .limit(1);
         if (!board) {
           throw new BadRequestException("Board not found");
         }
 
         const scanResult = await this.scanPersonalQr(item.hash, item.boardId, board.eventId, {
-          direction: item.direction ?? CHECKIN_DIRECTION.IN,
-          source: CHECKIN_SOURCE.OFFLINE_SYNC,
+          direction: item.direction ?? "IN",
+          source: "OFFLINE_SYNC",
           timestamp: new Date(item.scannedAt),
         });
 
@@ -303,69 +325,106 @@ export class CheckinService {
     options: ScanOptions,
     consumedHash?: string,
   ): Promise<ScanResult> {
-    const direction = options.direction ?? CHECKIN_DIRECTION.IN;
-    const source = options.source ?? CHECKIN_SOURCE.PERSONAL_QR;
+    const direction = options.direction ?? "IN";
+    const source = options.source ?? "PERSONAL_QR";
 
-    const board = await this.prisma.board.findUnique({
-      where: { id: boardId },
-      include: {
+    const [board] = await this.db.db
+      .select({
+        board: boards,
         event: {
-          include: {
-            boards: { select: { id: true } },
-            sessions: {
-              select: {
-                id: true,
-                title: true,
-                startsAt: true,
-                endsAt: true,
-                status: true,
-                isDefault: true,
-              },
-            },
-          },
+          id: events.id,
+          registrationEnabled: events.registrationEnabled,
+          checkinModes: events.checkinModes,
+          eventQrBehavior: events.eventQrBehavior,
+          allowedDomains: events.allowedDomains,
+          allowedEmails: events.allowedEmails,
+          blockedEmails: events.blockedEmails,
+          status: events.status,
+          startTime: events.startTime,
+          endTime: events.endTime,
+          attendancePolicy: events.attendancePolicy,
+          requiredBoardCount: events.requiredBoardCount,
+          credentialGraceSeconds: events.credentialGraceSeconds,
+          customSessionsEnabled: events.customSessionsEnabled,
+          latitude: events.latitude,
+          longitude: events.longitude,
+          geofenceRadius: events.geofenceRadius,
         },
-      },
-    });
+      })
+      .from(boards)
+      .innerJoin(events, eq(events.id, boards.eventId))
+      .where(eq(boards.id, boardId))
+      .limit(1);
 
-    if (!board || board.eventId !== eventId) {
+    if (!board || board.board.eventId !== eventId) {
       throw new BadRequestException("Board does not belong to this event");
     }
-    if (board.status !== BOARD_STATUS.ACTIVE) {
+    if (board.board.status !== ("ACTIVE" as BoardStatus)) {
       throw new BadRequestException("This check-in board is not active");
     }
 
     const event = board.event;
     const serverNow = new Date();
     if (
-      event.status === EVENT_STATUS.CANCELLED ||
-      event.status === EVENT_STATUS.COMPLETED ||
+      event.status === ("CANCELLED" as EventStatus) ||
+      event.status === ("COMPLETED" as EventStatus) ||
       serverNow > event.endTime
     ) {
       throw new BadRequestException("This event is not accepting check-ins");
     }
 
-    const registration = await this.prisma.eventRegistration.findUnique({
-      where: { one_registration_per_event: { userId, eventId } },
-    });
+    const [registration] = await this.db.db
+      .select()
+      .from(eventRegistrations)
+      .where(
+        and(
+          eq(eventRegistrations.eventId, eventId),
+          eq(eventRegistrations.userId, userId),
+        ),
+      )
+      .limit(1);
     if (!registration) {
       throw new ForbiddenException("Attendee is not registered for this event");
     }
 
-    const attendee = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { email: true },
-    });
+    const [attendee] = await this.db.db
+      .select({ email: users.email })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
     if (!attendee) {
       throw new BadRequestException("Attendee not found");
     }
     assertEmailEligible(attendee.email, event, "Attendee is not eligible for this event");
 
-    this.assertGeofence(event, options.latitude, options.longitude);
-    this.assertPolicyInput(event, boardId, direction);
-    const resolvedSession = this.resolveCheckinSession(event, serverNow);
+    const eventBoards = await this.db.db
+      .select({ id: boards.id })
+      .from(boards)
+      .where(eq(boards.eventId, eventId));
+    const eventSessionsList = await this.db.db
+      .select({
+        id: eventSessions.id,
+        title: eventSessions.title,
+        startsAt: eventSessions.startsAt,
+        endsAt: eventSessions.endsAt,
+        status: eventSessions.status,
+        isDefault: eventSessions.isDefault,
+      })
+      .from(eventSessions)
+      .where(eq(eventSessions.eventId, eventId));
+
+    const fullEvent: EventWithBoards = {
+      ...event,
+      boards: eventBoards,
+      sessions: eventSessionsList,
+    };
+
+    this.assertGeofence(fullEvent, options.latitude, options.longitude);
+    this.assertPolicyInput(fullEvent, boardId, direction);
+    const resolvedSession = this.resolveCheckinSession(fullEvent, serverNow);
 
     const idempotencyKey = this.buildIdempotencyKey(
-      event.attendancePolicy,
+      fullEvent.attendancePolicy,
       eventId,
       userId,
       boardId,
@@ -373,20 +432,20 @@ export class CheckinService {
     );
 
     if (
-      event.attendancePolicy === ATTENDANCE_POLICY.IN_OUT &&
-      direction === CHECKIN_DIRECTION.OUT
+      fullEvent.attendancePolicy === "IN_OUT" &&
+      direction === "OUT"
     ) {
-      const inRecord = await this.prisma.checkinRecord.findUnique({
-        where: {
-          idempotencyKey: this.buildIdempotencyKey(
-            event.attendancePolicy,
-            eventId,
-            userId,
-            boardId,
-            CHECKIN_DIRECTION.IN,
-          ),
-        },
-      });
+      const [inRecord] = await this.db.db
+        .select()
+        .from(checkinRecords)
+        .where(eq(checkinRecords.idempotencyKey, this.buildIdempotencyKey(
+          fullEvent.attendancePolicy,
+          eventId,
+          userId,
+          boardId,
+          "IN",
+        )))
+        .limit(1);
       if (!inRecord) {
         throw new BadRequestException("Cannot check out before check-in");
       }
@@ -402,78 +461,87 @@ export class CheckinService {
     try {
       const existingCheckin = await this.findCheckinByIdempotencyKey(idempotencyKey);
       if (existingCheckin) {
-        return this.toExistingResult(existingCheckin, event, boardId);
+        return this.toExistingResult(existingCheckin, fullEvent, boardId);
       }
 
-      const [checkinRecord] = await this.prisma.$transaction([
-        this.prisma.checkinRecord.create({
-          data: {
+      const inserted = await this.db.db.transaction(async (tx) => {
+        const [created] = await tx
+          .insert(checkinRecords)
+          .values({
             userId,
             eventId,
             boardId,
             sessionId: resolvedSession.sessionId,
             direction,
             source,
-            scannedById: options.scannedById,
-            timestamp: options.timestamp,
-            method:
-              source === CHECKIN_SOURCE.OFFLINE_SYNC
-                ? CHECKIN_METHOD.BULK_SYNC
-                : CHECKIN_METHOD.QR_SCAN,
+            scannedById: options.scannedById ?? null,
+            timestamp: options.timestamp ?? new Date(),
+            method: source === "OFFLINE_SYNC" ? "BULK_SYNC" : "QR_SCAN",
             idempotencyKey,
-          },
-          include: {
-            user: { select: { id: true, name: true, email: true } },
-            session: { select: { id: true, title: true } },
-          },
-        }),
-        this.prisma.board.update({
-          where: { id: boardId },
-          data: { checkinCount: { increment: 1 } },
-        }),
-      ]);
+          })
+          .returning();
 
-      if (consumedHash && source !== CHECKIN_SOURCE.BOARD_QR) {
+        await tx
+          .update(boards)
+          .set({ checkinCount: sql`${boards.checkinCount} + 1` })
+          .where(eq(boards.id, boardId));
+
+        const [withRelations] = await tx
+          .select({
+            checkin: checkinRecords,
+            user: { id: users.id, name: users.name, email: users.email },
+            session: { id: eventSessions.id, title: eventSessions.title },
+          })
+          .from(checkinRecords)
+          .innerJoin(users, eq(users.id, checkinRecords.userId))
+          .leftJoin(eventSessions, eq(eventSessions.id, checkinRecords.sessionId))
+          .where(eq(checkinRecords.id, created.id))
+          .limit(1);
+
+        return withRelations;
+      });
+
+      if (consumedHash && source !== "BOARD_QR") {
         await this.qrService.consumeHash(consumedHash);
       }
 
       this.eventsGateway.broadcastCheckin(eventId, {
-        checkinId: checkinRecord.id,
-        userId: checkinRecord.userId,
+        checkinId: inserted.checkin.id,
+        userId: inserted.checkin.userId,
         boardId,
-        timestamp: checkinRecord.timestamp.toISOString(),
-        method: checkinRecord.method,
-        user: checkinRecord.user,
+        timestamp: inserted.checkin.timestamp.toISOString(),
+        method: inserted.checkin.method,
+        user: inserted.user,
       });
 
       this.logger.log(
-        `Check-in success: user=${userId} event=${eventId} board=${boardId} policy=${event.attendancePolicy}`,
+        `Check-in success: user=${userId} event=${eventId} board=${boardId} policy=${fullEvent.attendancePolicy}`,
       );
 
       return {
         success: true,
         message: "Check-in successful",
-        attendance: await this.getAttendanceProgress(userId, event),
+        attendance: await this.getAttendanceProgress(userId, fullEvent),
         checkinRecord: {
-          id: checkinRecord.id,
-          userId: checkinRecord.userId,
-          eventId: checkinRecord.eventId,
+          id: inserted.checkin.id,
+          userId: inserted.checkin.userId,
+          eventId: inserted.checkin.eventId,
           boardId,
-          sessionId: checkinRecord.sessionId,
-          sessionName: checkinRecord.session?.title ?? null,
+          sessionId: inserted.checkin.sessionId,
+          sessionName: inserted.session?.title ?? null,
           outsideSession: resolvedSession.outsideSession,
-          direction: checkinRecord.direction,
-          timestamp: checkinRecord.timestamp,
-          method: checkinRecord.method,
-          source: checkinRecord.source,
-          user: checkinRecord.user,
+          direction: inserted.checkin.direction,
+          timestamp: inserted.checkin.timestamp,
+          method: inserted.checkin.method,
+          source: inserted.checkin.source,
+          user: inserted.user,
         },
       };
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      if (this.isUniqueViolation(error)) {
         const existingCheckin = await this.findCheckinByIdempotencyKey(idempotencyKey);
         if (existingCheckin) {
-          return this.toExistingResult(existingCheckin, event, boardId);
+          return this.toExistingResult(existingCheckin, fullEvent, boardId);
         }
       }
       throw error;
@@ -482,18 +550,18 @@ export class CheckinService {
     }
   }
 
-  private assertPolicyInput(event: EventWithBoards, boardId: string, direction: CHECKIN_DIRECTION) {
-    if (
-      event.attendancePolicy === ATTENDANCE_POLICY.SINGLE_IN &&
-      direction !== CHECKIN_DIRECTION.IN
-    ) {
+  private isUniqueViolation(error: unknown): boolean {
+    if (!error || typeof error !== "object") return false;
+    const e = error as { code?: string };
+    return e.code === "23505";
+  }
+
+  private assertPolicyInput(event: EventWithBoards, boardId: string, direction: CheckinDirection) {
+    if (event.attendancePolicy === "SINGLE_IN" && direction !== "IN") {
       throw new BadRequestException("This event only accepts a single check-in");
     }
 
-    if (
-      event.attendancePolicy === ATTENDANCE_POLICY.BOARD_REQUIREMENTS &&
-      direction !== CHECKIN_DIRECTION.IN
-    ) {
+    if (event.attendancePolicy === "BOARD_REQUIREMENTS" && direction !== "IN") {
       throw new BadRequestException("Board requirement events do not support check-out");
     }
 
@@ -502,7 +570,7 @@ export class CheckinService {
     }
 
     if (
-      event.attendancePolicy === ATTENDANCE_POLICY.BOARD_REQUIREMENTS &&
+      event.attendancePolicy === "BOARD_REQUIREMENTS" &&
       (!event.requiredBoardCount || event.requiredBoardCount < 1)
     ) {
       throw new BadRequestException("Board requirement count is not configured");
@@ -510,16 +578,16 @@ export class CheckinService {
   }
 
   private buildIdempotencyKey(
-    policy: ATTENDANCE_POLICY,
+    policy: AttendancePolicy,
     eventId: string,
     userId: string,
     boardId: string,
-    direction: CHECKIN_DIRECTION,
+    direction: CheckinDirection,
   ) {
-    if (policy === ATTENDANCE_POLICY.SINGLE_IN) {
+    if (policy === "SINGLE_IN") {
       return `${eventId}:${userId}:single-in`;
     }
-    if (policy === ATTENDANCE_POLICY.IN_OUT) {
+    if (policy === "IN_OUT") {
       return `${eventId}:${userId}:${direction.toLowerCase()}`;
     }
     return `${eventId}:${userId}:${boardId}:board`;
@@ -536,7 +604,7 @@ export class CheckinService {
 
     const matchingSession = event.sessions.find((session) => {
       if (session.isDefault) return false;
-      if (session.status !== SESSION_STATUS.SCHEDULED && session.status !== SESSION_STATUS.OPEN) {
+      if (session.status !== "SCHEDULED" && session.status !== "OPEN") {
         return false;
       }
       return session.startsAt <= serverNow && serverNow <= session.endsAt;
@@ -549,73 +617,97 @@ export class CheckinService {
   }
 
   private async findCheckinByIdempotencyKey(idempotencyKey: string) {
-    return this.prisma.checkinRecord.findUnique({
-      where: { idempotencyKey },
-      include: {
-        user: { select: { id: true, name: true, email: true } },
-        session: { select: { id: true, title: true } },
-      },
-    });
+    const rows = await this.db.db
+      .select({
+        checkin: checkinRecords,
+        user: { id: users.id, name: users.name, email: users.email },
+        session: { id: eventSessions.id, title: eventSessions.title },
+      })
+      .from(checkinRecords)
+      .innerJoin(users, eq(users.id, checkinRecords.userId))
+      .leftJoin(eventSessions, eq(eventSessions.id, checkinRecords.sessionId))
+      .where(eq(checkinRecords.idempotencyKey, idempotencyKey))
+      .limit(1);
+    return rows[0] ?? null;
   }
 
   private async toExistingResult(
-    existingCheckin: NonNullable<
-      Awaited<ReturnType<CheckinService["findCheckinByIdempotencyKey"]>>
-    >,
+    existing: {
+      checkin: typeof checkinRecords.$inferSelect;
+      user: { id: string; name: string; email: string };
+      session: { id: string; title: string } | null;
+    },
     event: EventWithBoards,
     fallbackBoardId: string,
   ): Promise<ScanResult> {
     return {
       success: false,
       message: "Already checked in for this attendance requirement",
-      attendance: await this.getAttendanceProgress(existingCheckin.userId, event),
+      attendance: await this.getAttendanceProgress(existing.checkin.userId, event),
       checkinRecord: {
-        id: existingCheckin.id,
-        userId: existingCheckin.userId,
-        eventId: existingCheckin.eventId,
-        boardId: existingCheckin.boardId ?? fallbackBoardId,
-        sessionId: existingCheckin.sessionId,
-        sessionName: existingCheckin.session?.title ?? null,
-        outsideSession: existingCheckin.sessionId == null,
-        direction: existingCheckin.direction,
-        timestamp: existingCheckin.timestamp,
-        method: existingCheckin.method,
-        source: existingCheckin.source,
-        user: existingCheckin.user,
+        id: existing.checkin.id,
+        userId: existing.checkin.userId,
+        eventId: existing.checkin.eventId,
+        boardId: existing.checkin.boardId ?? fallbackBoardId,
+        sessionId: existing.checkin.sessionId,
+        sessionName: existing.session?.title ?? null,
+        outsideSession: existing.checkin.sessionId == null,
+        direction: existing.checkin.direction,
+        timestamp: existing.checkin.timestamp,
+        method: existing.checkin.method,
+        source: existing.checkin.source,
+        user: existing.user,
       },
     };
   }
 
   private async getAttendanceProgress(userId: string, event: EventWithBoards) {
-    if (event.attendancePolicy === ATTENDANCE_POLICY.BOARD_REQUIREMENTS) {
-      const completedBoardCount = await this.prisma.checkinRecord.count({
-        where: {
-          userId,
-          eventId: event.id,
-          source: { not: CHECKIN_SOURCE.MANUAL },
-        },
-      });
+    if (event.attendancePolicy === "BOARD_REQUIREMENTS") {
+      const [completedRow] = await this.db.db
+        .select({ n: sql<number>`count(*)::int` })
+        .from(checkinRecords)
+        .where(
+          and(
+            eq(checkinRecords.userId, userId),
+            eq(checkinRecords.eventId, event.id),
+            sql`${checkinRecords.source} != 'MANUAL'`,
+          ),
+        );
       const requiredBoardCount = Math.min(
         event.requiredBoardCount ?? event.boards.length,
         event.boards.length,
       );
       return {
         policy: event.attendancePolicy,
-        completed: completedBoardCount >= requiredBoardCount,
-        completedBoardCount,
+        completed: (completedRow?.n ?? 0) >= requiredBoardCount,
+        completedBoardCount: completedRow?.n ?? 0,
         requiredBoardCount,
       };
     }
 
-    if (event.attendancePolicy === ATTENDANCE_POLICY.IN_OUT) {
-      const [inRecord, outRecord] = await Promise.all([
-        this.prisma.checkinRecord.findFirst({
-          where: { userId, eventId: event.id, direction: CHECKIN_DIRECTION.IN },
-        }),
-        this.prisma.checkinRecord.findFirst({
-          where: { userId, eventId: event.id, direction: CHECKIN_DIRECTION.OUT },
-        }),
-      ]);
+    if (event.attendancePolicy === "IN_OUT") {
+      const [inRecord] = await this.db.db
+        .select()
+        .from(checkinRecords)
+        .where(
+          and(
+            eq(checkinRecords.userId, userId),
+            eq(checkinRecords.eventId, event.id),
+            eq(checkinRecords.direction, "IN"),
+          ),
+        )
+        .limit(1);
+      const [outRecord] = await this.db.db
+        .select()
+        .from(checkinRecords)
+        .where(
+          and(
+            eq(checkinRecords.userId, userId),
+            eq(checkinRecords.eventId, event.id),
+            eq(checkinRecords.direction, "OUT"),
+          ),
+        )
+        .limit(1);
       return {
         policy: event.attendancePolicy,
         completed: Boolean(inRecord && outRecord),

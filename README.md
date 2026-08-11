@@ -1,127 +1,136 @@
-# Treckin — Smart Event Check-in System (University Edition)
+# Treckin - Smart Event Check-in System
 
-Treckin is a high-concurrency, real-time, multi-board event check-in platform designed for universities. It features anti-fraud dynamic QR codes, geofencing validation, and offline check-in caching with bulk synchronization.
+Treckin is a high-concurrency, real-time, multi-board event check-in platform for universities. It supports anti-fraud dynamic QR codes, geofence validation, offline check-in caching, and bulk synchronization.
 
-## 🚀 Tech Stack
+## Tech Stack
 
-- **Frontend**: React 19 (Vite), TypeScript, Tailwind CSS, Zustand, Socket.io-client.
-- **Backend**: NestJS (Fastify platform), Prisma ORM, PostgreSQL, ioredis, Socket.io.
-- **Services**: PostgreSQL (Database), Redis (Real-time socket adapter & cache).
+- Frontend: React 19, Vite, TypeScript, Tailwind CSS, Zustand, Socket.io-client.
+- Backend: NestJS on Fastify, Drizzle ORM, PostgreSQL, Redis, Socket.io.
+- Runtime: Docker Compose for Postgres, Redis, migration, backend, and Nginx-served frontend.
 
----
+## Database
 
-## 📂 Project Structure
+- Schema lives in `server/src/database/schema/*.ts`.
+- SQL migrations live in `server/drizzle/*.sql`.
+- The runtime migration runner is `server/scripts/migrate.mjs`.
+- The migration runner is forward-only and idempotent. It records applied files in `__migrations`.
 
-```text
-├── server/                    # NestJS Backend Application
-│   ├── src/                   # NestJS source code
-│   ├── prisma/                # Prisma ORM schema & migrations
-│   ├── Dockerfile             # Multi-stage production build for Backend
-│   └── package.json           # Backend dependencies
-├── src/                       # React Frontend Application (Vite)
-│   ├── components/            # Reusable UI components
-│   ├── pages/                 # Full pages (Login, Student/Staff Dashboards)
-│   ├── stores/                # Zustand state management
-│   └── types/                 # Core TypeScript declarations
-├── Dockerfile                 # Production Dockerfile for Frontend (served via Nginx)
-├── nginx.conf                 # Nginx proxy & static server configuration
-├── docker-compose.yml         # Production/Hosting configuration (with RAM optimizations)
-├── docker-compose.dev.yml     # Lightweight configuration for local development services
-└── package.json               # Frontend dependencies & root scripts
+Useful backend commands from `server/`:
+
+```bash
+npm run db:generate
+npm run db:migrate
+npm run db:migrate:dev
+npm run db:push
+npm run db:studio
 ```
 
----
+## Health Probes
 
-## 🛠️ Getting Started
+The backend exposes:
 
-### Prerequisites
+- `GET /api/health` for liveness.
+- `GET /api/health/ready` for readiness with Postgres and Redis checks.
 
-Make sure you have the following installed on your machine:
+Docker healthchecks use the liveness endpoint. The app-level readiness endpoint is available for orchestrators and uptime monitors.
 
-- [Node.js](https://nodejs.org/) (v20+ recommended)
-- [Docker](https://www.docker.com/) & Docker Compose
+## Project Structure
 
----
+```text
+server/
+  src/
+    database/              Drizzle schema and database service
+  drizzle/                 Generated SQL migrations
+  scripts/migrate.mjs      Runtime migration runner
+  Dockerfile               Backend production image
+src/                       React frontend source
+public/                    Frontend public assets
+Dockerfile                 Frontend production image, served by Nginx
+nginx.conf                 Static frontend + /api and /socket.io proxy
+docker-compose.yml         Production stack
+docker-compose.dev.yml     Full local development stack
+package.json               Frontend scripts
+```
 
-### 1. Development Environment (Hybrid Mode - Recommended)
+## Development With Docker
 
-To save memory and keep development fast with instant hot-reload, run database and cache services in Docker, and run application code directly on your local machine.
-
-#### Step 1: Start PostgreSQL and Redis in Docker
-
-Start the database and cache containers in the background:
+Start the full hot-reload stack:
 
 ```bash
 docker compose -f docker-compose.dev.yml up -d
 ```
 
-_This starts Postgres on port `5432` (password: `password`, database: `treckin_db`) and Redis on port `6379`._
+Services:
 
-#### Step 2: Set up and run the Backend
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:4000/api
+- Swagger docs: http://localhost:4000/api/docs
+- Postgres: `localhost:5432`, user `postgres`, password `password`, database `treckin_db`
+- Redis: `localhost:6379`
 
-1. Go to the `server` directory and copy environment variables:
-   ```bash
-   cd server
-   cp .env.example .env
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Run database migrations:
-   ```bash
-   npm run prisma:migrate
-   ```
-4. Start NestJS in watch mode:
-   ```bash
-   npm run start:dev
-   ```
+The `migrate` service runs once before the backend starts:
 
-#### Step 3: Set up and run the Frontend
+```bash
+docker compose -f docker-compose.dev.yml run --rm migrate
+```
 
-1. Return to the root directory and copy environment variables:
-   ```bash
-   cd ..
-   cp .env.example .env.local
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start Vite dev server:
-   ```bash
-   npm run dev
-   ```
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+Useful dev commands:
 
----
+```bash
+docker compose -f docker-compose.dev.yml logs -f backend frontend
+docker compose -f docker-compose.dev.yml down
+docker compose -f docker-compose.dev.yml down -v
+```
 
-### 2. Production Environment (Full-stack Docker Compose)
+## Production With Docker
 
-To deploy the entire stack to a VPS or hosting environment, run:
+Build and start the complete stack:
 
 ```bash
 docker compose up -d --build
 ```
 
-#### What this does:
+What starts:
 
-1. **Frontend Compilation**: Builds React app into static files and serves them via Nginx Alpine on port `80`.
-2. **Backend Compilation**: Builds NestJS backend into Javascript (`dist/main.js`) and runs under Node.js production mode.
-3. **Database & Cache**: Bootstraps PostgreSQL and Redis containers with persistent volumes.
-4. **Nginx Reverse Proxy**: Single entrypoint on port `80`. Requests to `/api` and `/socket.io` are automatically proxied to the Backend container, while all other requests serve the React Frontend.
+1. `postgres` with a persistent `postgres_data` volume.
+2. `redis` with a persistent `redis_data` volume.
+3. `migrate`, a one-shot service that runs `node scripts/migrate.mjs`.
+4. `backend`, after Postgres, Redis, and migration are healthy/successful.
+5. `frontend`, an Nginx container serving Vite static assets and proxying `/api` plus `/socket.io`.
 
----
+Useful production commands:
 
-## ⚡ Memory & Performance Optimizations (For Hosting)
+```bash
+docker compose logs -f migrate backend
+docker compose run --rm migrate
+docker compose down
+docker compose down -v
+```
 
-To allow deployment on low-spec VPS (e.g. 1GB or 2GB RAM), the following optimizations are applied:
+## Production Environment Variables
 
-- **Frontend Served via Nginx**: Instead of running a Node.js process to serve Vite in production (which eats ~150-200MB RAM), the frontend is built into static assets and served using Nginx. This reduces RAM footprint to just **5-15MB** and is extremely fast.
-- **Node.js RAM Limit**: Backend container runs with `--max-old-space-size=512` in `NODE_OPTIONS` to trigger garbage collection earlier, keeping Node.js memory footprint under **512MB**.
-- **PostgreSQL Tuning**: Configured with constrained resources:
-  - `max_connections = 50` (limits worker process spawn count).
-  - `shared_buffers = 128MB` (keeps cache buffer footprint small).
-  - `work_mem = 4MB`.
-- **Redis Memory Capping**: Configured with a `maxmemory 128mb` ceiling and `allkeys-lru` eviction policy, preventing Redis from consuming all available system memory.
-- **Docker Resource Limits**: Memory limits are enforced at the docker-compose level for each service, avoiding memory leaks from taking down the host system.
+Set these in `.env` or in your deployment platform:
+
+```bash
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=change-me
+POSTGRES_DB=treckin_db
+JWT_SECRET=change-me
+QR_HMAC_SECRET=change-me
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+CORS_ORIGIN=http://localhost
+LOCAL_STORAGE_BASE_URL=http://localhost
+VITE_API_URL=/api
+VITE_SOCKET_URL=/
+VITE_GOOGLE_CLIENT_ID=
+```
+
+For external storage, set `STORAGE_PROVIDER` to `r2` or `cloudinary` and provide the matching credentials from `server/.env.example`.
+
+## Notes
+
+- Production frontend uses same-origin `/api` and `/socket.io` through Nginx.
+- Development frontend talks directly to `http://localhost:4000`.
+- Uploaded local avatars are stored in the `backend_public` Docker volume in production.
+- Use `docker compose down -v` only when you intentionally want to delete local database and upload volumes.

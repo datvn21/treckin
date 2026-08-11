@@ -1,39 +1,106 @@
-version: '3.8'
-
 services:
-  # -------------------------------------------------------------
-  # Local Dev PostgreSQL Database
-  # -------------------------------------------------------------
   postgres:
     image: postgres:16-alpine
     container_name: treckin-postgres-dev
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password # Matches default DATABASE_URL in server/.env.example
+      POSTGRES_PASSWORD: password
       POSTGRES_DB: treckin_db
-    volumes:
-      - pgdata_dev:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
-    deploy:
-      resources:
-        limits:
-          memory: 256M
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d treckin_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
 
-  # -------------------------------------------------------------
-  # Local Dev Redis
-  # -------------------------------------------------------------
   redis:
     image: redis:7-alpine
     container_name: treckin-redis-dev
-    restart: always
+    restart: unless-stopped
     ports:
-      - "6379:6379"
-    deploy:
-      resources:
-        limits:
-          memory: 150M
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    image: node:20-alpine
+    container_name: treckin-migrate-dev
+    working_dir: /app
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/treckin_db
+    volumes:
+      - ./server:/app
+      - server_dev_node_modules:/app/node_modules
+    command: sh -c "npm ci && npm run db:migrate"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend:
+    image: node:20-alpine
+    container_name: treckin-backend-dev
+    working_dir: /app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/treckin_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-me}
+      JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-15m}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-7d}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-your-google-client-id}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-your-google-client-secret}
+      QR_HMAC_SECRET: ${QR_HMAC_SECRET:-your-hmac-secret-key-change-me}
+      QR_TTL_SECONDS: ${QR_TTL_SECONDS:-30}
+      CORS_ORIGIN: ${DOCKER_DEV_CORS_ORIGIN:-http://localhost:5173}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
+      LOCAL_STORAGE_BASE_URL: ${LOCAL_STORAGE_BASE_URL:-http://localhost:4000}
+    ports:
+      - "${BACKEND_PORT:-4000}:4000"
+    volumes:
+      - ./server:/app
+      - server_dev_node_modules:/app/node_modules
+    command: sh -c "npm ci && npm run start:dev"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  frontend:
+    image: node:20-alpine
+    container_name: treckin-frontend-dev
+    working_dir: /app
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: ${DOCKER_DEV_VITE_API_URL:-http://localhost:4000/api}
+      VITE_SOCKET_URL: ${DOCKER_DEV_VITE_SOCKET_URL:-http://localhost:4000}
+      VITE_GOOGLE_CLIENT_ID: ${DOCKER_DEV_VITE_GOOGLE_CLIENT_ID:-your-google-client-id.apps.googleusercontent.com}
+      VITE_GEOFENCE_RADIUS_METERS: ${DOCKER_DEV_VITE_GEOFENCE_RADIUS_METERS:-500}
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    volumes:
+      - .:/app
+      - frontend_dev_node_modules:/app/node_modules
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173"
+    depends_on:
+      backend:
+        condition: service_started
 
 volumes:
-  pgdata_dev:
+  postgres_dev_data:
+  server_dev_node_modules:
+  frontend_dev_node_modules:

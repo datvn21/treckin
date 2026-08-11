@@ -16,7 +16,14 @@ import {
   ApiPropertyOptional,
 } from "@nestjs/swagger";
 import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, Length } from "class-validator";
-import { CHECKIN_DIRECTION, CHECKIN_MODE } from "@prisma/client";
+import { CHECKIN_DIRECTION_VALUES, CHECKIN_MODE_VALUES } from "../database/schema/enums";
+
+export const CHECKIN_DIRECTION = Object.fromEntries(
+  CHECKIN_DIRECTION_VALUES.map((v) => [v, v]),
+) as { [K in (typeof CHECKIN_DIRECTION_VALUES)[number]]: K };
+export const CHECKIN_MODE = Object.fromEntries(
+  CHECKIN_MODE_VALUES.map((v) => [v, v]),
+) as { [K in (typeof CHECKIN_MODE_VALUES)[number]]: K };
 import { QrService } from "./qr.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { CurrentUser, JwtPayload } from "../common/decorators/current-user.decorator";
@@ -43,7 +50,7 @@ class GenerateBoardQrDto {
   @ApiPropertyOptional({ enum: CHECKIN_DIRECTION, default: CHECKIN_DIRECTION.IN })
   @IsEnum(CHECKIN_DIRECTION)
   @IsOptional()
-  direction?: CHECKIN_DIRECTION;
+  direction?: (typeof CHECKIN_DIRECTION)[keyof typeof CHECKIN_DIRECTION];
 }
 
 class ResolveShortCodeDto {

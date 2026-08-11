@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook } from "@/test/test-utils";
+import { renderHook, act } from "@/test/test-utils";
 import { useDocumentTitle } from "../useDocumentTitle";
 
 describe("useDocumentTitle", () => {
@@ -56,9 +56,12 @@ describe("useDocumentTitle", () => {
     });
 
     it("removes custom title when set to undefined", () => {
-      const { rerender } = renderHook(({ title }: { title?: string }) => useDocumentTitle(title), {
-        initialProps: { title: "Event Details" },
-      });
+      const { rerender } = renderHook(
+        ({ title }: { title?: string }) => useDocumentTitle(title),
+        {
+          initialProps: { title: "Event Details" as string | undefined },
+        },
+      );
 
       act(() => {
         vi.runAllTimers();

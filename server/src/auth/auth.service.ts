@@ -2,10 +2,11 @@ import { Injectable, UnauthorizedException, Logger, ConflictException } from "@n
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { OAuth2Client } from "google-auth-library";
-import { USER_ROLE } from "@prisma/client";
 import { randomBytes, scrypt as scryptCallback, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { PrismaService } from "../prisma/prisma.service";
+import { eq } from "drizzle-orm";
+import { DatabaseService } from "../database/database.service";
+import { users, USER_ROLE_VALUES } from "../database/schema";
 import { LoginDto, RegisterDto } from "./dto/email-auth.dto";
 
 const scrypt = promisify(scryptCallback);
@@ -26,10 +27,21 @@ export interface AuthResponse {
     id: string;
     email: string;
     name: string;
-    role: USER_ROLE;
+    role: string;
     avatarUrl: string | null;
   };
   tokens: TokenPair;
+}
+
+type UserRole = (typeof USER_ROLE_VALUES)[number];
+
+interface DbUser {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  avatarUrl: string | null;
+  createdAt: Date;
 }
 
 @Injectable()
@@ -38,7 +50,7 @@ export class AuthService {
   private readonly googleClient: OAuth2Client;
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly db: DatabaseService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {
@@ -51,7 +63,7 @@ export class AuthService {
     const user = await this.createOrFindUser({
       email: googleUser.email.trim().toLowerCase(),
       name: googleUser.name,
-      role: USER_ROLE.USER,
+      role: "USER",
       avatarUrl: googleUser.picture ?? null,
     });
 
@@ -62,33 +74,37 @@ export class AuthService {
   async register(dto: RegisterDto) {
     const email = dto.email.trim().toLowerCase();
 
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email },
-      select: { email: true },
-    });
+    const existing = await this.db.db
+      .select({ email: users.email })
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
 
-    if (existingUser?.email === email) {
+    if (existing.length > 0) {
       throw new ConflictException("Email is already registered");
     }
 
     const passwordHash = await this.hashPassword(dto.password);
-    const user = await this.prisma.user.create({
-      data: {
+    const [user] = await this.db.db
+      .insert(users)
+      .values({
         email,
         name: dto.name.trim(),
-        role: dto.role ?? USER_ROLE.USER,
+        role: dto.role ?? "USER",
         passwordHash,
-      },
-    });
+      })
+      .returning();
 
-    const tokens = this.generateTokens(user.id, user.email, user.role);
+    const tokens = this.generateTokens(user.id, user.email, user.role as UserRole);
     return this.formatAuthResponse(user, tokens);
   }
 
   async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email.trim().toLowerCase() },
-    });
+    const [user] = await this.db.db
+      .select()
+      .from(users)
+      .where(eq(users.email, dto.email.trim().toLowerCase()))
+      .limit(1);
 
     if (!user?.passwordHash) {
       throw new UnauthorizedException("Invalid email or password");
@@ -99,7 +115,7 @@ export class AuthService {
       throw new UnauthorizedException("Invalid email or password");
     }
 
-    const tokens = this.generateTokens(user.id, user.email, user.role);
+    const tokens = this.generateTokens(user.id, user.email, user.role as UserRole);
     return this.formatAuthResponse(user, tokens);
   }
 
@@ -129,25 +145,29 @@ export class AuthService {
   private async createOrFindUser(data: {
     email: string;
     name: string;
-    role: USER_ROLE;
+    role: UserRole;
     avatarUrl: string | null;
   }) {
-    return this.prisma.user.upsert({
-      where: { email: data.email },
-      update: {
-        name: data.name,
-        avatarUrl: data.avatarUrl,
-      },
-      create: {
+    const [user] = await this.db.db
+      .insert(users)
+      .values({
         email: data.email,
         name: data.name,
         role: data.role,
         avatarUrl: data.avatarUrl,
-      },
-    });
+      })
+      .onConflictDoUpdate({
+        target: users.email,
+        set: {
+          name: data.name,
+          avatarUrl: data.avatarUrl,
+        },
+      })
+      .returning();
+    return user;
   }
 
-  private generateTokens(userId: string, email: string, role: USER_ROLE): TokenPair {
+  private generateTokens(userId: string, email: string, role: UserRole): TokenPair {
     const payload = { sub: userId, email, role };
 
     const accessToken = this.jwtService.sign(payload, {
@@ -176,23 +196,13 @@ export class AuthService {
     return storedBuffer.length === derivedKey.length && timingSafeEqual(storedBuffer, derivedKey);
   }
 
-  private formatAuthResponse(
-    user: {
-      id: string;
-      email: string;
-      name: string;
-      role: USER_ROLE;
-      avatarUrl: string | null;
-      createdAt: Date;
-    },
-    tokens: TokenPair,
-  ) {
+  private formatAuthResponse(user: DbUser, tokens: TokenPair) {
     return {
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role.toLowerCase(),
+        role: (user.role as string).toLowerCase(),
         avatarUrl: user.avatarUrl ?? "",
         createdAt: user.createdAt.toISOString(),
       },

@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { SESSION_STATUS } from "@prisma/client";
-import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
+import { SESSION_STATUS } from "./enums";
+import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Min } from "class-validator";
 
 export class UpdateEventSessionDto {
   @ApiPropertyOptional()
@@ -37,7 +37,7 @@ export class UpdateEventSessionDto {
   @ApiPropertyOptional({ enum: SESSION_STATUS })
   @IsEnum(SESSION_STATUS)
   @IsOptional()
-  status?: SESSION_STATUS;
+  status?: keyof typeof SESSION_STATUS;
 
   @ApiPropertyOptional()
   @IsDateString()
