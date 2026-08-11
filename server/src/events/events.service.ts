@@ -5,7 +5,7 @@ import {
   ForbiddenException,
   BadRequestException,
 } from "@nestjs/common";
-import { and, desc, asc, eq, sql, or } from "drizzle-orm";
+import { and, desc, asc, eq, sql, or, inArray } from "drizzle-orm";
 import { randomBytes } from "crypto";
 import { DatabaseService } from "../database/database.service";
 import {
@@ -21,6 +21,7 @@ import {
   attendeeFieldDefinitions,
   auditLogs,
   boards,
+  checkinRecords,
   consentPolicies,
   eventAssignments,
   eventRegistrations,
@@ -30,6 +31,7 @@ import {
   users,
   workspaceMembers,
   workspaceSettings,
+  workspaces,
 } from "../database/schema";
 import { CreateEventDto } from "./dto/create-event.dto";
 import {
@@ -149,7 +151,7 @@ export class EventsService {
       isDefault: true,
     });
 
-    return this.fetchEventWithBoards(event.id, createdById);
+    return this.fetchEventWithRelations(event.id, createdById);
   }
 
   async findAllForUser(userId: string, pageParam?: any, limitParam?: any) {
@@ -238,9 +240,7 @@ export class EventsService {
       .from(events)
       .where(eq(events.workspaceId, workspaceId));
 
-    const enriched = await Promise.all(
-      list.map(async (event) => this.fetchEventWithRelations(event.id, userId)),
-    );
+    const enriched = await this.batchFetchEventsRelations(list, userId);
 
     return {
       data: enriched.map((e) => this.withResolvedStatusOrNull(e)),
@@ -793,6 +793,7 @@ export class EventsService {
 
   async exportCsv(eventId: string, scope: "all" | "checked-in", userId: string): Promise<string> {
     await this.requireEventAccess(eventId, userId);
+
     const registrations = await this.db.db
       .select({
         registration: eventRegistrations,
@@ -807,26 +808,65 @@ export class EventsService {
       .where(eq(eventRegistrations.eventId, eventId))
       .orderBy(desc(eventRegistrations.registeredAt));
 
+    const checkins = await this.db.db
+      .select({
+        checkin: checkinRecords,
+        boardName: boards.name,
+        sessionTitle: eventSessions.title,
+      })
+      .from(checkinRecords)
+      .leftJoin(boards, eq(boards.id, checkinRecords.boardId))
+      .leftJoin(eventSessions, eq(eventSessions.id, checkinRecords.sessionId))
+      .where(eq(checkinRecords.eventId, eventId))
+      .orderBy(desc(checkinRecords.timestamp));
+
+    const checkinMap = new Map<string, { boardName: string; sessionTitle: string; timestamp: Date }>();
+    for (const c of checkins) {
+      if (!checkinMap.has(c.checkin.userId)) {
+        checkinMap.set(c.checkin.userId, {
+          boardName: c.boardName ?? "",
+          sessionTitle: c.sessionTitle ?? "",
+          timestamp: c.checkin.timestamp,
+        });
+      }
+    }
+
     const BOM = "\uFEFF";
     const headers = ["#", "Họ tên", "Email", "Trạng thái", "Board", "Phiên", "Thời gian check-in"];
     const rows = [headers.join(",")];
 
-    registrations.forEach((reg, index) => {
+    const clean = (val: string | null | undefined) => {
+      if (val === null || val === undefined) return '""';
+      let str = String(val);
+      if (/^[=+\-@]/.test(str)) {
+        str = "'" + str;
+      }
+      const escaped = str.replace(/"/g, '""');
+      return `"${escaped}"`;
+    };
+
+    let count = 0;
+    registrations.forEach((reg) => {
       const user = reg.user;
-      const status = "Chưa check-in";
-      const clean = (val: string) => {
-        const escaped = val.replace(/"/g, '""');
-        return `"${escaped}"`;
-      };
+      const checkinInfo = checkinMap.get(user.id);
+      const isCheckedIn = Boolean(checkinInfo);
+
+      if (scope === "checked-in" && !isCheckedIn) {
+        return;
+      }
+
+      count++;
+      const status = isCheckedIn ? "Đã check-in" : "Chưa check-in";
+      const checkinTimeStr = checkinInfo?.timestamp ? checkinInfo.timestamp.toISOString() : "";
 
       const row = [
-        index + 1,
+        count,
         clean(user.name),
         clean(user.email),
         clean(status),
-        clean(""),
-        clean(""),
-        clean(""),
+        clean(checkinInfo?.boardName ?? ""),
+        clean(checkinInfo?.sessionTitle ?? ""),
+        clean(checkinTimeStr),
       ];
       rows.push(row.join(","));
     });
@@ -1010,9 +1050,7 @@ export class EventsService {
       .from(events)
       .where(where)
       .orderBy(desc(events.date));
-    const enriched = await Promise.all(
-      list.map((event) => this.fetchEventWithRelations(event.id, userId)),
-    );
+    const enriched = await this.batchFetchEventsRelations(list, userId);
     return { data: enriched.map((e) => this.withResolvedStatusOrNull(e)) };
   }
 
@@ -1198,20 +1236,6 @@ export class EventsService {
     return member;
   }
 
-  private async isWorkspaceOwner(workspaceId: string, userId: string) {
-    const [member] = await this.db.db
-      .select({ role: workspaceMembers.role })
-      .from(workspaceMembers)
-      .where(
-        and(
-          eq(workspaceMembers.workspaceId, workspaceId),
-          eq(workspaceMembers.userId, userId),
-        ),
-      )
-      .limit(1);
-    return member?.role === "OWNER";
-  }
-
   private async isWorkspaceAdmin(workspaceId: string, userId: string) {
     const [member] = await this.db.db
       .select({ role: workspaceMembers.role })
@@ -1253,9 +1277,108 @@ export class EventsService {
     return this.visibleEventWhere(userId);
   }
 
-  private async fetchEventWithBoards(eventId: string, userId: string) {
-    const enriched = await this.fetchEventWithRelations(eventId, userId);
-    return enriched;
+  private async batchFetchEventsRelations(
+    eventsList: Array<typeof events.$inferSelect>,
+    userId: string,
+  ) {
+    if (eventsList.length === 0) return [];
+    const eventIds = eventsList.map((e) => e.id);
+    const createdByIds = [...new Set(eventsList.map((e) => e.createdById).filter(Boolean))];
+    const workspaceIds = [...new Set(eventsList.map((e) => e.workspaceId).filter(Boolean))];
+
+    const [
+      allBoards,
+      allCreatedBy,
+      checkinCountsRows,
+      registrationCountsRows,
+      allWorkspaces,
+      allAssignments,
+      allMyRegistrations,
+    ] = await Promise.all([
+      this.db.db.select().from(boards).where(inArray(boards.eventId, eventIds)),
+      createdByIds.length > 0
+        ? this.db.db
+            .select({ id: users.id, name: users.name, email: users.email })
+            .from(users)
+            .where(inArray(users.id, createdByIds))
+        : Promise.resolve([]),
+      this.db.db
+        .select({ eventId: checkinRecords.eventId, n: sql<number>`count(*)::int` })
+        .from(checkinRecords)
+        .where(inArray(checkinRecords.eventId, eventIds))
+        .groupBy(checkinRecords.eventId),
+      this.db.db
+        .select({ eventId: eventRegistrations.eventId, n: sql<number>`count(*)::int` })
+        .from(eventRegistrations)
+        .where(inArray(eventRegistrations.eventId, eventIds))
+        .groupBy(eventRegistrations.eventId),
+      workspaceIds.length > 0
+        ? this.db.db
+            .select({ id: workspaces.id, name: workspaces.name })
+            .from(workspaces)
+            .where(inArray(workspaces.id, workspaceIds))
+        : Promise.resolve([]),
+      this.db.db
+        .select({
+          assignment: eventAssignments,
+          user: { id: users.id, name: users.name, email: users.email, avatarUrl: users.avatarUrl },
+        })
+        .from(eventAssignments)
+        .innerJoin(users, eq(users.id, eventAssignments.userId))
+        .where(inArray(eventAssignments.eventId, eventIds)),
+      this.db.db
+        .select({
+          id: eventRegistrations.id,
+          eventId: eventRegistrations.eventId,
+          registeredAt: eventRegistrations.registeredAt,
+        })
+        .from(eventRegistrations)
+        .where(
+          and(
+            inArray(eventRegistrations.eventId, eventIds),
+            eq(eventRegistrations.userId, userId),
+          ),
+        ),
+    ]);
+
+    const boardsByEvent = new Map<string, Array<typeof boards.$inferSelect>>();
+    allBoards.forEach((b) => {
+      const arr = boardsByEvent.get(b.eventId) ?? [];
+      arr.push(b);
+      boardsByEvent.set(b.eventId, arr);
+    });
+
+    const createdByMap = new Map(allCreatedBy.map((u) => [u.id, u]));
+    const workspaceMap = new Map(allWorkspaces.map((w) => [w.id, w]));
+    const checkinCountMap = new Map(checkinCountsRows.map((c) => [c.eventId, c.n]));
+    const regCountMap = new Map(registrationCountsRows.map((r) => [r.eventId, r.n]));
+
+    const assignmentsByEvent = new Map<string, Array<any>>();
+    allAssignments.forEach((a) => {
+      const arr = assignmentsByEvent.get(a.assignment.eventId) ?? [];
+      arr.push({ ...a.assignment, user: a.user });
+      assignmentsByEvent.set(a.assignment.eventId, arr);
+    });
+
+    const myRegByEvent = new Map<string, Array<any>>();
+    allMyRegistrations.forEach((r) => {
+      const arr = myRegByEvent.get(r.eventId) ?? [];
+      arr.push({ id: r.id, registeredAt: r.registeredAt });
+      myRegByEvent.set(r.eventId, arr);
+    });
+
+    return eventsList.map((event) => ({
+      ...event,
+      boards: boardsByEvent.get(event.id) ?? [],
+      workspace: workspaceMap.get(event.workspaceId) ?? undefined,
+      createdBy: createdByMap.get(event.createdById) ?? undefined,
+      assignments: assignmentsByEvent.get(event.id) ?? [],
+      registrations: myRegByEvent.get(event.id) ?? [],
+      _count: {
+        checkins: checkinCountMap.get(event.id) ?? 0,
+        registrations: regCountMap.get(event.id) ?? 0,
+      },
+    }));
   }
 
   private async fetchEventWithRelations(eventId: string, userId: string) {

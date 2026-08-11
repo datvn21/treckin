@@ -152,6 +152,7 @@ export interface BulkSyncResult {
   skipped: number;
   errors: number;
   details: Array<{
+    hash: string;
     userId: string;
     eventId: string;
     status: "synced" | "skipped" | "error";

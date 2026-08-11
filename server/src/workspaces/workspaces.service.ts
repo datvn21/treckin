@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, sql, inArray } from "drizzle-orm";
 import { randomBytes } from "crypto";
 import { DatabaseService } from "../database/database.service";
 import {
@@ -66,21 +66,56 @@ export class WorkspacesService {
   }
 
   async findMine(userId: string) {
-    const rows = await this.db.db
-      .select({ id: workspaces.id })
-      .from(workspaces)
-      .innerJoin(workspaceMembers, eq(workspaceMembers.workspaceId, workspaces.id))
-      .where(eq(workspaceMembers.userId, userId))
-      .orderBy(sql`${workspaces.createdAt} DESC`);
+    const userMemberships = await this.db.db
+      .select({ workspaceId: workspaceMembers.workspaceId, role: workspaceMembers.role })
+      .from(workspaceMembers)
+      .where(eq(workspaceMembers.userId, userId));
 
-    const enriched = await Promise.all(
-      rows.map(async (row) => {
-        const w = await this.fetchWorkspace(row.id, userId);
-        if (!w) throw new NotFoundException("Workspace not found");
-        return w;
-      }),
-    );
-    return enriched;
+    if (userMemberships.length === 0) return [];
+    const workspaceIds = userMemberships.map((m) => m.workspaceId);
+    const membershipRoleMap = new Map(userMemberships.map((m) => [m.workspaceId, m.role]));
+
+    const [
+      allWorkspaces,
+      allSettings,
+      allPolicies,
+      allUsages,
+      memberCountRows,
+      eventCountRows,
+    ] = await Promise.all([
+      this.db.db.select().from(workspaces).where(inArray(workspaces.id, workspaceIds)).orderBy(sql`${workspaces.createdAt} DESC`),
+      this.db.db.select().from(workspaceSettings).where(inArray(workspaceSettings.workspaceId, workspaceIds)),
+      this.db.db.select().from(workspacePolicies).where(inArray(workspacePolicies.workspaceId, workspaceIds)),
+      this.db.db.select().from(workspaceUsage).where(inArray(workspaceUsage.workspaceId, workspaceIds)),
+      this.db.db
+        .select({ workspaceId: workspaceMembers.workspaceId, n: sql<number>`count(*)::int` })
+        .from(workspaceMembers)
+        .where(inArray(workspaceMembers.workspaceId, workspaceIds))
+        .groupBy(workspaceMembers.workspaceId),
+      this.db.db
+        .select({ workspaceId: events.workspaceId, n: sql<number>`count(*)::int` })
+        .from(events)
+        .where(inArray(events.workspaceId, workspaceIds))
+        .groupBy(events.workspaceId),
+    ]);
+
+    const settingsMap = new Map(allSettings.map((s) => [s.workspaceId, s]));
+    const policyMap = new Map(allPolicies.map((p) => [p.workspaceId, p]));
+    const usageMap = new Map(allUsages.map((u) => [u.workspaceId, u]));
+    const memberCountMap = new Map(memberCountRows.map((m) => [m.workspaceId, m.n]));
+    const eventCountMap = new Map(eventCountRows.map((e) => [e.workspaceId, e.n]));
+
+    return allWorkspaces.map((w) => ({
+      ...w,
+      settings: settingsMap.get(w.id),
+      policy: policyMap.get(w.id),
+      usage: usageMap.get(w.id),
+      members: membershipRoleMap.has(w.id) ? [{ role: membershipRoleMap.get(w.id) }] : [],
+      _count: {
+        members: memberCountMap.get(w.id) ?? 0,
+        events: eventCountMap.get(w.id) ?? 0,
+      },
+    }));
   }
 
   async findOne(workspaceId: string, userId: string) {

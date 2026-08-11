@@ -28,9 +28,11 @@ export interface AuthResponse {
     email: string;
     name: string;
     role: string;
-    avatarUrl: string | null;
+    avatarUrl: string;
+    createdAt: string;
   };
-  tokens: TokenPair;
+  accessToken: string;
+  refreshToken: string;
 }
 
 type UserRole = (typeof USER_ROLE_VALUES)[number];
@@ -196,7 +198,7 @@ export class AuthService {
     return storedBuffer.length === derivedKey.length && timingSafeEqual(storedBuffer, derivedKey);
   }
 
-  private formatAuthResponse(user: DbUser, tokens: TokenPair) {
+  private formatAuthResponse(user: DbUser, tokens: TokenPair): AuthResponse {
     return {
       user: {
         id: user.id,

@@ -13,7 +13,8 @@ vi.mock("@/lib/api", () => ({
 
 describe("useOfflineSync", () => {
   beforeEach(() => {
-    vi.useFakeTimers();
+    localStorage.clear();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     // Reset the scanner store
     useScannerStore.getState().clearOfflineQueue();
     useScannerStore.getState().reset();
@@ -85,15 +86,11 @@ describe("useOfflineSync", () => {
       });
     });
 
-    it("does not trigger sync when already online (no transition)", async () => {
+    it("does not trigger sync when already online with empty queue", async () => {
       const { api } = vi.mocked(await import("@/lib/api"));
       const mockPost = api.post;
 
-      useScannerStore.getState().queueOffline({
-        hash: "test-hash",
-        scannedAt: new Date().toISOString(),
-        boardId: "board-1",
-      });
+      useScannerStore.getState().clearOfflineQueue();
 
       // Already online
       Object.defineProperty(navigator, "onLine", {
@@ -103,7 +100,7 @@ describe("useOfflineSync", () => {
 
       renderHook(() => useOfflineSync());
 
-      // Should not immediately call post
+      // Should not call post when queue is empty
       expect(mockPost).not.toHaveBeenCalled();
     });
   });

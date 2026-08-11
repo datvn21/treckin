@@ -8,9 +8,9 @@ import * as fs from "fs";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 
-// BigInt JSON serialization patch
+// BigInt JSON serialization patch (prevents precision loss above MAX_SAFE_INTEGER)
 (BigInt.prototype as any).toJSON = function () {
-  return Number(this);
+  return this.toString();
 };
 
 async function bootstrap() {
@@ -64,7 +64,7 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
       transform: true,
       transformOptions: {
-        enableImplicitConversion: false,
+        enableImplicitConversion: true,
       },
     }),
   );

@@ -94,9 +94,10 @@ export class CheckinController {
   @ApiOperation({ summary: "Bulk sync offline check-ins (event scanner/manager/owner only)" })
   @ApiResponse({ status: 200, description: "Bulk sync results" })
   async bulkSync(@Body() dto: BulkSyncDto, @CurrentUser() user: JwtPayload) {
-    for (const checkin of dto.checkins) {
-      await this.eventsService.canScanBoard(checkin.boardId, user.sub);
-    }
+    const uniqueBoardIds = [...new Set(dto.checkins.map((c) => c.boardId))];
+    await Promise.all(
+      uniqueBoardIds.map((boardId) => this.eventsService.canScanBoard(boardId, user.sub)),
+    );
     return this.checkinService.bulkSync(dto.checkins);
   }
 }

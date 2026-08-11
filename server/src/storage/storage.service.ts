@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
-import * as sharp from "sharp";
+import sharp from "sharp";
 import { STORAGE_PROVIDER, type StorageProvider, type UploadResult } from "./storage.interface";
 
 /** Avatar output config */

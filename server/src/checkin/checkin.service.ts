@@ -74,6 +74,7 @@ export interface BulkSyncResult {
   skipped: number;
   errors: number;
   details: Array<{
+    hash: string;
     userId: string;
     eventId: string;
     status: "synced" | "skipped" | "error";
@@ -282,6 +283,7 @@ export class CheckinService {
         if (scanResult.success) {
           result.synced++;
           result.details.push({
+            hash: item.hash,
             userId: resolvedUserId,
             eventId: resolvedEventId,
             status: "synced",
@@ -289,6 +291,7 @@ export class CheckinService {
         } else {
           result.skipped++;
           result.details.push({
+            hash: item.hash,
             userId: resolvedUserId,
             eventId: resolvedEventId,
             status: "skipped",
@@ -298,6 +301,7 @@ export class CheckinService {
       } catch (error) {
         result.errors++;
         result.details.push({
+          hash: item.hash,
           userId: resolvedUserId,
           eventId: resolvedEventId,
           status: "error",
