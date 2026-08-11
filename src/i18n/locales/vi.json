@@ -120,7 +120,9 @@
     "openScanner": "Mở scanner",
     "registrationOn": "Đăng ký đang bật",
     "registrationOff": "Đăng ký đang tắt",
-    "people": "người"
+    "people": "người",
+    "noResultsForQuery": "Không có sự kiện nào phù hợp với \"{{query}}\"",
+    "filteredCount": "{{count}} trong {{total}} sự kiện"
   },
   "eventDetail": {
     "detail": "Chi tiết",
@@ -177,6 +179,12 @@
     "boardLabel": "Board:",
     "eventNotFound": "Không tìm thấy sự kiện",
     "viewAsAttendee": "Xem với tư cách người tham dự",
+    "status": {
+      "active": "Đang diễn ra",
+      "upcoming": "Sắp tới",
+      "completed": "Đã kết thúc",
+      "cancelled": "Đã hủy"
+    },
     "boards": {
       "title": "Boards & Quét",
       "add": "Thêm board",
@@ -212,12 +220,6 @@
       "exportOptions": "Tuỳ chọn xuất",
       "exportSuccess": "Đã xuất danh sách.",
       "exportFailed": "Không xuất được danh sách."
-    },
-    "status": {
-      "active": "Đang diễn ra",
-      "upcoming": "Sắp tới",
-      "completed": "Đã kết thúc",
-      "cancelled": "Đã hủy"
     }
   },
   "eventManage": {
@@ -244,7 +246,17 @@
       "status": "Trạng thái",
       "capacity": "Sức chứa",
       "checkinOpensAt": "Mở check-in",
-      "checkinClosesAt": "Đóng check-in"
+      "checkinClosesAt": "Đóng check-in",
+      "customEnabled": "Đã bật phiên tùy chỉnh.",
+      "customDisabled": "Đã tắt phiên tùy chỉnh.",
+      "defaultTitle": "Phiên toàn bộ sự kiện",
+      "defaultDisabled": "Đã tắt",
+      "defaultBadge": "Mặc định",
+      "defaultPending": "Phiên toàn bộ sự kiện được quản lý theo lịch trình sự kiện.",
+      "customToggle": "Sử dụng phiên tùy chỉnh",
+      "customToggleDesc": "Chia sự kiện này thành các ca hoặc khung giờ.",
+      "simpleTitle": "Sự kiện một phiên",
+      "simpleDesc": "Người tham dự check-in theo lịch trình sự kiện chính. Bật phiên tùy chỉnh nếu bạn cần nhiều ca hoặc khung giờ."
     },
     "checkinSettings": {
       "tab": "Check-in",
@@ -292,6 +304,7 @@
     "notFound": "Không tìm thấy workspace",
     "notFoundDesc": "Workspace này không tồn tại hoặc bạn không có quyền truy cập.",
     "settingsInfo": "Thông tin workspace",
+    "settingsInfoDesc": "Cập nhật thông tin cơ bản của workspace.",
     "deleteWarning": "Xoá workspace sẽ không thể hoàn tác.",
     "deleteWorkspace": "Xoá workspace",
     "inviteRole": "Vai trò",
@@ -301,6 +314,8 @@
     "settingsSaved": "Đã lưu cài đặt workspace",
     "settingsSaveFailed": "Không lưu được cài đặt workspace",
     "defaults": "Mặc định cho sự kiện",
+    "defaultsDesc": "Cấu hình mặc định cho các sự kiện thuộc workspace này.",
+    "saveSettings": "Lưu cài đặt",
     "defaultRetentionDays": "Số ngày lưu mặc định",
     "retentionDays": "Số ngày lưu theo policy",
     "defaultQrTtlSeconds": "Thời hạn QR mặc định (giây)",
@@ -338,6 +353,7 @@
     "requireReasonForManualEditDesc": "Bắt buộc nhập lý do audit trước khi chỉnh sửa dữ liệu tham dự thủ công.",
     "retentionNote": "Cấu hình lưu trữ dữ liệu",
     "retentionNoteDesc": "Mặc định lưu dữ liệu 30 ngày nếu không thay đổi tại đây. Ẩn danh giúp giữ báo cáo tổng hợp; xóa hẳn sẽ loại bỏ bản ghi khi có job dọn dữ liệu.",
+    "total": "Tổng số workspace: {{count}}",
     "roles": {
       "owner": "Chủ sở hữu",
       "admin": "Quản trị viên",
@@ -418,7 +434,8 @@
       "noCameraTitle": "Không tìm thấy camera",
       "noCamera": "Không tìm thấy camera trên thiết bị này.",
       "errorTitle": "Lỗi camera",
-      "errorHint": "Vui lòng thử tải lại trang hoặc dùng thiết bị khác."
+      "errorHint": "Vui lòng thử tải lại trang hoặc dùng thiết bị khác.",
+      "error": "Không thể khởi động camera."
     },
     "status": {
       "active": "Đang mở",
@@ -430,7 +447,8 @@
       "alreadyCheckedIn": "Đã điểm danh",
       "invalid": "QR không hợp lệ",
       "expired": "QR đã hết hạn",
-      "geofence": "Ngoài khu vực"
+      "geofence": "Ngoài khu vực",
+      "raceCondition": "Xung đột QR"
     }
   },
   "common": {
@@ -474,7 +492,12 @@
     "systemMode": "Theo hệ thống",
     "language": "Ngôn ngữ",
     "vietnamese": "Tiếng Việt",
-    "english": "English"
+    "english": "English",
+    "noName": "Chưa đặt tên"
+  },
+  "settings": {
+    "language": "Ngôn ngữ",
+    "theme": "Giao diện"
   },
   "theme": {
     "light": "Sáng",
@@ -521,51 +544,5 @@
     "uploadError": "Không thể tải ảnh lên",
     "tooLarge": "Ảnh phải nhỏ hơn 2MB",
     "invalidType": "Chỉ chấp nhận JPG, PNG hoặc WebP"
-  },
-  "scanner": {
-    "scanQr": "Quét QR",
-    "scanHint": "Đưa camera về phía mã QR",
-    "enterCode": "Nhập mã",
-    "enterCodePlaceholder": "ABC123",
-    "submit": "Gửi",
-    "pause": "Tạm dừng",
-    "resume": "Tiếp tục",
-    "success": "Điểm danh thành công!",
-    "alreadyCheckedIn": "Đã điểm danh rồi",
-    "invalidQr": "Mã QR không hợp lệ",
-    "expired": "Mã QR đã hết hạn",
-    "geofence": "Ngoài khu vực điểm danh",
-    "checkins": "lượt điểm danh",
-    "checkedIn": "đã điểm danh",
-    "recentCheckins": "Gần đây",
-    "camera": {
-      "initializing": "Đang khởi động camera...",
-      "paused": "Camera đã tạm dừng",
-      "pausedHint": "Nhấn play để tiếp tục",
-      "permissionTitle": "Không có quyền truy cập camera",
-      "permissionDenied": "Cho phép truy cập camera trong cài đặt trình duyệt.",
-      "permissionHint": "Nhấn biểu tượng camera trên thanh địa chỉ trình duyệt để cho phép.",
-      "noCameraTitle": "Không tìm thấy camera",
-      "noCamera": "Không có camera trên thiết bị này.",
-      "errorTitle": "Lỗi camera",
-      "error": "Không thể khởi động camera."
-    },
-    "result": {
-      "success": "Thành công!",
-      "alreadyCheckedIn": "Đã điểm danh",
-      "invalid": "QR không hợp lệ",
-      "expired": "Đã hết hạn",
-      "geofence": "Ngoài phạm vi"
-    },
-    "dismiss": "Đóng"
-  },
-  "eventDetail": {
-    "credential": "QR điểm danh"
-  },
-  "event": {
-    "joinCode": "Mã ngắn",
-    "copyCode": "Sao chép mã",
-    "date": "Ngày",
-    "location": "Địa điểm"
   }
 }

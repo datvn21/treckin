@@ -199,7 +199,7 @@ export function WorkspaceDetailPage() {
           onClick={() => navigate(`/app/workspaces/${id}/events/create`)}
         >
           <Plus size={15} />
-          {t("event.createEvent")}
+          {t("event.createEvent", { defaultValue: "Tạo sự kiện" })}
         </Button>
       );
     }
@@ -307,8 +307,10 @@ export function WorkspaceDetailPage() {
           <EventTable
             events={filteredEvents}
             loading={false}
-            emptyTitle={t("event.noEvents")}
-            emptyDescription={t("event.noEventsDescription")}
+            emptyTitle={t("event.noEvents", { defaultValue: "Chưa có sự kiện" })}
+            emptyDescription={t("event.noEventsDescription", {
+              defaultValue: "Tham gia bằng mã sự kiện hoặc tạo workspace mới.",
+            })}
             emptyIcon={<Calendar size={24} />}
             emptyAction={
               isWorkspaceAdmin ? (
@@ -318,7 +320,7 @@ export function WorkspaceDetailPage() {
                   onClick={() => navigate(`/app/workspaces/${id}/events/create`)}
                 >
                   <Plus size={15} />
-                  {t("event.createEvent")}
+                  {t("event.createEvent", { defaultValue: "Tạo sự kiện" })}
                 </Button>
               ) : undefined
             }

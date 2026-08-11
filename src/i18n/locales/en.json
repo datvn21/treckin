@@ -120,7 +120,9 @@
     "openScanner": "Open scanner",
     "registrationOn": "Registration is ON",
     "registrationOff": "Registration is OFF",
-    "people": "people"
+    "people": "people",
+    "noResultsForQuery": "No events match \"{{query}}\"",
+    "filteredCount": "{{count}} of {{total}} events"
   },
   "eventDetail": {
     "detail": "Details",
@@ -182,6 +184,42 @@
       "upcoming": "Upcoming",
       "completed": "Completed",
       "cancelled": "Cancelled"
+    },
+    "boards": {
+      "title": "Boards & Scanning",
+      "add": "Add board",
+      "addTitle": "Add new board",
+      "namePlaceholder": "e.g. Main Entrance, Zone A...",
+      "addSuccess": "Board added.",
+      "addFailed": "Could not add board.",
+      "renameSuccess": "Board renamed.",
+      "renameFailed": "Could not rename board.",
+      "deleteSuccess": "Board deleted.",
+      "deleteFailed": "Could not delete board.",
+      "deleteConfirm": "Are you sure you want to delete board \"{{name}}\"?",
+      "cantDeleteHasCheckins": "Cannot delete board with check-in data.",
+      "statusActive": "Open",
+      "statusPaused": "Paused",
+      "statusClosed": "Closed",
+      "pause": "Pause board",
+      "resume": "Resume board",
+      "selectBoardToScan": "Select board to open scanner"
+    },
+    "attendees": {
+      "title": "Attendee list",
+      "registered": "Registered",
+      "checkedIn": "Checked in",
+      "notCheckedIn": "Not checked in",
+      "searchPlaceholder": "Search by name or email...",
+      "name": "Name",
+      "board": "Board",
+      "time": "Time",
+      "export": "Export list",
+      "exportAll": "Export all (.csv)",
+      "exportCheckedIn": "Export checked-in (.csv)",
+      "exportOptions": "Export options",
+      "exportSuccess": "List exported.",
+      "exportFailed": "Could not export list."
     }
   },
   "eventManage": {
@@ -208,7 +246,17 @@
       "status": "Status",
       "capacity": "Capacity",
       "checkinOpensAt": "Check-in opens",
-      "checkinClosesAt": "Check-in closes"
+      "checkinClosesAt": "Check-in closes",
+      "customEnabled": "Custom sessions enabled.",
+      "customDisabled": "Custom sessions disabled.",
+      "defaultTitle": "Full event session",
+      "defaultDisabled": "Disabled",
+      "defaultBadge": "Default",
+      "defaultPending": "The full-event session is managed by the event schedule.",
+      "customToggle": "Use custom sessions",
+      "customToggleDesc": "Split this event into shifts or time blocks.",
+      "simpleTitle": "Single-session event",
+      "simpleDesc": "Attendees check in using the main event schedule. Turn on custom sessions if you need multiple shifts or time blocks."
     },
     "checkinSettings": {
       "tab": "Check-in",
@@ -256,6 +304,7 @@
     "notFound": "Workspace not found",
     "notFoundDesc": "This workspace does not exist or you don't have access.",
     "settingsInfo": "Workspace info",
+    "settingsInfoDesc": "Update basic workspace details.",
     "deleteWarning": "Deleting a workspace cannot be undone.",
     "deleteWorkspace": "Delete workspace",
     "inviteRole": "Role",
@@ -265,6 +314,8 @@
     "settingsSaved": "Workspace settings saved",
     "settingsSaveFailed": "Could not save workspace settings",
     "defaults": "Event defaults",
+    "defaultsDesc": "Default settings for events in this workspace.",
+    "saveSettings": "Save settings",
     "defaultRetentionDays": "Default retention days",
     "retentionDays": "Policy retention days",
     "defaultQrTtlSeconds": "QR TTL seconds",
@@ -302,6 +353,7 @@
     "requireReasonForManualEditDesc": "Require an audit reason before manual attendance corrections.",
     "retentionNote": "Retention posture",
     "retentionNoteDesc": "Default retention is set to 30 days unless changed here. Anonymize keeps aggregate reporting usable; purge removes retained records when cleanup jobs are added.",
+    "total": "Total workspaces: {{count}}",
     "roles": {
       "owner": "Owner",
       "admin": "Admin",
@@ -376,13 +428,14 @@
       "initializing": "Starting camera...",
       "paused": "Scanning paused",
       "pausedHint": "Tap resume to continue",
-      "permissionDenied": "Camera permission was denied.",
       "permissionTitle": "Camera access required",
+      "permissionDenied": "Camera permission was denied.",
       "permissionHint": "Please allow camera access in your browser settings",
-      "noCamera": "No camera found on this device.",
       "noCameraTitle": "No camera",
+      "noCamera": "No camera found on this device.",
       "errorTitle": "Camera error",
-      "errorHint": "Try refreshing the page"
+      "errorHint": "Try refreshing the page",
+      "error": "Failed to start camera."
     },
     "status": {
       "active": "Active",
@@ -394,7 +447,8 @@
       "alreadyCheckedIn": "Already checked in",
       "invalid": "Invalid QR",
       "expired": "Expired QR",
-      "geofence": "Outside geofence"
+      "geofence": "Outside geofence",
+      "raceCondition": "Conflict detected"
     }
   },
   "common": {
@@ -438,7 +492,12 @@
     "systemMode": "System",
     "language": "Language",
     "vietnamese": "Tiếng Việt",
-    "english": "English"
+    "english": "English",
+    "noName": "Unnamed"
+  },
+  "settings": {
+    "language": "Language",
+    "theme": "Theme"
   },
   "theme": {
     "light": "Light",
@@ -476,52 +535,6 @@
     "switchRole": "Switch role",
     "currentRole": "Current role",
     "switchRoleTo": "Switch to: {{role}}"
-  },
-  "scanner": {
-    "scanQr": "Scan QR",
-    "scanHint": "Point camera at QR code",
-    "enterCode": "Enter Code",
-    "enterCodePlaceholder": "ABC123",
-    "submit": "Submit",
-    "pause": "Pause",
-    "resume": "Resume",
-    "success": "Check-in successful!",
-    "alreadyCheckedIn": "Already checked in",
-    "invalidQr": "Invalid QR code",
-    "expired": "QR code expired",
-    "geofence": "Outside check-in area",
-    "checkins": "check-ins",
-    "checkedIn": "checked in",
-    "recentCheckins": "Recent",
-    "camera": {
-      "initializing": "Starting camera...",
-      "paused": "Camera paused",
-      "pausedHint": "Press play to resume",
-      "permissionTitle": "Camera access denied",
-      "permissionDenied": "Allow camera access in your browser settings.",
-      "permissionHint": "Click the camera icon in your browser's address bar to allow access.",
-      "noCameraTitle": "No camera found",
-      "noCamera": "No camera detected on this device.",
-      "errorTitle": "Camera error",
-      "error": "Failed to start camera."
-    },
-    "result": {
-      "success": "Success!",
-      "alreadyCheckedIn": "Already checked in",
-      "invalid": "Invalid QR",
-      "expired": "Expired",
-      "geofence": "Out of range"
-    },
-    "dismiss": "Dismiss"
-  },
-  "eventDetail": {
-    "credential": "Check-in QR"
-  },
-  "event": {
-    "joinCode": "Short Code",
-    "copyCode": "Copy code",
-    "date": "Date",
-    "location": "Location"
   },
   "avatar": {
     "upload": "Upload photo",

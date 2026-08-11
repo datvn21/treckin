@@ -78,8 +78,10 @@ export function MyEventsPage() {
   const isActive = (event: EventItemType) =>
     isApiEventOngoing(rawEvents.find((r) => r.id === event.id)?.status);
 
+  const activeCount = events.filter((e) => isActive(e)).length;
+
   return (
-    <>
+    <div className="space-y-6">
       <PageHeader
         title={t("event.myEvents")}
         subtitle={!loading ? t("event.eventsCount", { count: events.length }) : undefined}
@@ -89,6 +91,22 @@ export function MyEventsPage() {
           </Button>
         }
       />
+
+      {/* Stat-Led Summary Header Pills */}
+      {!loading && events.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 animate-fade-in-up">
+          <div className="card px-3.5 py-2 flex items-center gap-2 text-caption">
+            <span className="w-2 h-2 rounded-full bg-primary" />
+            <span className="text-ink-3">{t("event.myEvents", "Joined Events")}:</span>
+            <span className="font-semibold text-ink-1">{events.length}</span>
+          </div>
+          <div className="card px-3.5 py-2 flex items-center gap-2 text-caption">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="text-ink-3">{t("eventDetail.status.active", "Active")}:</span>
+            <span className="font-semibold text-ink-1">{activeCount}</span>
+          </div>
+        </div>
+      )}
 
       {/* Event table */}
       <EventTable
@@ -120,6 +138,6 @@ export function MyEventsPage() {
           ) : null
         }
       />
-    </>
+    </div>
   );
 }

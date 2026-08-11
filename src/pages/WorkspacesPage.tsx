@@ -19,6 +19,7 @@ import { EmptyState } from "@/atoms/EmptyState";
 import { setFlowPreference } from "@/lib/flow-preference";
 import { useDocumentTitle } from "@/hooks";
 import { parseApiError } from "@/lib/parseApiError";
+import { cn } from "@/lib/utils";
 
 interface ApiWorkspace {
   id: string;
@@ -119,15 +120,45 @@ export function WorkspacesPage() {
           }
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {workspaces.map((ws) => (
-            <WorkspaceCard
-              key={ws.id}
-              workspace={ws}
-              role={ws.role}
-              onClick={() => navigate(`/app/workspaces/${ws.id}`)}
-            />
-          ))}
+        <div className="space-y-6">
+          {/* Stat-Led Header Pills */}
+          <div className="flex flex-wrap items-center gap-3 animate-fade-in-up">
+            <div className="card px-3.5 py-2 flex items-center gap-2 text-caption">
+              <span className="w-2 h-2 rounded-full bg-primary" />
+              <span className="text-ink-3">{t("workspace.total", "Total Workspaces")}:</span>
+              <span className="font-semibold text-ink-1">{workspaces.length}</span>
+            </div>
+            <div className="card px-3.5 py-2 flex items-center gap-2 text-caption">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="text-ink-3">{t("workspace.owner", "Owner")}:</span>
+              <span className="font-semibold text-ink-1">
+                {workspaces.filter((w) => w.role === "OWNER").length}
+              </span>
+            </div>
+            <div className="card px-3.5 py-2 flex items-center gap-2 text-caption">
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
+              <span className="text-ink-3">{t("workspace.member", "Member")}:</span>
+              <span className="font-semibold text-ink-1">
+                {workspaces.filter((w) => w.role === "MEMBER").length}
+              </span>
+            </div>
+          </div>
+
+          {/* Bento-inspired Workspace Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+            {workspaces.map((ws, i) => (
+              <WorkspaceCard
+                key={ws.id}
+                workspace={ws}
+                role={ws.role}
+                onClick={() => navigate(`/app/workspaces/${ws.id}`)}
+                className={cn(
+                  "hover:shadow-sm transition-all duration-200",
+                  i === 0 && workspaces.length > 1 && "md:col-span-2 lg:col-span-1",
+                )}
+              />
+            ))}
+          </div>
         </div>
       )}
 

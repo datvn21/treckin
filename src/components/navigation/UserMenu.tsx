@@ -48,7 +48,7 @@ export function UserMenu({ name, email, avatarUrl, onProfile, onLogout }: UserMe
         className="flex items-center gap-1 rounded-md p-1 transition-[background-color] duration-100 hover:bg-surface-raised"
         aria-expanded={open}
       >
-        <Avatar src={avatarUrl} name={name} size="md" />
+        <Avatar src={avatarUrl} name={name} size="sm" />
         <ChevronDown
           size={13}
           className={cn(

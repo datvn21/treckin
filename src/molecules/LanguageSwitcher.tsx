@@ -18,12 +18,6 @@ const LANGUAGES = [
     searchKey: "tieng viet vietnamese vi",
   },
   { value: "en", label: "English", nativeName: "English", searchKey: "english en" },
-  { value: "ja", label: "Japanese", nativeName: "日本語", searchKey: "japanese nihongo ja" },
-  { value: "ko", label: "Korean", nativeName: "한국어", searchKey: "korean ko" },
-  { value: "zh", label: "Chinese", nativeName: "中文", searchKey: "chinese zh" },
-  { value: "fr", label: "French", nativeName: "Français", searchKey: "french fr" },
-  { value: "es", label: "Spanish", nativeName: "Español", searchKey: "spanish es" },
-  { value: "de", label: "German", nativeName: "Deutsch", searchKey: "german de" },
 ];
 
 const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({

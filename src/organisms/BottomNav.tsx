@@ -14,13 +14,13 @@ interface BottomNavProps {
 }
 
 const ATTENDEE_TABS = [
-  { to: "/app/join", icon: Ticket, labelKey: "nav.events" },
-  { to: "/app/profile", icon: User, labelKey: "nav.profile" },
+  { to: "/app/join", icon: Ticket, labelKey: "nav.events", fallback: "Sự kiện" },
+  { to: "/app/profile", icon: User, labelKey: "nav.profile", fallback: "Hồ sơ" },
 ] as const;
 
 const ORGANIZER_TABS = [
-  { to: "/app/workspaces", icon: Building2, labelKey: "nav.workspace" },
-  { to: "/app/profile", icon: User, labelKey: "nav.profile" },
+  { to: "/app/workspaces", icon: Building2, labelKey: "nav.workspace", fallback: "Workspace" },
+  { to: "/app/profile", icon: User, labelKey: "nav.profile", fallback: "Hồ sơ" },
 ] as const;
 
 const SWIPE_THRESHOLD = 50; // px
@@ -82,15 +82,15 @@ export function BottomNav({ mode }: BottomNavProps) {
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      {TABS.map(({ to, icon: Icon, labelKey }) => (
+      {TABS.map(({ to, icon: Icon, labelKey, fallback }) => (
         <NavLink
           key={to}
           to={to}
           className={({ isActive }) => cn("bottom-nav-item", isActive && "active")}
-          aria-label={t(labelKey)}
+          aria-label={t(labelKey, { defaultValue: fallback })}
         >
           <Icon size={24} strokeWidth={1.75} aria-hidden />
-          <span className="bottom-nav-label">{t(labelKey)}</span>
+          <span className="bottom-nav-label">{t(labelKey, { defaultValue: fallback })}</span>
         </NavLink>
       ))}
     </nav>

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import i18n from "@/i18n";
 
 type Theme = "light" | "dark" | "system";
 type Lang = string;
@@ -33,8 +34,10 @@ export const useThemeStore = create<ThemeStore>()(
       },
 
       setLang(lang) {
-        set({ lang });
-        document.documentElement.lang = lang;
+        const safeLang = ["vi", "en"].includes(lang) ? lang : "vi";
+        set({ lang: safeLang });
+        document.documentElement.lang = safeLang;
+        void i18n.changeLanguage(safeLang);
       },
 
       resolvedTheme() {
@@ -45,7 +48,12 @@ export const useThemeStore = create<ThemeStore>()(
     {
       name: "treckin-theme",
       onRehydrateStorage: () => (state) => {
-        if (state) applyTheme(state.theme);
+        if (state) {
+          applyTheme(state.theme);
+          const safeLang = ["vi", "en"].includes(state.lang) ? state.lang : "vi";
+          document.documentElement.lang = safeLang;
+          void i18n.changeLanguage(safeLang);
+        }
       },
     },
   ),

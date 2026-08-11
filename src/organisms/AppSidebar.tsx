@@ -56,24 +56,24 @@ export function AppSidebar({
           {
             to: "/app/join",
             icon: <Ticket size={16} />,
-            label: t("nav.events"),
+            label: t("nav.events", { defaultValue: "Sự kiện" }),
           },
           {
             to: "/app/profile",
             icon: <User size={16} />,
-            label: t("nav.profile"),
+            label: t("nav.profile", { defaultValue: "Hồ sơ" }),
           },
         ]
       : [
           {
             to: "/app/workspaces",
             icon: <Building2 size={16} />,
-            label: t("nav.workspace"),
+            label: t("nav.workspace", { defaultValue: "Workspace" }),
           },
           {
             to: "/app/profile",
             icon: <User size={16} />,
-            label: t("nav.profile"),
+            label: t("nav.profile", { defaultValue: "Hồ sơ" }),
           },
         ];
 
@@ -107,7 +107,9 @@ export function AppSidebar({
       {/* ── Workspace Quick-list (organizer only) ── */}
       {mode === "organizer" && (
         <div className="sidebar-section flex-1 min-h-0 overflow-hidden flex flex-col mt-2 border-t border-border-1 pt-2">
-          <p className="sidebar-label mb-1">{t("workspace.myWorkspaces")}</p>
+          <p className="sidebar-label mb-1">
+            {t("workspace.myWorkspaces", { defaultValue: "Workspace của tôi" })}
+          </p>
 
           {/* Scrollable workspace list */}
           <div className="flex-1 overflow-y-auto no-scrollbar space-y-0.5 pb-1">
