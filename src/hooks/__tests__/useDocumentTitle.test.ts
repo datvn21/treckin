@@ -85,7 +85,7 @@ describe("useDocumentTitle", () => {
         vi.runAllTimers();
       });
 
-      expect(document.title).toBe(" · Treckin");
+      expect(document.title).toBe("Treckin");
     });
 
     it("handles special characters in title", () => {
