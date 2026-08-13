@@ -74,6 +74,23 @@ export function BottomNav({ mode }: BottomNavProps) {
     touchStartY.current = null;
   };
 
+  const isTabActive = (tabTo: string) => {
+    if (tabTo === "/app/workspaces") {
+      return (
+        location.pathname.startsWith("/app/workspaces") ||
+        location.pathname.includes("/manage") ||
+        (mode === "organizer" && location.pathname.startsWith("/app/events"))
+      );
+    }
+    if (tabTo === "/app/join") {
+      return (
+        location.pathname.startsWith("/app/join") ||
+        (mode === "attendee" && location.pathname.startsWith("/app/events"))
+      );
+    }
+    return location.pathname.startsWith(tabTo);
+  };
+
   return (
     <nav
       className={cn("bottom-nav lg:hidden tap-transparent")}
@@ -86,7 +103,7 @@ export function BottomNav({ mode }: BottomNavProps) {
         <NavLink
           key={to}
           to={to}
-          className={({ isActive }) => cn("bottom-nav-item", isActive && "active")}
+          className={() => cn("bottom-nav-item", isTabActive(to) && "active")}
           aria-label={t(labelKey, { defaultValue: fallback })}
         >
           <Icon size={24} strokeWidth={1.75} aria-hidden />

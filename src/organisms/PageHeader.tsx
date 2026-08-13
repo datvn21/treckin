@@ -68,14 +68,14 @@ export function PageHeader({
 
       {/* Right: actions + close */}
       {(trailing || closeTo) && (
-        <div className={cn("flex items-center gap-2 shrink-0 ml-auto", closeTo && "pr-10")}>
+        <div className="flex items-center gap-2 shrink-0 ml-auto">
           {trailing}
           {closeTo && (
             <button
               type="button"
               onClick={() => navigate(closeTo)}
               aria-label={t("common.close")}
-              className="absolute top-0 right-0 flex items-center justify-center w-8 h-8 rounded-full border border-border-1 text-ink-3 hover:text-ink-1 hover:bg-surface-raised transition-[background-color,color] duration-100 shrink-0"
+              className="flex items-center justify-center w-8 h-8 rounded-full border border-border-1 text-ink-3 hover:text-ink-1 hover:bg-surface-raised transition-[background-color,color] duration-100 shrink-0"
             >
               <X size={15} />
             </button>

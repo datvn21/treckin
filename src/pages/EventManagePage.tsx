@@ -43,7 +43,7 @@ import { EmptyState } from "@/atoms/EmptyState";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useAuthStore } from "@/stores/auth-store";
 import { getSocket, joinEventRoom, leaveEventRoom } from "@/lib/socket";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import { useDocumentTitle } from "@/hooks";
 import type {
   CheckinRecord,
@@ -236,8 +236,22 @@ function InlineQRScanner({ onScan, isPaused }: InlineQRScannerProps) {
   const isActive = cameraState === "ready";
 
   return (
-    <div className="relative w-full aspect-square bg-[#0f172a] rounded-2xl overflow-hidden">
-      <div id={SCANNER_ID} className={cn("w-full h-full", !isActive && "hidden")} />
+    <div className="relative w-full aspect-square bg-[#0f172a] rounded-2xl overflow-hidden shadow-inner">
+      <style>{`
+        #${SCANNER_ID} video {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
+          object-position: center !important;
+          display: block !important;
+        }
+        #${SCANNER_ID} img,
+        #${SCANNER_ID} canvas,
+        #${SCANNER_ID} > div {
+          display: none !important;
+        }
+      `}</style>
+      <div id={SCANNER_ID} className={cn("w-full h-full", !isActive && "invisible")} />
 
       {/* Overlay when active */}
       {isActive && (
@@ -529,7 +543,7 @@ function EventQRCard({ event, board }: { event: EventDetail; board: BoardInfo | 
               {t("event.joinCode")}
             </p>
             <div className="flex items-center gap-2">
-              <p className="font-mono text-2xl font-bold tracking-widest text-[#111827]">
+              <p className="font-sans text-2xl font-bold tracking-widest text-[#111827]">
                 {shortCode}
               </p>
               <button
@@ -843,12 +857,21 @@ export function EventManagePage() {
 
   const rateColor = rate >= 80 ? "#12a150" : rate >= 50 ? "#b45309" : "#dc2626";
 
+  const displayDate = (() => {
+    if (!event.date) return "";
+    try {
+      return formatDate(event.date, "dd/MM/yyyy HH:mm");
+    } catch {
+      return event.date;
+    }
+  })();
+
   return (
     <div className="space-y-6">
       {/* ── Page Header (Standardized Workspace PageHeader) ──────────────── */}
       <PageHeader
         title={event.title}
-        subtitle={`${t("event.date")}: ${event.date}${event.location ? ` · ${event.location}` : ""}`}
+        subtitle={`${t("event.date")}: ${displayDate}${event.location ? ` · ${event.location}` : ""}`}
         badge={
           <div className="flex items-center gap-2">
             <Badge variant={statusVariant(event.status)}>{getStatusLabel(event.status, t)}</Badge>
@@ -991,44 +1014,60 @@ export function EventManagePage() {
 
             {/* Scanner body */}
             <div className="p-4">
-              <div className="flex gap-4">
-                {/* Left: camera or code input */}
-                <div className="flex-1 flex flex-col gap-3">
+              <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6">
+                {/* Left/Center: camera or code input */}
+                <div className="w-full max-w-md flex flex-col gap-3">
                   {scanMode === "camera" ? (
                     <InlineQRScanner onScan={handleScan} isPaused={isPaused} />
                   ) : (
                     <form
                       onSubmit={(e) => void handleShortCodeSubmit(e)}
-                      className="flex flex-col gap-3"
+                      className="w-full aspect-square bg-surface-raised rounded-2xl border border-border-1 p-6 flex flex-col justify-center items-center gap-5 text-center"
                     >
-                      <Input
-                        type="text"
-                        value={shortCode}
-                        onChange={(e) =>
-                          setShortCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))
-                        }
-                        placeholder={t("scanner.enterCodePlaceholder")}
-                        className="text-center text-xl font-mono tracking-widest uppercase"
-                        maxLength={6}
-                        autoFocus
-                        autoComplete="off"
-                      />
-                      <Button
-                        type="submit"
-                        variant="primary"
-                        disabled={shortCode.length !== 6}
-                        isLoading={isSubmittingCode}
-                      >
-                        {t("scanner.submit")}
-                      </Button>
+                      <div className="w-12 h-12 rounded-full bg-primary-muted text-primary flex items-center justify-center">
+                        <ScanQrCode className="w-6 h-6" strokeWidth={1.5} />
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="text-base font-semibold text-ink-1">
+                          {t("scanner.enterCode")}
+                        </h4>
+                        <p className="text-xs text-ink-3">
+                          {t("scanner.enterCodeHint", "Nhập mã 6 ký tự hiển thị trên ứng dụng người tham dự")}
+                        </p>
+                      </div>
+                      <div className="w-full max-w-xs space-y-3">
+                        <Input
+                          type="text"
+                          value={shortCode}
+                          onChange={(e) =>
+                            setShortCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))
+                          }
+                          placeholder={t("scanner.enterCodePlaceholder")}
+                          className="text-center text-2xl font-sans font-bold tracking-widest uppercase bg-surface h-12"
+                          maxLength={6}
+                          autoFocus
+                          autoComplete="off"
+                        />
+                        <Button
+                          type="submit"
+                          variant="primary"
+                          className="w-full"
+                          disabled={shortCode.length !== 6}
+                          isLoading={isSubmittingCode}
+                        >
+                          {t("scanner.submit")}
+                        </Button>
+                      </div>
                     </form>
                   )}
                 </div>
 
                 {/* Right: recent check-ins */}
-                <div className="w-72 flex-shrink-0">
-                  <RecentCheckins checkins={recentCheckins} />
-                </div>
+                {recentCheckins.length > 0 && (
+                  <div className="w-full lg:w-72 flex-shrink-0">
+                    <RecentCheckins checkins={recentCheckins} />
+                  </div>
+                )}
               </div>
             </div>
           </div>
