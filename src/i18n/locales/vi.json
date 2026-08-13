@@ -353,7 +353,7 @@
     "requireReasonForManualEditDesc": "Bắt buộc nhập lý do audit trước khi chỉnh sửa dữ liệu tham dự thủ công.",
     "retentionNote": "Cấu hình lưu trữ dữ liệu",
     "retentionNoteDesc": "Mặc định lưu dữ liệu 30 ngày nếu không thay đổi tại đây. Ẩn danh giúp giữ báo cáo tổng hợp; xóa hẳn sẽ loại bỏ bản ghi khi có job dọn dữ liệu.",
-    "total": "Tổng số workspace: {{count}}",
+    "total": "Tổng số workspace: ",
     "roles": {
       "owner": "Chủ sở hữu",
       "admin": "Quản trị viên",
@@ -372,7 +372,7 @@
       "publicLink": "Link công khai"
     },
     "deletion": {
-      "anonymize": "Ẩn danh",
+      "anonymize": "Không công khai",
       "purge": "Xóa hẳn"
     }
   },

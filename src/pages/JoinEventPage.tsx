@@ -182,7 +182,7 @@ export function JoinEventPage() {
         {/* QR tab */}
         {activeTab === "qr" && (
           <div className="bg-neutral-950">
-            <div className="h-72 sm:h-80">
+            <div className="aspect-[4/3] min-h-[320px]">
               <QRScanner isPaused={joining} onScan={handleScan} />
             </div>
             {joining && (

@@ -18,7 +18,6 @@ import {
   VideoOff,
   Pause,
   Play,
-  ArrowLeft,
   CheckCircle,
   Clock,
   XCircle,
@@ -237,7 +236,7 @@ function InlineQRScanner({ onScan, isPaused }: InlineQRScannerProps) {
   const isActive = cameraState === "ready";
 
   return (
-    <div className="relative w-full aspect-square bg-[#1a1714] rounded-2xl overflow-hidden">
+    <div className="relative w-full aspect-square bg-[#0f172a] rounded-2xl overflow-hidden">
       <div id={SCANNER_ID} className={cn("w-full h-full", !isActive && "hidden")} />
 
       {/* Overlay when active */}
@@ -258,30 +257,30 @@ function InlineQRScanner({ onScan, isPaused }: InlineQRScannerProps) {
 
       {/* Paused */}
       {cameraState === "paused" && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#1a1714] z-20">
-          <CameraOff className="w-12 h-12 text-[#8f857f]" strokeWidth={1.2} />
-          <p className="text-[#c2b9b3] text-sm font-medium">{t("scanner.camera.paused")}</p>
-          <p className="text-[#5e5650] text-xs">{t("scanner.camera.pausedHint")}</p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#0f172a] z-20">
+          <CameraOff className="w-12 h-12 text-[#94a3b8]" strokeWidth={1.2} />
+          <p className="text-[#cbd5e1] text-sm font-medium">{t("scanner.camera.paused")}</p>
+          <p className="text-[#475569] text-xs">{t("scanner.camera.pausedHint")}</p>
         </div>
       )}
 
       {/* Initializing */}
       {cameraState === "initializing" && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#1a1714] z-20">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#0f172a] z-20">
           <Loader2 className="w-10 h-10 text-[#0061fe] animate-spin" strokeWidth={1.5} />
-          <p className="text-[#5e5650] text-xs">{t("scanner.camera.initializing")}</p>
+          <p className="text-[#475569] text-xs">{t("scanner.camera.initializing")}</p>
         </div>
       )}
 
       {/* Permission denied */}
       {cameraState === "permission-denied" && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#1a1714] z-20 p-6 text-center">
-          <CameraOff className="w-12 h-12 text-[#e4a020]" strokeWidth={1.2} />
-          <p className="text-[#f0ebe6] font-semibold text-base">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#0f172a] z-20 p-6 text-center">
+          <CameraOff className="w-12 h-12 text-[#b45309]" strokeWidth={1.2} />
+          <p className="text-[#f1f5f9] font-semibold text-base">
             {t("scanner.camera.permissionTitle")}
           </p>
-          <p className="text-[#8f857f] text-xs max-w-[240px]">{errorMessage}</p>
-          <p className="text-[#5e5650] text-xs max-w-[240px]">
+          <p className="text-[#94a3b8] text-xs max-w-[240px]">{errorMessage}</p>
+          <p className="text-[#475569] text-xs max-w-[240px]">
             {t("scanner.camera.permissionHint")}
           </p>
         </div>
@@ -289,27 +288,27 @@ function InlineQRScanner({ onScan, isPaused }: InlineQRScannerProps) {
 
       {/* No camera */}
       {cameraState === "no-camera" && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#1a1714] z-20 p-6 text-center">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#0f172a] z-20 p-6 text-center">
           <VideoOff className="w-12 h-12 text-[#f87171]" strokeWidth={1.2} />
-          <p className="text-[#f0ebe6] font-semibold text-base">
+          <p className="text-[#f1f5f9] font-semibold text-base">
             {t("scanner.camera.noCameraTitle")}
           </p>
-          <p className="text-[#8f857f] text-xs max-w-[240px]">{errorMessage}</p>
+          <p className="text-[#94a3b8] text-xs max-w-[240px]">{errorMessage}</p>
         </div>
       )}
 
       {/* Generic error */}
       {cameraState === "error" && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#1a1714] z-20 p-6 text-center">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#0f172a] z-20 p-6 text-center">
           <Camera className="w-12 h-12 text-[#f87171]" strokeWidth={1.2} />
-          <p className="text-[#f0ebe6] font-semibold text-base">{t("scanner.camera.errorTitle")}</p>
-          <p className="text-[#8f857f] text-xs max-w-[240px]">{errorMessage}</p>
+          <p className="text-[#f1f5f9] font-semibold text-base">{t("scanner.camera.errorTitle")}</p>
+          <p className="text-[#94a3b8] text-xs max-w-[240px]">{errorMessage}</p>
         </div>
       )}
 
       {/* Hint */}
       {isActive && (
-        <p className="absolute bottom-3 left-0 right-0 text-center text-[#5e5650] text-[10px]">
+        <p className="absolute bottom-3 left-0 right-0 text-center text-[#475569] text-[10px]">
           {t("scanner.scanHint")}
         </p>
       )}
@@ -384,8 +383,8 @@ function ScanResultToast({
   if (!result) return null;
 
   return (
-    <div className="fixed bottom-20 left-4 right-4 mx-auto max-w-sm z-50 rounded-2xl border border-[#3d3530] bg-[#231f1c] shadow-2xl animate-slide-up">
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#3d3530]">
+    <div className="fixed bottom-20 left-4 right-4 mx-auto max-w-sm z-50 rounded-2xl border border-[#e5e7eb] bg-white shadow-2xl animate-slide-up">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#e5e7eb]">
         <div className="flex items-center gap-2">
           <ResultIcon status={result.status} />
           <ResultLabel status={result.status} />
@@ -393,27 +392,27 @@ function ScanResultToast({
         <button
           type="button"
           onClick={onDismiss}
-          className="flex items-center justify-center w-6 h-6 rounded-full text-[#5e5650] hover:text-[#f0ebe6] hover:bg-[#2c2724] transition-colors"
+          className="flex items-center justify-center w-6 h-6 rounded-full text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6] transition-colors"
           aria-label={t("scanner.dismiss")}
         >
           <X className="w-3.5 h-3.5" strokeWidth={1.5} />
         </button>
       </div>
       <div className="px-4 py-3.5">
-        <p className="text-sm text-[#c2b9b3] leading-relaxed mb-3">{result.message}</p>
+        <p className="text-sm text-[#374151] leading-relaxed mb-3">{result.message}</p>
         {result.student && (
           <div className="flex items-center gap-3">
             <Avatar name={result.student.name} size="sm" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-[#f0ebe6] truncate">{result.student.name}</p>
+              <p className="text-sm font-semibold text-[#111827] truncate">{result.student.name}</p>
               {result.student.email && (
-                <p className="text-[10px] text-[#5e5650] truncate">{result.student.email}</p>
+                <p className="text-[10px] text-[#6b7280] truncate">{result.student.email}</p>
               )}
             </div>
           </div>
         )}
         {result.status === "already-checked-in" && result.originalCheckin && (
-          <div className="mt-2 flex items-center gap-1.5 text-[10px] text-[#8f857f]">
+          <div className="mt-2 flex items-center gap-1.5 text-[10px] text-[#9ca3af]">
             <Clock className="w-3 h-3 flex-shrink-0" strokeWidth={1.5} />
             <span>
               {result.originalCheckin.boardName} · {formatTime(result.originalCheckin.timestamp)}
@@ -448,7 +447,7 @@ function RecentCheckins({ checkins }: { checkins: CheckinRecord[] }) {
 
   return (
     <div className="space-y-1.5">
-      <p className="text-xs font-medium text-[#776e6b] uppercase tracking-wider">
+      <p className="text-xs font-medium text-[#6b7280] uppercase tracking-wider">
         {t("scanner.recentCheckins")}
       </p>
       {checkins.slice(0, 8).map((c) => {
@@ -456,7 +455,7 @@ function RecentCheckins({ checkins }: { checkins: CheckinRecord[] }) {
         return (
           <div
             key={c.id}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#f7f5f2] border border-[#e4deda]"
+            className="flex items-center gap-3 px-3 py-2 rounded-xl bg-[#f9fafb] border border-[#e5e7eb]"
           >
             <div
               className={cn(
@@ -472,11 +471,11 @@ function RecentCheckins({ checkins }: { checkins: CheckinRecord[] }) {
             </div>
             <Avatar name={c.userName} size="xs" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-[#1e1919] truncate">{c.userName}</p>
+              <p className="text-xs font-medium text-[#111827] truncate">{c.userName}</p>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-[10px] text-[#776e6b]">{formatTime(c.timestamp)}</span>
-              <span className="text-[10px] text-[#a89e9b]">{c.boardName}</span>
+              <span className="text-[10px] text-[#6b7280]">{formatTime(c.timestamp)}</span>
+              <span className="text-[10px] text-[#9ca3af]">{c.boardName}</span>
             </div>
           </div>
         );
@@ -505,18 +504,18 @@ function EventQRCard({ event, board }: { event: EventDetail; board: BoardInfo | 
   return (
     <div className="card p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-[#1e1919]">{t("eventDetail.credential")}</h3>
+        <h3 className="text-sm font-semibold text-[#111827]">{t("eventDetail.credential")}</h3>
         {board && <Badge variant="green">{board.name}</Badge>}
       </div>
       <div className="flex items-start gap-4">
         {/* QR Code */}
         <div className="flex-shrink-0 flex flex-col items-center gap-2">
-          <div className="p-3 bg-white rounded-xl border border-[#e4deda]">
+          <div className="p-3 bg-white rounded-xl border border-[#e5e7eb]">
             <QRCodeSVG
               value={qrPayload}
               size={100}
               bgColor="transparent"
-              fgColor="#1e1919"
+              fgColor="#111827"
               level="M"
               includeMargin={false}
             />
@@ -526,17 +525,17 @@ function EventQRCard({ event, board }: { event: EventDetail; board: BoardInfo | 
         {/* Code + Info */}
         <div className="flex-1 min-w-0 space-y-3">
           <div>
-            <p className="text-[10px] text-[#776e6b] uppercase tracking-wider mb-1">
+            <p className="text-[10px] text-[#6b7280] uppercase tracking-wider mb-1">
               {t("event.joinCode")}
             </p>
             <div className="flex items-center gap-2">
-              <p className="font-mono text-2xl font-bold tracking-widest text-[#1e1919]">
+              <p className="font-mono text-2xl font-bold tracking-widest text-[#111827]">
                 {shortCode}
               </p>
               <button
                 type="button"
                 onClick={handleCopy}
-                className="flex items-center justify-center w-7 h-7 rounded-lg text-[#776e6b] hover:text-[#1e1919] hover:bg-[#f2efe9] transition-colors"
+                className="flex items-center justify-center w-7 h-7 rounded-lg text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6] transition-colors"
                 title={t("event.copyCode")}
               >
                 {copied ? (
@@ -548,11 +547,11 @@ function EventQRCard({ event, board }: { event: EventDetail; board: BoardInfo | 
             </div>
           </div>
           <div className="space-y-1">
-            <p className="text-xs text-[#776e6b]">
+            <p className="text-xs text-[#6b7280]">
               {t("event.date")}: {event.date}
             </p>
             {event.location && (
-              <p className="text-xs text-[#776e6b]">
+              <p className="text-xs text-[#6b7280]">
                 {t("event.location")}: {event.location}
               </p>
             )}
@@ -813,7 +812,7 @@ export function EventManagePage() {
           <button
             type="button"
             onClick={() => navigate(closePath)}
-            className="flex items-center justify-center w-8 h-8 rounded-full border border-[#e4deda] text-[#776e6b] hover:text-[#1e1919] hover:bg-[#f2efe9] transition-colors"
+            className="flex items-center justify-center w-8 h-8 rounded-full border border-[#e5e7eb] text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6] transition-colors"
           >
             <X size={15} />
           </button>
@@ -831,7 +830,7 @@ export function EventManagePage() {
           <button
             type="button"
             onClick={() => navigate(closePath)}
-            className="flex items-center justify-center w-8 h-8 rounded-full border border-[#e4deda] text-[#776e6b] hover:text-[#1e1919] hover:bg-[#f2efe9] transition-colors"
+            className="flex items-center justify-center w-8 h-8 rounded-full border border-[#e5e7eb] text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6] transition-colors"
           >
             <X size={15} />
           </button>
@@ -845,48 +844,43 @@ export function EventManagePage() {
   const rateColor = rate >= 80 ? "#12a150" : rate >= 50 ? "#b45309" : "#dc2626";
 
   return (
-    <div className="min-h-screen bg-[#f7f5f2]">
-      {/* ── Topbar ─────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 bg-white border-b border-[#e4deda] px-4 py-3">
-        <div className="max-w-5xl mx-auto flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate(closePath)}
-            className="flex items-center justify-center w-9 h-9 rounded-lg text-[#776e6b] hover:text-[#1e1919] hover:bg-[#f2efe9] transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
-          </button>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-base font-semibold text-[#1e1919] truncate">{event.title}</h1>
-            <div className="flex items-center gap-2">
-              <Badge variant={statusVariant(event.status)}>{getStatusLabel(event.status, t)}</Badge>
-              <OnlineDot isOnline={isOnline && socketConnected} />
-            </div>
+    <div className="space-y-6">
+      {/* ── Page Header (Standardized Workspace PageHeader) ──────────────── */}
+      <PageHeader
+        title={event.title}
+        subtitle={`${t("event.date")}: ${event.date}${event.location ? ` · ${event.location}` : ""}`}
+        badge={
+          <div className="flex items-center gap-2">
+            <Badge variant={statusVariant(event.status)}>{getStatusLabel(event.status, t)}</Badge>
+            <OnlineDot isOnline={isOnline && socketConnected} />
           </div>
-          <button
-            type="button"
+        }
+        actions={
+          <Button
+            variant="default"
+            size="sm"
             onClick={() => navigate(`/app/events/${id}`)}
-            className="flex items-center justify-center w-9 h-9 rounded-lg text-[#776e6b] hover:text-[#1e1919] hover:bg-[#f2efe9] transition-colors"
-            title={t("manage.viewAsAttendee")}
           >
-            <ExternalLink className="w-4 h-4" strokeWidth={1.5} />
-          </button>
-        </div>
-      </div>
+            <ExternalLink size={14} />
+            <span className="hidden sm:inline">{t("manage.viewAsAttendee")}</span>
+          </Button>
+        }
+        closeTo={closePath}
+      />
 
-      <div className="max-w-5xl mx-auto px-4 py-5 space-y-5">
+      <div className="space-y-5">
         {/* ── Stats row ─────────────────────────────── */}
         <div className="grid grid-cols-3 gap-3">
           <div className="card p-4 flex flex-col gap-1">
-            <p className="text-xs text-[#776e6b] font-medium">{t("manage.totalRegistrations")}</p>
-            <p className="text-2xl font-semibold text-[#1e1919] tabular-nums">{totalReg}</p>
+            <p className="text-xs text-[#6b7280] font-medium">{t("manage.totalRegistrations")}</p>
+            <p className="text-2xl font-semibold text-[#111827] tabular-nums">{totalReg}</p>
           </div>
           <div className="card p-4 flex flex-col gap-1">
-            <p className="text-xs text-[#776e6b] font-medium">{t("manage.checkedIn")}</p>
-            <p className="text-2xl font-semibold text-[#1e1919] tabular-nums">{checkedIn}</p>
+            <p className="text-xs text-[#6b7280] font-medium">{t("manage.checkedIn")}</p>
+            <p className="text-2xl font-semibold text-[#111827] tabular-nums">{checkedIn}</p>
           </div>
           <div className="card p-4 flex flex-col gap-1">
-            <p className="text-xs text-[#776e6b] font-medium">{t("manage.checkinRate")}</p>
+            <p className="text-xs text-[#6b7280] font-medium">{t("manage.checkinRate")}</p>
             <p className="text-2xl font-semibold tabular-nums" style={{ color: rateColor }}>
               {rate}%
             </p>
@@ -907,14 +901,14 @@ export function EventManagePage() {
                   "flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium whitespace-nowrap transition-colors",
                   activeBoardId === board.id
                     ? "bg-[#0061fe] text-white border-transparent"
-                    : "bg-white text-[#4a4543] border-[#e4deda] hover:border-[#cfc8c3]",
+                    : "bg-white text-[#374151] border-[#e5e7eb] hover:border-[#d1d5db]",
                 )}
               >
                 <span>{board.name}</span>
                 <span
                   className={cn(
                     "text-[10px] px-1.5 py-0.5 rounded-full font-semibold tabular-nums",
-                    activeBoardId === board.id ? "bg-white/20" : "bg-[#f2efe9]",
+                    activeBoardId === board.id ? "bg-white/20" : "bg-[#f3f4f6]",
                   )}
                 >
                   {board.checkinCount}
@@ -941,24 +935,24 @@ export function EventManagePage() {
         {scannerOpen && (
           <div className="card overflow-hidden animate-fade-in-up">
             {/* Scanner header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#e4deda]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#e5e7eb]">
               <div className="flex items-center gap-3">
                 <OnlineDot isOnline={isOnline && socketConnected} />
-                <span className="text-sm font-semibold text-[#1e1919]">
+                <span className="text-sm font-semibold text-[#111827]">
                   {totalCheckins} {t("scanner.checkins")}
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
                 {/* Scan mode toggle */}
-                <div className="flex items-center bg-[#f2efe9] rounded-lg p-0.5 gap-0.5">
+                <div className="flex items-center bg-[#f3f4f6] rounded-xl p-0.5 gap-0.5">
                   <button
                     type="button"
                     onClick={() => setScanMode("camera")}
                     className={cn(
-                      "px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                      "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
                       scanMode === "camera"
-                        ? "bg-white text-[#1e1919] shadow-sm"
-                        : "text-[#776e6b]",
+                        ? "bg-white text-[#111827] shadow-sm"
+                        : "text-[#6b7280]",
                     )}
                   >
                     <Camera className="w-3.5 h-3.5" strokeWidth={1.5} />
@@ -967,8 +961,8 @@ export function EventManagePage() {
                     type="button"
                     onClick={() => setScanMode("code")}
                     className={cn(
-                      "px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
-                      scanMode === "code" ? "bg-white text-[#1e1919] shadow-sm" : "text-[#776e6b]",
+                      "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                      scanMode === "code" ? "bg-white text-[#111827] shadow-sm" : "text-[#6b7280]",
                     )}
                   >
                     {t("scanner.enterCode")}
@@ -979,10 +973,10 @@ export function EventManagePage() {
                   type="button"
                   onClick={() => setIsPaused((v) => !v)}
                   className={cn(
-                    "flex items-center justify-center w-8 h-8 rounded-lg transition-colors",
+                    "flex items-center justify-center w-8 h-8 rounded-xl transition-colors",
                     isPaused
                       ? "bg-[#12a150] text-white hover:bg-[#0f8f42]"
-                      : "text-[#776e6b] hover:text-[#1e1919] hover:bg-[#f2efe9]",
+                      : "text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6]",
                   )}
                   title={isPaused ? t("scanner.resume") : t("scanner.pause")}
                 >
@@ -1046,13 +1040,13 @@ export function EventManagePage() {
         {/* ── Attendees summary (compact) ─────────────── */}
         <div className="card p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-[#1e1919]">{t("manage.attendees.title")}</h3>
-            <span className="text-xs text-[#776e6b]">
+            <h3 className="text-sm font-semibold text-[#111827]">{t("manage.attendees.title")}</h3>
+            <span className="text-xs text-[#6b7280]">
               {checkedIn}/{totalReg} {t("scanner.checkedIn")}
             </span>
           </div>
           {/* Progress bar */}
-          <div className="h-2 bg-[#f2efe9] rounded-full overflow-hidden mb-4">
+          <div className="h-2 bg-[#f3f4f6] rounded-full overflow-hidden mb-4">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{ width: `${rate}%`, backgroundColor: rateColor }}

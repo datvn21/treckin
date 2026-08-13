@@ -68,7 +68,7 @@ export function QRScanner({ onScan, isPaused }: QRScannerProps) {
         if (isMounted.current) {
           setCameraState("ready");
         } else {
-          await scanner.stop().catch(() => {});
+          await scanner.stop().catch(() => { });
           scanner.clear();
           scannerRef.current = null;
         }
@@ -103,7 +103,7 @@ export function QRScanner({ onScan, isPaused }: QRScannerProps) {
     if (!scanner) return;
     const state = scanner.getState();
     if (state === Html5QrcodeScannerState.SCANNING || state === Html5QrcodeScannerState.PAUSED) {
-      await scanner.stop().catch(() => {});
+      await scanner.stop().catch(() => { });
     }
     try {
       scanner.clear();
@@ -145,41 +145,83 @@ export function QRScanner({ onScan, isPaused }: QRScannerProps) {
 
   return (
     <div className="relative flex-1 flex flex-col items-center justify-center bg-[#1a1714] overflow-hidden">
+      {/*
+       * html5-qrcode injects inline `style="width: 943px"` on the <video>
+       * via JS after React render — Tailwind arbitrary-variant selectors
+       * can't reliably override JS-set inline styles.  A proper CSS rule
+       * with `!important` always wins.
+       */}
+      <style>{`
+        #${SCANNER_ID} video {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
+          object-position: center !important;
+          display: block !important;
+        }
+        #${SCANNER_ID} img,
+        #${SCANNER_ID} canvas,
+        #${SCANNER_ID} > div {
+          display: none !important;
+        }
+      `}</style>
+
       {/* ── Scanner viewport ─────────────────────────────── */}
-      {/* Centered square viewport — natural QR scanning ratio */}
-      <div className="relative w-full max-w-sm aspect-square flex items-center justify-center">
+      <div className="relative w-full h-full flex items-center justify-center">
+        {/*
+         * Use `invisible` instead of `hidden` so the container keeps its
+         * layout dimensions during initialization.  html5-qrcode measures
+         * the container's clientWidth/clientHeight at `scanner.start()` —
+         * `display:none` gives it 0×0, which produces the black rectangle.
+         */}
         <div
           id={SCANNER_ID}
-          className={cn("w-full h-full rounded-2xl overflow-hidden", !isActive && "hidden")}
+          className={cn(
+            "w-full h-full overflow-hidden",
+            !isActive && "invisible",
+          )}
         />
 
         {/* QR viewfinder overlay — only visible when camera is active */}
         {isActive && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-            {/* Dark overlay with transparent center cutout */}
-            <div className="absolute inset-0 rounded-2xl overflow-hidden">
-              <div className="absolute inset-0 bg-black/50" />
-              {/* Transparent center square */}
-              <div className="absolute inset-1/4 bg-transparent" />
-            </div>
+          <div className="absolute inset-0 pointer-events-none z-10">
+            {/* Dark overlay with transparent center cutout via SVG mask */}
+            <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+              <defs>
+                <mask id="viewfinder-cutout">
+                  <rect width="100%" height="100%" fill="white" />
+                  {/* Centered square cutout — calc-based so it's always centered */}
+                  <rect
+                    x="50%" y="50%" width="220" height="220"
+                    rx="16" ry="16" fill="black"
+                    transform="translate(-110,-110)"
+                  />
+                </mask>
+              </defs>
+              <rect
+                width="100%" height="100%"
+                fill="rgba(0,0,0,0.55)"
+                mask="url(#viewfinder-cutout)"
+              />
+            </svg>
 
-            {/* Corner brackets on the center square */}
-            <div className="absolute w-3/5 h-3/5 max-w-[240px] max-h-[240px]">
-              {/* Top-left corner */}
-              <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#0061fe] rounded-tl-xl" />
-              {/* Top-right corner */}
-              <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-[#0061fe] rounded-tr-xl" />
-              {/* Bottom-left corner */}
-              <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-[#0061fe] rounded-bl-xl" />
-              {/* Bottom-right corner */}
-              <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-[#0061fe] rounded-br-xl" />
+            {/* Corner brackets — centered square, same size as SVG cutout */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[220px] h-[220px]">
+              {/* Top-left */}
+              <div className="absolute top-0 left-0 w-10 h-10 border-t-[3px] border-l-[3px] border-[#0061fe] rounded-tl-2xl" />
+              {/* Top-right */}
+              <div className="absolute top-0 right-0 w-10 h-10 border-t-[3px] border-r-[3px] border-[#0061fe] rounded-tr-2xl" />
+              {/* Bottom-left */}
+              <div className="absolute bottom-0 left-0 w-10 h-10 border-b-[3px] border-l-[3px] border-[#0061fe] rounded-bl-2xl" />
+              {/* Bottom-right */}
+              <div className="absolute bottom-0 right-0 w-10 h-10 border-b-[3px] border-r-[3px] border-[#0061fe] rounded-br-2xl" />
             </div>
           </div>
         )}
 
         {/* ── Paused state ────────────────────────────── */}
         {cameraState === "paused" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#1a1714] rounded-2xl z-20 animate-fade-in">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#1a1714] z-20 animate-fade-in">
             <CameraOff className="w-16 h-16 text-[#5e5650]" strokeWidth={1.2} />
             <p className="text-[#c2b9b3] text-base font-semibold">{t("scanner.camera.paused")}</p>
             <p className="text-[#5e5650] text-xs">{t("scanner.camera.pausedHint")}</p>
@@ -188,7 +230,7 @@ export function QRScanner({ onScan, isPaused }: QRScannerProps) {
 
         {/* ── Initializing state ────────────────────── */}
         {cameraState === "initializing" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#1a1714] rounded-2xl z-20">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#1a1714] z-20">
             <Loader2 className="w-12 h-12 text-[#0061fe] animate-spin" />
             <p className="text-[#5e5650] text-sm">{t("scanner.camera.initializing")}</p>
           </div>
@@ -224,9 +266,11 @@ export function QRScanner({ onScan, isPaused }: QRScannerProps) {
         )}
       </div>
 
-      {/* ── Instruction text ──────────────────────────── */}
+      {/* ── Instruction text — pinned to bottom of viewport ── */}
       {isActive && (
-        <p className="mt-6 text-[#5e5650] text-xs text-center px-8">{t("scanner.scanHint")}</p>
+        <p className="absolute bottom-4 left-0 right-0 text-[#8f857f] text-xs text-center px-8 z-10">
+          {t("scanner.scanHint")}
+        </p>
       )}
     </div>
   );

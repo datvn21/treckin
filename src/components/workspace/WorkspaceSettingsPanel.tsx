@@ -510,13 +510,13 @@ export function WorkspaceSettingsPanel({
                 }
               >
                 <option value="PRIVATE">
-                  🔒 {t("workspace.visibility.private", { defaultValue: "Private" })}
+                  {t("workspace.visibility.private", { defaultValue: "Private" })}
                 </option>
                 <option value="WORKSPACE">
-                  🏢 {t("workspace.visibility.workspace", { defaultValue: "Workspace" })}
+                  {t("workspace.visibility.workspace", { defaultValue: "Workspace" })}
                 </option>
                 <option value="PUBLIC_LINK">
-                  🌐 {t("workspace.visibility.publicLink", { defaultValue: "Public link" })}
+                  {t("workspace.visibility.publicLink", { defaultValue: "Public link" })}
                 </option>
               </Select>
             </div>
@@ -535,10 +535,10 @@ export function WorkspaceSettingsPanel({
               }
             >
               <option value="ANONYMIZE">
-                🛡️ {t("workspace.deletion.anonymize", { defaultValue: "Anonymize" })}
+                {t("workspace.deletion.anonymize", { defaultValue: "Anonymize" })}
               </option>
               <option value="PURGE">
-                🗑️ {t("workspace.deletion.purge", { defaultValue: "Purge" })}
+                {t("workspace.deletion.purge", { defaultValue: "Purge" })}
               </option>
             </Select>
           </FormField>
@@ -785,7 +785,7 @@ export function WorkspaceSettingsPanel({
       </div>
 
       {/* ── 6. Sticky Save Action Bar ───────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 bg-surface/90  px-4 sm:px-6 py-3.5  transition-all duration-200 lg:pb-3.5 pb-16">
+      <div className="z-20 bg-surface/90  px-4 sm:px-6 py-3.5  transition-all duration-200 lg:pb-3.5 pb-16">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             {isDirty ? (
